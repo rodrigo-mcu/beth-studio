@@ -155,3 +155,24 @@ func TestSettingsLoadToleratesUTF8BOM(t *testing.T) {
 		t.Fatalf("o arquivo não deveria ter sido movido como corrompido: %v", matches)
 	}
 }
+
+func TestRemapFromBaseSurvivesRecordSpawnDeletingCollidingEntries(t *testing.T) {
+	st := remapTestStore(t)
+	base := st.captureRemapBase()
+	// recriar o terminal novo de id 1 faz recordSpawn apagar a aparência do antigo "1" (host diferente)
+	st.s.Spawned = map[string]SpawnedPane{}
+	st.recordSpawn(1, "cmd")
+	if st.s.Panes["1"] != nil {
+		t.Fatal("pré-condição: recordSpawn deveria ter apagado a aparência do id 1")
+	}
+	st.remapPanesFrom(base, map[int]int{1: 1, 2: 0}, "200@2")
+	if p := st.s.Panes["1"]; p == nil || p.Theme != "tema-um" {
+		t.Fatalf("a aparência do antigo 1 deveria ter sido recuperada da cópia: %+v", st.s.Panes)
+	}
+	if p := st.s.Panes["0"]; p == nil || p.Theme != "tema-dois" {
+		t.Fatalf("a aparência do antigo 2 deveria ir para o novo 0: %+v", st.s.Panes)
+	}
+	if n := st.s.PaneNames["0"]; n == nil || n.Name != "Backend" {
+		t.Fatalf("o nome do antigo 2 deveria ir para o novo 0: %+v", st.s.PaneNames)
+	}
+}

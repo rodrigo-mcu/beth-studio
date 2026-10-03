@@ -59,6 +59,8 @@ Write-Host "distro WSL do teste: $(if ($Distro) { $Distro } else { '(nenhuma: ca
 
 $data = Join-Path $WorkDir 'appdata\bethterm'
 New-Item -ItemType Directory $WorkDir, (Join-Path $WorkDir 'appdata'), $data | Out-Null
+# o host com id escreve o .pid antes de criar a pasta hosts\; sem ela a escrita falha em silencio e o Studio fica sem a identidade do host
+New-Item -ItemType Directory (Join-Path $data 'hosts') | Out-Null
 
 # ---- 1. receita e layout pré-gravados -------------------------------------------------
 $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')

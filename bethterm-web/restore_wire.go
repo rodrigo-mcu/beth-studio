@@ -172,6 +172,8 @@ func (h *hub) runRestoreJob(file specsFile, c *restoreCoordinator) {
 	defer cancel()
 	log.Printf("restore: recriando %d terminais depois da queda do host", len(file.Specs))
 	lifeLog(fmt.Sprintf("host novo e vazio; recriando %d terminais da receita", len(file.Specs)))
+	// copia ANTES de recriar: recordSpawn apaga a aparencia do terminal antigo cujo id coincide com o novo
+	base := settings.captureRemapBase()
 	res := runRestore(ctx, file.Specs, &hubRestoreEnv{h: h}, h.wslGate, 3)
 
 	// o reconcile só pode voltar quando a lista já mostra os terminais novos
@@ -183,7 +185,7 @@ func (h *hub) runRestoreJob(file specsFile, c *restoreCoordinator) {
 	for time.Now().Before(deadline) && !settings.liveHas(ids) {
 		time.Sleep(200 * time.Millisecond)
 	}
-	settings.remapPanes(res.Map, settings.hostID())
+	settings.remapPanesFrom(base, res.Map, settings.hostID())
 
 	lifeLog(fmt.Sprintf("restauração terminou: %d recriados, %d falharam, %d abriram na home", len(res.Map), len(res.Failed), len(res.Fallbacks)))
 	h.setRestore(map[string]any{

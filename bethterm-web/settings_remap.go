@@ -30,11 +30,42 @@ func (st *settingsStore) setFrozen(on bool) {
 	st.mu.Unlock()
 }
 
-// remapPanes aplica o mapa de ids (antigo→novo) de uma vez: a troca 1↔2 não
-// perde nenhum terminal. Folha sem mapeamento vira "encerrada". Entrada de
-// aparência/nome sem mapeamento cuja chave colide com um id novo é descartada.
-func (st *settingsStore) remapPanes(m map[int]int, newHost string) SettingsSnapshot {
+// remapBase: copia da aparencia e dos nomes por terminal tirada ANTES de recriar os terminais.
+// Os ids reiniciam do zero a cada host, e abrir o terminal novo de id 1 faz recordSpawn apagar a
+// aparencia do terminal antigo que tambem era "1": o remapeamento parte da copia, nao do estado vivo.
+type remapBase struct {
+	panes map[string]*PaneAppearance
+	names map[string]*PaneName
+}
+
+func (st *settingsStore) captureRemapBase() *remapBase {
 	st.mu.Lock()
+	defer st.mu.Unlock()
+	b := &remapBase{panes: map[string]*PaneAppearance{}, names: map[string]*PaneName{}}
+	for k, p := range st.s.Panes {
+		c := *p
+		b.panes[k] = &c
+	}
+	for k, n := range st.s.PaneNames {
+		c := *n
+		b.names[k] = &c
+	}
+	return b
+}
+
+// remapPanes aplica o mapa de ids (antigo->novo) de uma vez a partir do estado atual.
+func (st *settingsStore) remapPanes(m map[int]int, newHost string) SettingsSnapshot {
+	return st.remapPanesFrom(nil, m, newHost)
+}
+
+// remapPanesFrom aplica o mapa de ids de uma vez: a troca 1<->2 nao perde nenhum terminal.
+// Folha sem mapeamento vira "encerrada". Entrada de aparencia/nome sem mapeamento cuja chave
+// colide com um id novo e' descartada. base (se houver) e' a copia anterior a restauracao.
+func (st *settingsStore) remapPanesFrom(base *remapBase, m map[int]int, newHost string) SettingsSnapshot {
+	st.mu.Lock()
+	if base == nil {
+		base = &remapBase{panes: st.s.Panes, names: st.s.PaneNames}
+	}
 	// layout: abas abertas e fechadas
 	forEachLeaf(st.s.Layout, func(n *LayoutNode) {
 		if n.Gone {
@@ -50,9 +81,9 @@ func (st *settingsStore) remapPanes(m map[int]int, newHost string) SettingsSnaps
 	for _, nid := range m {
 		newIDs[strconv.Itoa(nid)] = true
 	}
-	// aparência por terminal
+	// aparencia por terminal
 	panes := map[string]*PaneAppearance{}
-	for k, p := range st.s.Panes {
+	for k, p := range base.panes {
 		id, err := strconv.Atoi(k)
 		if err != nil {
 			continue
@@ -62,7 +93,7 @@ func (st *settingsStore) remapPanes(m map[int]int, newHost string) SettingsSnaps
 			panes[strconv.Itoa(nid)] = p
 		}
 	}
-	for k, p := range st.s.Panes {
+	for k, p := range base.panes {
 		id, _ := strconv.Atoi(k)
 		if _, mapped := m[id]; mapped || newIDs[k] {
 			continue
@@ -71,9 +102,9 @@ func (st *settingsStore) remapPanes(m map[int]int, newHost string) SettingsSnaps
 	}
 	st.s.Panes = panes
 	// nomes de aba por terminal
-	if st.s.PaneNames != nil {
+	if base.names != nil || st.s.PaneNames != nil {
 		names := map[string]*PaneName{}
-		for k, n := range st.s.PaneNames {
+		for k, n := range base.names {
 			id, err := strconv.Atoi(k)
 			if err != nil {
 				continue
@@ -84,7 +115,7 @@ func (st *settingsStore) remapPanes(m map[int]int, newHost string) SettingsSnaps
 				names[strconv.Itoa(nid)] = n
 			}
 		}
-		for k, n := range st.s.PaneNames {
+		for k, n := range base.names {
 			id, _ := strconv.Atoi(k)
 			if _, mapped := m[id]; mapped || newIDs[k] {
 				continue
