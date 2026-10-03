@@ -11,12 +11,12 @@ members = [
   "wezterm-ssh",
   "wezterm-surface",
   "wezterm-uds",
-  # BethTerm local additions (see upstream-wezterm/PATCHES.md
+  # Beth Studio local additions (see upstream-wezterm/PATCHES.md
   # patch 0001). These two members are our delta crates; everything
   # else in this list is unmodified from upstream.
   "wtinator",
-  # BethTerm (patch 0091): single-file zstd self-extractor / installer.
-  "bethterm-setup",
+  # Beth Studio (patch 0091): single-file zstd self-extractor / installer.
+  "bethstudio-setup",
 ]
 resolver = "2"
 exclude = [
@@ -268,7 +268,7 @@ zbus = "4.2"
 zstd = "0.11"
 zvariant = "4.0"
 
-# BethTerm local additions (see PATCHES.md patch 0002 / 0088). These
+# Beth Studio local additions (see PATCHES.md patch 0002 / 0088). These
 # are referenced by the `wtinator` crate via
 # `xxx.workspace = true`. We add them to the upstream workspace's
 # [workspace.dependencies] table so that our crates can inherit them.

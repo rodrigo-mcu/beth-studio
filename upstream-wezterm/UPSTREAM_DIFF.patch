@@ -1,5 +1,5 @@
 diff --git a/Cargo.toml b/Cargo.toml
-index 980ebad..18911ec 100644
+index 980ebad..d300dfc 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -1,21 +1,22 @@
@@ -21,12 +21,12 @@ index 980ebad..18911ec 100644
    "wezterm-ssh",
    "wezterm-surface",
    "wezterm-uds",
-+  # BethTerm local additions (see upstream-wezterm/PATCHES.md
++  # Beth Studio local additions (see upstream-wezterm/PATCHES.md
 +  # patch 0001). These two members are our delta crates; everything
 +  # else in this list is unmodified from upstream.
 +  "wtinator",
-+  # BethTerm (patch 0091): single-file zstd self-extractor / installer.
-+  "bethterm-setup",
++  # Beth Studio (patch 0091): single-file zstd self-extractor / installer.
++  "bethstudio-setup",
  ]
  resolver = "2"
  exclude = [
@@ -108,14 +108,14 @@ index 980ebad..18911ec 100644
 -# We use our own vendored cairo, which has minimal deps and should just
 -# build via cargo.
 -cairo-sys-rs = {path="deps/cairo", version="0.18.0"}
-+# BethTerm local additions (see PATCHES.md patch 0002 / 0088). These
++# Beth Studio local additions (see PATCHES.md patch 0002 / 0088). These
 +# are referenced by the `wtinator` crate via
 +# `xxx.workspace = true`. We add them to the upstream workspace's
 +# [workspace.dependencies] table so that our crates can inherit them.
 +# The upstream code itself does not use these entries.
 +wtinator = { path = "wtinator" }
 diff --git a/ci/windows-installer.iss b/ci/windows-installer.iss
-index 59d1610..ed1ee91 100644
+index 59d1610..dfa830a 100644
 --- a/ci/windows-installer.iss
 +++ b/ci/windows-installer.iss
 @@ -2,11 +2,11 @@
@@ -123,12 +123,12 @@ index 59d1610..ed1ee91 100644
  ; vim:ts=2:sw=2:et:
  
 -#define MyAppName "WezTerm"
-+#define MyAppName "BethTerm"
++#define MyAppName "Beth Studio"
  ;#define MyAppVersion "1.5"
 -#define MyAppPublisher "Wez Furlong"
 -#define MyAppURL "http://wezterm.org"
 -#define MyAppExeName "wezterm-gui.exe"
-+#define MyAppPublisher "BethTerm contributors"
++#define MyAppPublisher "Beth Studio contributors"
 +#define MyAppURL "https://github.com/wezterm/wezterm"
 +#define MyAppExeName "bethterm-gui.exe"
  
@@ -139,7 +139,7 @@ index 59d1610..ed1ee91 100644
  ;PrivilegesRequiredOverridesAllowed=dialog
  OutputDir=..
 -OutputBaseFilename=WezTerm-Setup
-+OutputBaseFilename=BethTerm-Setup
++OutputBaseFilename=BethStudio-Setup
  SetupIconFile=..\assets\windows\terminal.ico
  UninstallDisplayIcon={app}\{#MyAppExeName}
  Compression=lzma
@@ -149,7 +149,7 @@ index 59d1610..ed1ee91 100644
  [Files]
 -Source: "..\target\release\wezterm.exe"; DestDir: "{app}"; Flags: ignoreversion
 -Source: "..\target\release\wezterm-gui.exe"; DestDir: "{app}"; Flags: ignoreversion
-+Source: "..\target\release\bethterm.exe"; DestDir: "{app}"; Flags: ignoreversion
++Source: "..\target\release\bethstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
 +Source: "..\target\release\bethterm-gui.exe"; DestDir: "{app}"; Flags: ignoreversion
  Source: "..\target\release\wezterm-mux-server.exe"; DestDir: "{app}"; Flags: ignoreversion
  Source: "..\target\release\mesa\opengl32.dll"; DestDir: "{app}\mesa"; Flags: ignoreversion
@@ -815,7 +815,7 @@ index 1c46d7a..6b3e2ef 100644
  
      fn get_keyboard_encoding(&self) -> KeyboardEncoding {
 diff --git a/mux/src/tab.rs b/mux/src/tab.rs
-index 29f14bc..9b18d9a 100644
+index 29f14bc..6845c4f 100644
 --- a/mux/src/tab.rs
 +++ b/mux/src/tab.rs
 @@ -37,6 +37,9 @@ impl Recency {
@@ -882,7 +882,7 @@ index 29f14bc..9b18d9a 100644
 +    }
 +}
 +
-+/// BethTerm (patch 0130): how many base rows of pane header the layout
++/// Beth Studio (patch 0130): how many base rows of pane header the layout
 +/// adds on top of the content sizes a mux host reports for `tree`.
 +/// Stacked panes (a `Vertical` split) add their headers; side-by-side
 +/// panes share the tallest column.
@@ -905,7 +905,7 @@ index 29f14bc..9b18d9a 100644
      }
  }
  
-+/// BethTerm (patch 0130): inverse of `reserve_pane_header_row` for a
++/// Beth Studio (patch 0130): inverse of `reserve_pane_header_row` for a
 +/// whole tab: grow a host-reported content size by `rows` base rows.
 +fn add_header_rows(size: &TerminalSize, rows: usize) -> TerminalSize {
 +    if rows == 0 || size.rows == 0 {
@@ -1158,7 +1158,7 @@ index 29f14bc..9b18d9a 100644
              }
          }
 -        self.pane.replace(cursor.tree());
-+        // BethTerm (patch 0130): `size` is the CONTENT size the mux host
++        // Beth Studio (patch 0130): `size` is the CONTENT size the mux host
 +        // reports (its panes carry no header row). The local layout adds
 +        // one base row per stacked header (patch 0067). Feeding the
 +        // content size straight into `resize` reserved the header again,
@@ -1201,7 +1201,7 @@ index 29f14bc..9b18d9a 100644
 +        self.resize_impl(size, true)
 +    }
 +
-+    /// BethTerm (patch 0130): `resize_leaves == false` re-lays the split
++    /// Beth Studio (patch 0130): `resize_leaves == false` re-lays the split
 +    /// tree without pushing sizes into the panes. Used by
 +    /// `sync_with_pane_tree`, where the panes already have the sizes the
 +    /// mux host reported.
@@ -1541,7 +1541,7 @@ index 29f14bc..9b18d9a 100644
 +        assert_eq!(reserve_pane_header_row(&layout), layout);
 +    }
 +
-+    /// BethTerm (patch 0130): a host reports CONTENT sizes. Syncing must
++    /// Beth Studio (patch 0130): a host reports CONTENT sizes. Syncing must
 +    /// grow the layout by the header rows and must not resize the pane,
 +    /// otherwise the GUI sends the host a one-row-smaller pane, the host
 +    /// answers `TabResized`, and the loop shrinks the pane to 1 row.
@@ -1698,7 +1698,7 @@ index a086e3a..f06fc20 100644
          if workspace == self.workspace {
              return;
 diff --git a/pty/src/win/conpty.rs b/pty/src/win/conpty.rs
-index 0e9a18c..97d98a7 100644
+index 0e9a18c..58111a9 100644
 --- a/pty/src/win/conpty.rs
 +++ b/pty/src/win/conpty.rs
 @@ -23,12 +23,15 @@ impl PtySystem for ConPtySystem {
@@ -1707,7 +1707,7 @@ index 0e9a18c..97d98a7 100644
  
 +        // `con` is last so Rust drops the pipe handles first.
 +        // ClosePseudoConsole blocks while those pipes stay open
-+        // (BethTerm patch 0113 / Microsoft ConPTY contract).
++        // (Beth Studio patch 0113 / Microsoft ConPTY contract).
          let master = ConPtyMasterPty {
              inner: Arc::new(Mutex::new(Inner {
 -                con,
@@ -1727,13 +1727,13 @@ index 0e9a18c..97d98a7 100644
      writable: Option<FileDescriptor>,
      size: PtySize,
 +    /// Dropped last so the communication pipes are already closed
-+    /// when `ClosePseudoConsole` runs (BethTerm patch 0113).
++    /// when `ClosePseudoConsole` runs (Beth Studio patch 0113).
 +    con: PsuedoCon,
  }
  
  impl Inner {
 diff --git a/pty/src/win/psuedocon.rs b/pty/src/win/psuedocon.rs
-index 13c7c5d..c5b25d1 100644
+index 13c7c5d..278fb4b 100644
 --- a/pty/src/win/psuedocon.rs
 +++ b/pty/src/win/psuedocon.rs
 @@ -24,11 +24,18 @@ use winapi::um::winnt::HANDLE;
@@ -1761,7 +1761,7 @@ index 13c7c5d..c5b25d1 100644
  impl Drop for PsuedoCon {
      fn drop(&mut self) {
 -        unsafe { (CONPTY.ClosePseudoConsole)(self.con) };
-+        // BethTerm patch 0113: ClosePseudoConsole can block forever
++        // Beth Studio patch 0113: ClosePseudoConsole can block forever
 +        // (OpenConsole deadlock / undrained output pipe). Never run it
 +        // on the GUI thread — that is the classic WezTerm-on-Windows
 +        // "close a pane and the whole app freezes" bug.
@@ -1775,7 +1775,7 @@ index 13c7c5d..c5b25d1 100644
 +        unsafe impl Send for SendHpcon {}
 +        let send = SendHpcon(con);
 +        if std::thread::Builder::new()
-+            .name("bethterm-conpty-close".into())
++            .name("bethstudio-conpty-close".into())
 +            .spawn(move || unsafe {
 +                (CONPTY.ClosePseudoConsole)(send.0);
 +            })
@@ -1793,10 +1793,10 @@ index 13c7c5d..c5b25d1 100644
 -                PSUEDOCONSOLE_INHERIT_CURSOR
 -                    | PSEUDOCONSOLE_RESIZE_QUIRK
 -                    | PSEUDOCONSOLE_WIN32_INPUT_MODE,
-+                // BethTerm patch 0113: skip INHERIT_CURSOR. That flag
++                // Beth Studio patch 0113: skip INHERIT_CURSOR. That flag
 +                // is the other documented ConPTY hang (Create /
 +                // ClosePseudoConsole waiting on the previous console
-+                // cursor). New BethTerm panes always start at 0,0.
++                // cursor). New Beth Studio panes always start at 0,0.
 +                // Patch 0127: do not OR in 0x8. On ConPTY 1.24 that bit
 +                // is glyph-width graphemes, not passthrough.
 +                PSEUDOCONSOLE_RESIZE_QUIRK | PSEUDOCONSOLE_WIN32_INPUT_MODE,
@@ -1880,17 +1880,17 @@ index 4acbe6c..81e0ea3 100644
                      let mut output = String::new();
                      write!(&mut output, "Unhandled OSC ").ok();
 diff --git a/wezterm-client/src/client.rs b/wezterm-client/src/client.rs
-index 9dc2420..f6d8cd8 100644
+index 9dc2420..5001394 100644
 --- a/wezterm-client/src/client.rs
 +++ b/wezterm-client/src/client.rs
 @@ -191,6 +191,11 @@ async fn process_unilateral_inner_async(
      client_pane.process_unilateral(decoded.pdu).await
  }
  
-+/// BethTerm (patch 0175): a client without a local domain (the
-+/// `bethterm cli bridge`) gets every unilateral PDU here instead of having
++/// Beth Studio (patch 0175): a client without a local domain (the
++/// `bethstudio cli bridge`) gets every unilateral PDU here instead of having
 +/// it dropped, so it can forward pane alerts (bell, OSC 9, user vars).
-+pub static BETHTERM_UNILATERAL: std::sync::OnceLock<fn(&Pdu)> = std::sync::OnceLock::new();
++pub static BETHSTUDIO_UNILATERAL: std::sync::OnceLock<fn(&Pdu)> = std::sync::OnceLock::new();
 +
  fn process_unilateral(
      local_domain_id: Option<DomainId>,
@@ -1899,7 +1899,7 @@ index 9dc2420..f6d8cd8 100644
      let local_domain_id = match local_domain_id {
          Some(id) => id,
          None => {
-+            if let Some(hook) = BETHTERM_UNILATERAL.get() {
++            if let Some(hook) = BETHSTUDIO_UNILATERAL.get() {
 +                hook(&decoded.pdu);
 +                return Ok(());
 +            }
@@ -1910,7 +1910,7 @@ index 9dc2420..f6d8cd8 100644
                              .ok_or_else(|| {
                                  anyhow!("domain {} is not a ClientDomain instance", local_domain_id)
                              })?;
-+                    // BethTerm (patch 0165): only this path is a lost host.
++                    // Beth Studio (patch 0165): only this path is a lost host.
 +                    client_domain.note_connection_lost();
                      client_domain.perform_detach();
                  }
@@ -1923,7 +1923,7 @@ index 9dc2420..f6d8cd8 100644
 -                socket_path: Some(path.into()),
 -                ..Default::default()
 -            }),
-+            // BethTerm (patch 0171): a process started from the GUI inherits
++            // Beth Studio (patch 0171): a process started from the GUI inherits
 +            // WEZTERM_UNIX_SOCKET=<gui-sock-PID>. With prefer_mux that GUI
 +            // socket must not win over the host (it may even be from a GUI
 +            // that has since restarted).
@@ -1946,11 +1946,11 @@ index 9dc2420..f6d8cd8 100644
                      }
                  }
  
-+                // BethTerm (patch 0139): the GUI does not publish a
-+                // gui-sock; the panes live in bethterm-host. When its
-+                // socket exists, `bethterm cli ...` talks to it without
++                // Beth Studio (patch 0139): the GUI does not publish a
++                // gui-sock; the panes live in bethstudio-host. When its
++                // socket exists, `bethstudio cli ...` talks to it without
 +                // WEZTERM_UNIX_SOCKET.
-+                if let Some(host) = bethterm_host_socket() {
++                if let Some(host) = bethstudio_host_socket() {
 +                    return Ok(config::UnixDomain {
 +                        socket_path: Some(host),
 +                        no_serve_automatically: true,
@@ -1967,28 +1967,28 @@ index 9dc2420..f6d8cd8 100644
      rpc!(adjust_pane_size, AdjustPaneSize, UnitResponse);
  }
 +
-+/// BethTerm (patch 0139): `%APPDATA%\bethterm\host.sock` (Windows) or
-+/// `~/.config/bethterm/host.sock`, when it exists. Mirrors
++/// Beth Studio (patch 0139): `%APPDATA%\bethstudio\host.sock` (Windows) or
++/// `~/.config/bethstudio/host.sock`, when it exists. Mirrors
 +/// `wtinator::host::socket_path`; this crate cannot depend on `wtinator`.
-+fn bethterm_host_socket() -> Option<std::path::PathBuf> {
++fn bethstudio_host_socket() -> Option<std::path::PathBuf> {
 +    let dir = if cfg!(windows) {
 +        std::env::var_os("APPDATA").map(std::path::PathBuf::from)?
 +    } else {
 +        std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config"))?
 +    };
-+    // Patch 0197: BETHTERM_HOST_ID (the same filter the host applies) picks
++    // Patch 0197: BETHSTUDIO_HOST_ID (the same filter the host applies) picks
 +    // `hosts\<id>.sock`, so tests can reach a host of their own without ever
 +    // seeing the user's host. Unset: the single host, as always.
-+    let id: String = std::env::var("BETHTERM_HOST_ID")
++    let id: String = std::env::var("BETHSTUDIO_HOST_ID")
 +        .unwrap_or_default()
 +        .chars()
 +        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
 +        .take(48)
 +        .collect();
 +    let sock = if id.is_empty() {
-+        dir.join("bethterm").join("host.sock")
++        dir.join("bethstudio").join("host.sock")
 +    } else {
-+        dir.join("bethterm").join("hosts").join(format!("{id}.sock"))
++        dir.join("bethstudio").join("hosts").join(format!("{id}.sock"))
 +    };
 +    if sock.exists() {
 +        Some(sock)
@@ -1997,7 +1997,7 @@ index 9dc2420..f6d8cd8 100644
 +    }
 +}
 diff --git a/wezterm-client/src/discovery.rs b/wezterm-client/src/discovery.rs
-index 9a97bd9..ed6e32d 100644
+index 9a97bd9..3dbfa6f 100644
 --- a/wezterm-client/src/discovery.rs
 +++ b/wezterm-client/src/discovery.rs
 @@ -333,7 +333,15 @@ pub fn publish_gui_sock_path(path: &Path, class_name: &str) -> anyhow::Result<Na
@@ -2006,7 +2006,7 @@ index 9a97bd9..ed6e32d 100644
  pub fn resolve_gui_sock_path(class_name: &str) -> anyhow::Result<PathBuf> {
 -    NameHolder::resolve(class_name)
 +    let path = NameHolder::resolve(class_name)?;
-+    // BethTerm (patch 0165): Windows publishes only the file name, so a
++    // Beth Studio (patch 0165): Windows publishes only the file name, so a
 +    // second launch from any other working directory (the shortcut
 +    // starts in the install folder) never reached the running GUI.
 +    if path.is_relative() {
@@ -2018,41 +2018,41 @@ index 9a97bd9..ed6e32d 100644
  
  /// This function returns a list of the gui-sock- paths in
 diff --git a/wezterm-client/src/domain.rs b/wezterm-client/src/domain.rs
-index b4a824b..d893467 100644
+index b4a824b..6112552 100644
 --- a/wezterm-client/src/domain.rs
 +++ b/wezterm-client/src/domain.rs
 @@ -395,6 +395,38 @@ fn mux_notify_client_domain(local_domain_id: DomainId, notif: MuxNotification) -
      true
  }
  
-+/// BethTerm (patch 0136): name of the persistent PTY host domain. Must
++/// Beth Studio (patch 0136): name of the persistent PTY host domain. Must
 +/// match `wtinator::host::DOMAIN_NAME` (this crate cannot depend on
 +/// `wtinator`).
-+pub const BETHTERM_HOST_DOMAIN_NAME: &str = "bethterm-host";
++pub const BETHSTUDIO_HOST_DOMAIN_NAME: &str = "bethstudio-host";
 +
-+/// BethTerm (patch 0165): the legacy host or a window host
-+/// (`bethterm-host-<id>`, patch 0159). Exact comparisons with
-+/// `BETHTERM_HOST_DOMAIN_NAME` missed every window host.
-+pub fn is_bethterm_host_domain(name: &str) -> bool {
-+    name == BETHTERM_HOST_DOMAIN_NAME
++/// Beth Studio (patch 0165): the legacy host or a window host
++/// (`bethstudio-host-<id>`, patch 0159). Exact comparisons with
++/// `BETHSTUDIO_HOST_DOMAIN_NAME` missed every window host.
++pub fn is_bethstudio_host_domain(name: &str) -> bool {
++    name == BETHSTUDIO_HOST_DOMAIN_NAME
 +        || name
-+            .strip_prefix(BETHTERM_HOST_DOMAIN_NAME)
++            .strip_prefix(BETHSTUDIO_HOST_DOMAIN_NAME)
 +            .is_some_and(|rest| rest.starts_with('-'))
 +}
 +
-+/// BethTerm (patch 0165): host domains whose connection dropped while
++/// Beth Studio (patch 0165): host domains whose connection dropped while
 +/// this GUI still showed panes from them. The mux also detaches a
 +/// domain when its last window closes, so only the connection-loss
 +/// path records here. The GUI then asks `wtinator::host` whether the
 +/// host exited on purpose (empty) or died with terminals in it.
-+pub static BETHTERM_HOSTS_LOST_WITH_PANES: Mutex<Vec<String>> = Mutex::new(Vec::new());
++pub static BETHSTUDIO_HOSTS_LOST_WITH_PANES: Mutex<Vec<String>> = Mutex::new(Vec::new());
 +
-+/// BethTerm (patch 0168): `wtinator::host::note_life`, set by the GUI
++/// Beth Studio (patch 0168): `wtinator::host::note_life`, set by the GUI
 +/// (this crate cannot depend on `wtinator`).
-+pub static BETHTERM_LIFE_LOG: std::sync::OnceLock<fn(&str)> = std::sync::OnceLock::new();
++pub static BETHSTUDIO_LIFE_LOG: std::sync::OnceLock<fn(&str)> = std::sync::OnceLock::new();
 +
-+fn bethterm_life(message: &str) {
-+    if let Some(log) = BETHTERM_LIFE_LOG.get() {
++fn bethstudio_life(message: &str) {
++    if let Some(log) = BETHSTUDIO_LIFE_LOG.get() {
 +        log(message);
 +    }
 +}
@@ -2064,11 +2064,11 @@ index b4a824b..d893467 100644
          self.config.connect_automatically()
      }
  
-+    /// BethTerm (patch 0165): the connection to this domain dropped.
++    /// Beth Studio (patch 0165): the connection to this domain dropped.
 +    /// Called before `perform_detach` on the connection-loss path only.
 +    pub fn note_connection_lost(&self) {
 +        let name = self.config.name();
-+        if !is_bethterm_host_domain(&name) {
++        if !is_bethstudio_host_domain(&name) {
 +            return;
 +        }
 +        let shown = Mux::get()
@@ -2076,22 +2076,22 @@ index b4a824b..d893467 100644
 +            .iter()
 +            .filter(|p| p.domain_id() == self.local_domain_id)
 +            .count();
-+        bethterm_life(&format!(
++        bethstudio_life(&format!(
 +            "GUI lost its connection to {name} (showing {shown} pane(s) from it)"
 +        ));
 +        if shown > 0 {
 +            log::warn!(
-+                "bethterm: lost the connection to host {name} while it still showed panes; \
-+                 see %APPDATA%\\bethterm\\host-life.log for the host's own exit line"
++                "bethstudio: lost the connection to host {name} while it still showed panes; \
++                 see %APPDATA%\\bethstudio\\host-life.log for the host's own exit line"
 +            );
-+            BETHTERM_HOSTS_LOST_WITH_PANES.lock().unwrap().push(name.to_string());
++            BETHSTUDIO_HOSTS_LOST_WITH_PANES.lock().unwrap().push(name.to_string());
 +        }
 +    }
 +
      pub fn perform_detach(&self) {
          log::info!("detached domain {}", self.local_domain_id);
-+        if is_bethterm_host_domain(&self.config.name()) {
-+            bethterm_life(&format!(
++        if is_bethstudio_host_domain(&self.config.name()) {
++            bethstudio_life(&format!(
 +                "GUI detached domain {} ({})",
 +                self.config.name(),
 +                self.local_domain_id
@@ -2114,7 +2114,7 @@ index b4a824b..d893467 100644
 -                    );
 -                    if window.idx_by_id(tab.tab_id()).is_none() {
 -                        window.push(&tab);
-+                    // BethTerm (patch 0140): the mapped local window can be
++                    // Beth Studio (patch 0140): the mapped local window can be
 +                    // gone. "Move tab to new window" empties the old local
 +                    // window, the mux drops it, and the next host sync used
 +                    // to `expect` it and kill the whole GUI. Re-map the
@@ -2173,7 +2173,7 @@ index b4a824b..d893467 100644
 -                            .expect("primary window to be valid")
 -                            .get_workspace(),
 -                    ) == workspace.as_deref()
-+                    // windows. BethTerm (patch 0123): the primary window can
++                    // windows. Beth Studio (patch 0123): the primary window can
 +                    // already be gone during session restore onto a ClientDomain;
 +                    // do not panic the GUI.
 +                    let workspace_ok = mux
@@ -2192,7 +2192,7 @@ index b4a824b..d893467 100644
 -                    .get_window_mut(local_window_id)
 -                    .expect("no such window!?");
 -                window.set_title(&window_title);
-+                // BethTerm (patch 0140): never panic on a vanished window.
++                // Beth Studio (patch 0140): never panic on a vanished window.
 +                if let Some(mut window) = mux.get_window_mut(local_window_id) {
 +                    window.set_title(&window_title);
 +                }
@@ -2207,14 +2207,14 @@ index b4a824b..d893467 100644
 -            window_id,
 -            ..Default::default()
 -        });
-+        // BethTerm (patch 0136): the local host is on a Unix socket on
++        // Beth Studio (patch 0136): the local host is on a Unix socket on
 +        // the same machine and attaches in well under a second. The
 +        // upstream progress UI opens a "Connecting..." mux window with
-+        // a termwiz pane; in BethTerm the window X hides to the tray
++        // a termwiz pane; in Beth Studio the window X hides to the tray
 +        // instead of closing, so that window survived as a hidden
 +        // zero-size ghost with its own timers (duplicate session
 +        // snapshots, duplicate pipe servers). Use the headless UI.
-+        let ui = if window_id.is_none() && is_bethterm_host_domain(&self.config.name()) {
++        let ui = if window_id.is_none() && is_bethstudio_host_domain(&self.config.name()) {
 +            ConnectionUI::new_headless()
 +        } else {
 +            ConnectionUI::with_params(ConnectionUIParams {
@@ -2226,7 +2226,7 @@ index b4a824b..d893467 100644
  
          ui.async_run_and_log_error({
 diff --git a/wezterm-client/src/pane/clientpane.rs b/wezterm-client/src/pane/clientpane.rs
-index aad21a5..d47e844 100644
+index aad21a5..bbb0ede 100644
 --- a/wezterm-client/src/pane/clientpane.rs
 +++ b/wezterm-client/src/pane/clientpane.rs
 @@ -20,7 +20,7 @@ use ratelim::RateLimiter;
@@ -2242,9 +2242,9 @@ index aad21a5..d47e844 100644
      TerminalConfiguration, TerminalSize,
  };
  
-+/// BethTerm (patch 0122): visual overrides the GUI keeps for a host pane.
++/// Beth Studio (patch 0122): visual overrides the GUI keeps for a host pane.
 +#[derive(Debug, Clone)]
-+pub struct BethTermVisual {
++pub struct BethStudioVisual {
 +    /// Host-side pane id (stable across GUI reconnect).
 +    pub remote_pane_id: usize,
 +    /// Header label above the pane.
@@ -2261,12 +2261,12 @@ index aad21a5..d47e844 100644
 +    pub font_italic: bool,
 +}
 +
-+/// Called after a ClientPane visual field changes so BethTerm can persist it.
-+pub static BETHTERM_VISUAL_CHANGED: OnceLock<fn(&BethTermVisual)> = OnceLock::new();
++/// Called after a ClientPane visual field changes so Beth Studio can persist it.
++pub static BETHSTUDIO_VISUAL_CHANGED: OnceLock<fn(&BethStudioVisual)> = OnceLock::new();
 +
-+/// BethTerm (patch 0170): called with the key -> host -> render-delta
++/// Beth Studio (patch 0170): called with the key -> host -> render-delta
 +/// round trip in ms. Set by `wtinator::echo_latency::install`.
-+pub static BETHTERM_ECHO_RTT: OnceLock<fn(u64)> = OnceLock::new();
++pub static BETHSTUDIO_ECHO_RTT: OnceLock<fn(u64)> = OnceLock::new();
 +
  pub struct ClientPane {
      client: Arc<ClientInner>,
@@ -2299,8 +2299,8 @@ index aad21a5..d47e844 100644
 +        }
 +    }
 +
-+    fn visual_snapshot(&self) -> BethTermVisual {
-+        BethTermVisual {
++    fn visual_snapshot(&self) -> BethStudioVisual {
++        BethStudioVisual {
 +            remote_pane_id: self.remote_pane_id,
 +            header_text: self.header_text.lock().clone(),
 +            theme_id: self.theme_id.lock().clone(),
@@ -2312,7 +2312,7 @@ index aad21a5..d47e844 100644
 +    }
 +
 +    fn emit_visual(&self) {
-+        if let Some(persist) = BETHTERM_VISUAL_CHANGED.get() {
++        if let Some(persist) = BETHSTUDIO_VISUAL_CHANGED.get() {
 +            persist(&self.visual_snapshot());
          }
      }
@@ -2419,25 +2419,25 @@ index aad21a5..d47e844 100644
          self.client.local_domain_id
      }
 diff --git a/wezterm-client/src/pane/mod.rs b/wezterm-client/src/pane/mod.rs
-index 3461571..2a8e1ba 100644
+index 3461571..fc5ec8c 100644
 --- a/wezterm-client/src/pane/mod.rs
 +++ b/wezterm-client/src/pane/mod.rs
 @@ -1,4 +1,4 @@
 -pub use clientpane::ClientPane;
-+pub use clientpane::{BethTermVisual, ClientPane, BETHTERM_ECHO_RTT, BETHTERM_VISUAL_CHANGED};
++pub use clientpane::{BethStudioVisual, ClientPane, BETHSTUDIO_ECHO_RTT, BETHSTUDIO_VISUAL_CHANGED};
  
  mod clientpane;
  mod mousestate;
 diff --git a/wezterm-client/src/pane/renderable.rs b/wezterm-client/src/pane/renderable.rs
-index 68fa518..04534eb 100644
+index 68fa518..ea5ad97 100644
 --- a/wezterm-client/src/pane/renderable.rs
 +++ b/wezterm-client/src/pane/renderable.rs
 @@ -331,6 +331,10 @@ impl RenderableInner {
          // long it took for this response to come back
          if let Some(serial) = delta.input_serial {
              self.last_input_rtt = serial.elapsed_millis();
-+            // BethTerm (patch 0170): feed the typing-latency meter.
-+            if let Some(record) = crate::pane::BETHTERM_ECHO_RTT.get() {
++            // Beth Studio (patch 0170): feed the typing-latency meter.
++            if let Some(record) = crate::pane::BETHSTUDIO_ECHO_RTT.get() {
 +                record(self.last_input_rtt);
 +            }
          }
@@ -2447,7 +2447,7 @@ index 68fa518..04534eb 100644
          }
  
          let mut result = RangeSet::new();
-+        // BethTerm (patch 0174): rows above the scrollback no longer exist.
++        // Beth Studio (patch 0174): rows above the scrollback no longer exist.
 +        // Callers pass `0..bottom`, and `bottom` is every line the pane
 +        // ever printed; a long-lived pane made this loop add millions of
 +        // uncached rows and froze the GUI thread for minutes.
@@ -2456,14 +2456,14 @@ index 68fa518..04534eb 100644
              match inner.lines.get(&r) {
                  None => {
 diff --git a/wezterm-mux-server-impl/src/sessionhandler.rs b/wezterm-mux-server-impl/src/sessionhandler.rs
-index 5c8e295..22aa0bf 100644
+index 5c8e295..a57c603 100644
 --- a/wezterm-mux-server-impl/src/sessionhandler.rs
 +++ b/wezterm-mux-server-impl/src/sessionhandler.rs
 @@ -82,8 +82,11 @@ impl PerPane {
  
          let old_seqno = self.seqno;
          self.seqno = pane.get_current_seqno();
-+        // BethTerm (patch 0174): start at the scrollback top, not row 0;
++        // Beth Studio (patch 0174): start at the scrollback top, not row 0;
 +        // the rows before it are gone and a client pane scanned them one
 +        // by one (241 s GUI freeze on 2026-09-25).
          let mut all_dirty_lines = pane.get_changed_since(
@@ -2476,7 +2476,7 @@ index 5c8e295..22aa0bf 100644
                              let pane = mux
                                  .get_pane(pane_id)
                                  .ok_or_else(|| anyhow!("no such pane {}", pane_id))?;
-+                            // BethTerm (patch 0138): a client that shrinks
++                            // Beth Studio (patch 0138): a client that shrinks
 +                            // a working pane to one row is a bug on its
 +                            // side (patch 0130 was one). Refuse it and say
 +                            // so instead of putting the shell in a one-row
@@ -2484,7 +2484,7 @@ index 5c8e295..22aa0bf 100644
 +                            let prev = pane.get_dimensions();
 +                            if size.rows < 2 && prev.viewport_rows >= 2 {
 +                                log::warn!(
-+                                    "bethterm-host: refusing resize of pane {} to {}x{} \
++                                    "bethstudio-host: refusing resize of pane {} to {}x{} \
 +                                     (it has {} rows); client-side layout bug?",
 +                                    pane_id,
 +                                    size.cols,
@@ -2500,7 +2500,7 @@ index 5c8e295..22aa0bf 100644
                                  .get_pane(pane_id)
                                  .ok_or_else(|| anyhow!("no such pane {}", pane_id))?;
  
-+                            // BethTerm (patch 0189): fork the terminal palette
++                            // Beth Studio (patch 0189): fork the terminal palette
 +                            // so OSC 10/11 answers this scheme even when a
 +                            // dynamic palette was already copied. The client
 +                            // palette below still covers panes that have not
@@ -2511,7 +2511,7 @@ index 5c8e295..22aa0bf 100644
                                  Some(config) => match config.downcast_ref::<TermConfig>() {
                                      Some(tc) => tc.set_client_palette(palette),
 diff --git a/wezterm-mux-server/Cargo.toml b/wezterm-mux-server/Cargo.toml
-index 2838cfe..36ed96f 100644
+index 2838cfe..d89f349 100644
 --- a/wezterm-mux-server/Cargo.toml
 +++ b/wezterm-mux-server/Cargo.toml
 @@ -5,6 +5,13 @@ authors = ["Wez Furlong <wez@wezfurlong.org>"]
@@ -2520,10 +2520,10 @@ index 2838cfe..36ed96f 100644
  publish = false
 +autobins = false
 +
-+# BethTerm (patch 0121): ship the mux as bethterm-host.exe so the GUI
++# Beth Studio (patch 0121): ship the mux as bethstudio-host.exe so the GUI
 +# can attach/detach without owning the PTYs.
 +[[bin]]
-+name = "bethterm-host"
++name = "bethstudio-host"
 +path = "src/main.rs"
  
  # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -2537,7 +2537,7 @@ index 2838cfe..36ed96f 100644
  [target."cfg(windows)".dependencies]
  winapi = { workspace=true, features = [ "winuser" ]}
 diff --git a/wezterm-mux-server/src/main.rs b/wezterm-mux-server/src/main.rs
-index 5c9c220..44aef51 100644
+index 5c9c220..d8aeb30 100644
 --- a/wezterm-mux-server/src/main.rs
 +++ b/wezterm-mux-server/src/main.rs
 @@ -1,3 +1,5 @@
@@ -2550,19 +2550,19 @@ index 5c9c220..44aef51 100644
          }
      }
  
-+    // BethTerm (patch 0121): this process owns PTYs. Take the
++    // Beth Studio (patch 0121): this process owns PTYs. Take the
 +    // single-instance mutex before binding so a second host never
 +    // unlink()s a live socket.
 +    if wtinator::host::is_host_exe() {
 +        wtinator::host::adopt_id_from_env();
-+        std::env::set_var("BETHTERM_ACTIVE", "1");
++        std::env::set_var("BETHSTUDIO_ACTIVE", "1");
 +        std::env::set_var("WTINATOR_ACTIVE", "1");
 +        if let Err(err) = wtinator::install() {
 +            log::warn!("wtinator install: {:#}", err);
 +        }
 +        if !wtinator::host::try_become_owner()? {
 +            wtinator::host::note_life("second host exited because one is already running");
-+            log::info!("bethterm-host already running; exiting");
++            log::info!("bethstudio-host already running; exiting");
 +            return Ok(());
 +        }
 +        let prev = std::panic::take_hook();
@@ -2580,10 +2580,10 @@ index 5c9c220..44aef51 100644
          }
      }
  
-+    // BethTerm (patch 0165): a window host exits after its last pane.
++    // Beth Studio (patch 0165): a window host exits after its last pane.
 +    if wtinator::host::is_host_exe() {
 +        wtinator::host::exit_when_emptied(&mux);
-+        // BethTerm (patch 0168): every terminal opened/closed.
++        // Beth Studio (patch 0168): every terminal opened/closed.
 +        wtinator::host::log_pane_changes(&mux);
 +    }
 +
@@ -2620,7 +2620,7 @@ index 5c9c220..44aef51 100644
      for unix_dom in &config.unix_domains {
          std::env::set_var("WEZTERM_UNIX_SOCKET", unix_dom.socket_path());
 diff --git a/wezterm/Cargo.toml b/wezterm/Cargo.toml
-index 979a843..a04df6e 100644
+index 979a843..e535870 100644
 --- a/wezterm/Cargo.toml
 +++ b/wezterm/Cargo.toml
 @@ -4,6 +4,13 @@ version = "0.1.0"
@@ -2629,10 +2629,10 @@ index 979a843..a04df6e 100644
  publish = false
 +autobins = false
 +
-+# BethTerm (patch 0089): ship the CLI as bethterm.exe. The Cargo package
++# Beth Studio (patch 0089): ship the CLI as bethstudio.exe. The Cargo package
 +# name stays `wezterm` so `-p wezterm` keeps working.
 +[[bin]]
-+name = "bethterm"
++name = "bethstudio"
 +path = "src/main.rs"
  
  # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -2649,7 +2649,7 @@ index 979a843..a04df6e 100644
  [target."cfg(unix)".dependencies]
  termios.workspace = true
 diff --git a/wezterm/src/cli/list.rs b/wezterm/src/cli/list.rs
-index 35ab4fc..4213f01 100644
+index 35ab4fc..2d152e6 100644
 --- a/wezterm/src/cli/list.rs
 +++ b/wezterm/src/cli/list.rs
 @@ -16,32 +16,8 @@ pub struct ListCommand {
@@ -2690,7 +2690,7 @@ index 35ab4fc..4213f01 100644
      }
  }
  
-+/// BethTerm (patch 0171): shared by `cli list` and `cli bridge`.
++/// Beth Studio (patch 0171): shared by `cli list` and `cli bridge`.
 +pub(super) async fn collect_items(client: &Client) -> anyhow::Result<Vec<CliListResultItem>> {
 +    let mut output_items = vec![];
 +    let panes = client.list_panes().await?;
@@ -2742,7 +2742,7 @@ index 35ab4fc..4213f01 100644
      /// Cursor x coordinate from top left of non-scrollback pane area
      cursor_x: usize,
 diff --git a/wezterm/src/cli/mod.rs b/wezterm/src/cli/mod.rs
-index b932595..24878e7 100644
+index b932595..a371444 100644
 --- a/wezterm/src/cli/mod.rs
 +++ b/wezterm/src/cli/mod.rs
 @@ -7,6 +7,7 @@ mod activate_pane;
@@ -2757,7 +2757,7 @@ index b932595..24878e7 100644
      #[command(name = "list", about = "list windows, tabs and panes")]
      List(list::ListCommand),
  
-+    /// BethTerm (patch 0171): JSON-lines bridge for the web front end
++    /// Beth Studio (patch 0171): JSON-lines bridge for the web front end
 +    #[command(name = "bridge", rename_all = "kebab")]
 +    Bridge(bridge::Bridge),
 +
@@ -2770,9 +2770,9 @@ index b932595..24878e7 100644
          &mut ui,
 -        cli.no_auto_start,
 -        cli.prefer_mux,
-+        // BethTerm (patch 0171): the bridge never spawns a mux server.
++        // Beth Studio (patch 0171): the bridge never spawns a mux server.
 +        cli.no_auto_start || matches!(cli.sub, CliSubCommand::Bridge(_)),
-+        // BethTerm (patch 0171): the bridge talks to the host itself, so it
++        // Beth Studio (patch 0171): the bridge talks to the host itself, so it
 +        // survives GUI restarts and reports stable host pane ids.
 +        cli.prefer_mux || matches!(cli.sub, CliSubCommand::Bridge(_)),
          cli.class
@@ -2787,7 +2787,7 @@ index b932595..24878e7 100644
          CliSubCommand::SplitPane(cmd) => cmd.run(client).await,
          CliSubCommand::SendText(cmd) => cmd.run(client).await,
 diff --git a/wezterm/src/main.rs b/wezterm/src/main.rs
-index 0661d80..5575275 100644
+index 0661d80..4a063be 100644
 --- a/wezterm/src/main.rs
 +++ b/wezterm/src/main.rs
 @@ -23,7 +23,7 @@ mod cli;
@@ -2795,7 +2795,7 @@ index 0661d80..5575275 100644
  #[derive(Debug, Parser)]
  #[command(
 -    about = "Wez's Terminal Emulator\nhttp://github.com/wezterm/wezterm",
-+    about = "BethTerm — based on Wez's Terminal Emulator\nhttps://github.com/wezterm/wezterm",
++    about = "Beth Studio — based on Wez's Terminal Emulator\nhttps://github.com/wezterm/wezterm",
      version = wezterm_version()
  )]
  pub struct Opt {
@@ -2822,7 +2822,7 @@ index 0661d80..5575275 100644
 -
 -    // Restore the original umask
 +    // Beth Studio (patch 0198): there is no native terminal window any more.
-+    // The terminals are shown by bethterm-web (Beth Studio); `bethterm cli`
++    // The terminals are shown by bethstudio-web (Beth Studio); `bethstudio cli`
 +    // talks to the host directly.
      drop(saver);
 -
@@ -2866,7 +2866,7 @@ index 0661d80..5575275 100644
 -        std::process::exit(code);
 -    }
 +    anyhow::bail!(
-+        "esta versão não tem janela nativa: abra o Beth Studio (bethterm-web) \
-+         ou use `bethterm cli` para falar com o host"
++        "esta versão não tem janela nativa: abra o Beth Studio (bethstudio-web) \
++         ou use `bethstudio cli` para falar com o host"
 +    )
  }

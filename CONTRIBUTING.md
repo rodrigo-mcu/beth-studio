@@ -1,6 +1,6 @@
-# Contributing to BethTerm
+# Contributing to Beth Studio
 
-Thanks for wanting to make BethTerm better. For build, test, and debug details, see [`docs/HACKING.md`](docs/HACKING.md).
+Thanks for wanting to make Beth Studio better. For build, test, and debug details, see [`docs/HACKING.md`](docs/HACKING.md).
 
 ## Code of conduct
 
@@ -30,14 +30,14 @@ We follow the [Contributor Covenant](CODE_OF_CONDUCT.md) 2.1. Be kind. Disagreem
 - GPL / AGPL / SSPL dependencies. See [`docs/LICENSE-NOTES.md`](docs/LICENSE-NOTES.md).
 - Telemetry or phone-home of any kind.
 - Using the WezTerm name as our binary or package name.
-- Omitting the WezTerm origin. BethTerm is based on WezTerm; see [`NOTICE.md`](NOTICE.md) and [`docs/ORIGIN.md`](docs/ORIGIN.md).
+- Omitting the WezTerm origin. Beth Studio is based on WezTerm; see [`NOTICE.md`](NOTICE.md) and [`docs/ORIGIN.md`](docs/ORIGIN.md).
 - A plugin marketplace. Lua config is the extension surface.
 - Unrelated patches to WezTerm core — those go to [wezterm/wezterm](https://github.com/wezterm/wezterm).
 
 ## Coding rules
 
 - Existing files under `upstream-wezterm/` that are not our crates may be changed **only** as a documented patch: add a row to `upstream-wezterm/PATCHES.md` and a matching `upstream-wezterm/patches/NNNN-*.md`.
-- New BethTerm code belongs in `upstream-wezterm/wtinator/` whenever possible; Beth Studio code lives in `bethterm-web/`.
+- New Beth Studio code belongs in `upstream-wezterm/wtinator/` whenever possible; Beth Studio code lives in `bethstudio-web/`.
 - The crate is still named `wtinator` on purpose. Do not mass-rename it in a drive-by PR.
 - `cargo fmt` before every commit.
 - No `unwrap()` outside `#[cfg(test)]` in `wtinator/`.
@@ -53,7 +53,7 @@ cargo +nightly test -p wtinator
 cargo +nightly check -p wezterm -p wezterm-mux-server
 ```
 
-Manual Windows tests must use `run-bethterm.cmd` (or `run-bethterm-debug.cmd`), which start `bethterm-web.exe` from this checkout, so a system WezTerm does not absorb the run. Build the Studio first with `powershell -File bethterm-webuild.ps1`.
+Manual Windows tests must use `run-bethstudio.cmd` (or `run-bethstudio-debug.cmd`), which start `bethstudio-web.exe` from this checkout, so a system WezTerm does not absorb the run. Build the Studio first with `powershell -File bethstudio-webuild.ps1`.
 
 ## License of contributions
 

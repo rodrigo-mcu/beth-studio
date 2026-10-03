@@ -331,8 +331,8 @@ impl RenderableInner {
         // long it took for this response to come back
         if let Some(serial) = delta.input_serial {
             self.last_input_rtt = serial.elapsed_millis();
-            // BethTerm (patch 0170): feed the typing-latency meter.
-            if let Some(record) = crate::pane::BETHTERM_ECHO_RTT.get() {
+            // Beth Studio (patch 0170): feed the typing-latency meter.
+            if let Some(record) = crate::pane::BETHSTUDIO_ECHO_RTT.get() {
                 record(self.last_input_rtt);
             }
         }
@@ -824,7 +824,7 @@ impl RenderableState {
         }
 
         let mut result = RangeSet::new();
-        // BethTerm (patch 0174): rows above the scrollback no longer exist.
+        // Beth Studio (patch 0174): rows above the scrollback no longer exist.
         // Callers pass `0..bottom`, and `bottom` is every line the pane
         // ever printed; a long-lived pane made this loop add millions of
         // uncached rows and froze the GUI thread for minutes.

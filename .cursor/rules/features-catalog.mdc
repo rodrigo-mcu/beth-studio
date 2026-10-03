@@ -7,7 +7,7 @@ alwaysApply: true
 
 `FEATURES.md` na raiz é a lista do que a pessoa pode usar. Ao adicionar, mudar ou remover uma funcionalidade, atualize esse arquivo no mesmo cambio.
 
-Conta como funcionalidade o que aparece no BethTerm, no Beth Studio ou no BethTerm Mobile. Correção, log e refatoração interna não entram.
+Conta como funcionalidade o que aparece no Beth Studio, no Beth Studio ou no Beth Studio Mobile. Correção, log e refatoração interna não entram.
 
 1. Inclua ou ajuste o item na seção certa (janela nativa, Beth Studio, SSH, banco, mobile).
 2. Se estava em **Ainda não**, tire de lá.

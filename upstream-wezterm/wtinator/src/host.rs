@@ -1,6 +1,6 @@
 // wtinator::host — patch 0121.
 //
-// Long-lived PTY owner (`bethterm-host.exe`). The GUI attaches over a
+// Long-lived PTY owner (`bethstudio-host.exe`). The GUI attaches over a
 // unix-domain socket and can exit or be replaced; shells and agents
 // stay in this process.
 
@@ -15,17 +15,17 @@ use std::time::{Duration, Instant};
 static HOST_HAD_EXISTING_PANES: AtomicBool = AtomicBool::new(false);
 
 /// Mux domain name used by the GUI ClientDomain.
-pub const DOMAIN_NAME: &str = "bethterm-host";
+pub const DOMAIN_NAME: &str = "bethstudio-host";
 
-const MUTEX_NAME: &str = "Local\\BethTermHost";
-const QUIT_EVENT_NAME: &str = "Local\\BethTermHostQuit";
+const MUTEX_NAME: &str = "Local\\BethStudioHost";
+const QUIT_EVENT_NAME: &str = "Local\\BethStudioHostQuit";
 
 static HOST_ID: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
-/// This process's window-host id, from `BETHTERM_HOST_ID`. Empty means
+/// This process's window-host id, from `BETHSTUDIO_HOST_ID`. Empty means
 /// the legacy single host (`host.sock`).
 pub fn adopt_id_from_env() {
-    if let Ok(raw) = std::env::var("BETHTERM_HOST_ID") {
+    if let Ok(raw) = std::env::var("BETHSTUDIO_HOST_ID") {
         let id = sanitize_id(&raw);
         if !id.is_empty() {
             let _ = HOST_ID.set(id);
@@ -71,7 +71,7 @@ pub fn socket_for(id: Option<&str>) -> PathBuf {
     }
 }
 
-/// Socket under `%APPDATA%\bethterm` for this process.
+/// Socket under `%APPDATA%\bethstudio` for this process.
 pub fn socket_path() -> PathBuf {
     socket_for(current_id())
 }
@@ -107,33 +107,33 @@ fn quit_event_name_for(id: Option<&str>) -> String {
     }
 }
 
-/// True when this process is `bethterm-host` / `bethterm-host.exe`.
+/// True when this process is `bethstudio-host` / `bethstudio-host.exe`.
 pub fn is_host_exe() -> bool {
     std::env::current_exe()
         .ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_ascii_lowercase()))
-        .map(|n| n == "bethterm-host.exe" || n == "bethterm-host")
+        .map(|n| n == "bethstudio-host.exe" || n == "bethstudio-host")
         .unwrap_or(false)
 }
 
 fn host_exe() -> PathBuf {
     std::env::current_exe()
         .ok()
-        .map(|p| p.with_file_name("bethterm-host.exe"))
-        .unwrap_or_else(|| PathBuf::from("bethterm-host.exe"))
+        .map(|p| p.with_file_name("bethstudio-host.exe"))
+        .unwrap_or_else(|| PathBuf::from("bethstudio-host.exe"))
 }
 
 /// Path used to stage a host update while the live host still holds
-/// the running `bethterm-host.exe` image.
+/// the running `bethstudio-host.exe` image.
 pub fn pending_host_exe() -> PathBuf {
-    host_exe().with_file_name("bethterm-host.exe.new")
+    host_exe().with_file_name("bethstudio-host.exe.new")
 }
 
 /// Files the running host keeps locked. An installer that finds the
 /// host up stages each of them as `<name>.new`; the next host start
 /// applies them here (patch 0141 added the ConPTY pair to patch 0128's
 /// host exe).
-pub const HOST_LOCKED_FILES: [&str; 3] = ["bethterm-host.exe", "OpenConsole.exe", "conpty.dll"];
+pub const HOST_LOCKED_FILES: [&str; 3] = ["bethstudio-host.exe", "OpenConsole.exe", "conpty.dll"];
 
 /// If the host is not running, replace every host-locked file with its
 /// staged `.new` from the last GUI/setup update.
@@ -159,7 +159,7 @@ pub fn apply_pending_binary() {
         };
         if !newer {
             log::info!(
-                "bethterm-host: discarding stale staged {} (older than the installed file)",
+                "bethstudio-host: discarding stale staged {} (older than the installed file)",
                 pending.display()
             );
             let _ = std::fs::remove_file(&pending);
@@ -175,12 +175,12 @@ pub fn apply_pending_binary() {
         }
         if std::fs::rename(&pending, &target).is_err() {
             if let Err(err) = std::fs::copy(&pending, &target) {
-                log::warn!("bethterm-host: pending swap copy of {name} failed: {err}");
+                log::warn!("bethstudio-host: pending swap copy of {name} failed: {err}");
                 continue;
             }
             let _ = std::fs::remove_file(&pending);
         }
-        log::info!("bethterm-host: applied staged {}", target.display());
+        log::info!("bethstudio-host: applied staged {}", target.display());
     }
 }
 
@@ -203,15 +203,15 @@ pub fn start_id(id: Option<&str>) -> Result<()> {
     let exe = host_exe();
     anyhow::ensure!(
         exe.is_file(),
-        "bethterm-host.exe not found next to the GUI ({})",
+        "bethstudio-host.exe not found next to the GUI ({})",
         exe.display()
     );
     let mut cmd = std::process::Command::new(&exe);
-    cmd.env("BETHTERM_ACTIVE", "1");
+    cmd.env("BETHSTUDIO_ACTIVE", "1");
     cmd.env("WTINATOR_ACTIVE", "1");
     if let Some(id) = id {
         if !id.is_empty() {
-            cmd.env("BETHTERM_HOST_ID", id);
+            cmd.env("BETHSTUDIO_HOST_ID", id);
         }
     }
     #[cfg(windows)]
@@ -226,7 +226,7 @@ pub fn start_id(id: Option<&str>) -> Result<()> {
         .with_context(|| format!("spawn {}", exe.display()))?;
     match id {
         Some(id) => note_life(&format!("spawned window host {id} (0159 layout)")),
-        None => note_life("spawned the host (bethterm-host.exe)"),
+        None => note_life("spawned the host (bethstudio-host.exe)"),
     }
     wait_id(id)
 }
@@ -240,7 +240,7 @@ fn wait_id(id: Option<&str>) -> Result<()> {
         std::thread::sleep(Duration::from_millis(50));
     }
     anyhow::bail!(
-        "bethterm-host {} did not come up within 8s",
+        "bethstudio-host {} did not come up within 8s",
         id.unwrap_or("legacy")
     )
 }
@@ -282,7 +282,7 @@ fn id_running(id: Option<&str>) -> bool {
     }
 }
 
-/// True unless `domain_name` is a BethTerm host whose process is gone.
+/// True unless `domain_name` is a Beth Studio host whose process is gone.
 pub fn domain_host_running(domain_name: &str) -> bool {
     match domain_name.strip_prefix(DOMAIN_NAME) {
         Some("") => id_running(None),
@@ -313,7 +313,7 @@ pub fn exit_when_emptied(mux: &mux::Mux) {
                 // Give the GUI time to drop the pane first, so the
                 // socket closing is not read as "host died with panes".
                 let _ = std::thread::Builder::new()
-                    .name("bethterm-host-empty".into())
+                    .name("bethstudio-host-empty".into())
                     .spawn(|| {
                         std::thread::sleep(Duration::from_secs(2));
                         let empty = mux::Mux::try_get()
@@ -336,7 +336,7 @@ pub fn exit_when_emptied(mux: &mux::Mux) {
 
 /// Patch 0165: did any of these hosts die with terminals in it? A
 /// window host that exits because it became empty removes its pid
-/// file first; a crash, a kill, or Encerrar BethTerm leaves it.
+/// file first; a crash, a kill, or Encerrar Beth Studio leaves it.
 pub fn any_died_with_panes(domain_names: &[String]) -> bool {
     domain_names.iter().any(|name| {
         let id = match name.strip_prefix(DOMAIN_NAME) {
@@ -403,7 +403,7 @@ pub fn watch_host_exit() {
     note_life(&format!("GUI attached to host pid {pid}; watching it"));
     let bits = handle as isize;
     let _ = std::thread::Builder::new()
-        .name("bethterm-host-watch".into())
+        .name("bethstudio-host-watch".into())
         .spawn(move || {
             let handle = bits as windows_sys::Win32::Foundation::HANDLE;
             if unsafe { WaitForSingleObject(handle, u32::MAX) } == WAIT_OBJECT_0 {
@@ -469,13 +469,13 @@ pub fn start_quit_watcher() {
         let _ = std::fs::remove_file(quit_request_path(current_id()));
         if let Err(err) = spawn_quit_watcher() {
             note_life(&format!("quit watcher failed: {err:#}"));
-            log::warn!("bethterm-host: quit watcher: {err:#}");
+            log::warn!("bethstudio-host: quit watcher: {err:#}");
         }
         spawn_alive_heartbeat();
     }
 }
 
-/// Append one line to `%APPDATA%\bethterm\host-life.log` and flush it
+/// Append one line to `%APPDATA%\bethstudio\host-life.log` and flush it
 /// to disk. `process::exit` and `TerminateProcess` skip the normal
 /// logger, so this file is the record of why the host ended.
 pub fn note_life(message: &str) {
@@ -499,7 +499,7 @@ pub fn note_life(message: &str) {
         let _ = file.flush();
         let _ = file.sync_all();
     }
-    log::info!("bethterm life: {message}");
+    log::info!("bethstudio life: {message}");
 }
 
 const LIFE_LOG_MAX: u64 = 4 * 1024 * 1024;
@@ -519,7 +519,7 @@ fn life_role() -> String {
         .unwrap_or_default();
     match stem.as_str() {
         "bethterm-gui" | "wezterm-gui" => "gui".to_string(),
-        "bethterm" | "wezterm" => "cli".to_string(),
+        "bethstudio" | "wezterm" => "cli".to_string(),
         "" => "?".to_string(),
         other => other.to_string(),
     }
@@ -622,7 +622,7 @@ pub fn request_stop() -> Result<()> {
     request_stop_all()
 }
 
-/// Stop every window host. The tray "Encerrar BethTerm" uses this.
+/// Stop every window host. The tray "Encerrar Beth Studio" uses this.
 pub fn request_stop_all() -> Result<()> {
     let ids = running_ids();
     if ids.is_empty() {
@@ -643,7 +643,7 @@ fn request_stop_id(id: Option<&str>) -> Result<()> {
             "Encerrar host confirmed by pid {}; signaling quit for {label}",
             std::process::id()
         ));
-        write_quit_request(id, "tray Encerrar BethTerm (user confirmed)");
+        write_quit_request(id, "tray Encerrar Beth Studio (user confirmed)");
         signal_quit_event_for(id);
         let deadline = Instant::now() + Duration::from_secs(5);
         while id_running(id) && Instant::now() < deadline {
@@ -664,7 +664,7 @@ fn request_stop_id(id: Option<&str>) -> Result<()> {
         // with terminals in it (patch 0165). `prune_stale_host_files`
         // removes it on the next start.
         if id_running(id) {
-            anyhow::bail!("bethterm-host {label} did not exit");
+            anyhow::bail!("bethstudio-host {label} did not exit");
         }
         Ok(())
     }
@@ -752,7 +752,7 @@ fn take_host_mutex() -> Result<bool> {
     let name = wide(&mutex_name_for(current_id()));
     let handle = unsafe { CreateMutexW(std::ptr::null(), 1, name.as_ptr()) };
     if handle.is_null() {
-        anyhow::bail!("CreateMutexW BethTermHost failed ({})", unsafe {
+        anyhow::bail!("CreateMutexW BethStudioHost failed ({})", unsafe {
             GetLastError()
         });
     }
@@ -775,11 +775,11 @@ fn spawn_quit_watcher() -> Result<()> {
     let name = quit_event_wide();
     let handle = unsafe { CreateEventW(std::ptr::null(), 1, 0, name.as_ptr()) };
     if handle.is_null() {
-        anyhow::bail!("CreateEventW BethTermHostQuit failed");
+        anyhow::bail!("CreateEventW BethStudioHostQuit failed");
     }
     let handle_bits = handle as isize;
     let _ = std::thread::Builder::new()
-        .name("bethterm-host-quit".into())
+        .name("bethstudio-host-quit".into())
         .spawn(move || {
             let handle = handle_bits as HANDLE;
             let started = Instant::now();
@@ -790,13 +790,13 @@ fn spawn_quit_watcher() -> Result<()> {
                 } else {
                     "quit event signaled"
                 };
-                // Patch 0168: name whoever asked. BethTerm (tray, setup)
+                // Patch 0168: name whoever asked. Beth Studio (tray, setup)
                 // always writes the request before signaling.
                 let path = quit_request_path(current_id());
                 let who = match std::fs::read_to_string(&path) {
                     Ok(text) => format!("requested by: {}", text.trim()),
                     Err(_) => "requester UNKNOWN: no quit-request file, so it was not \
-                               the BethTerm tray or setup (another program or an agent \
+                               the Beth Studio tray or setup (another program or an agent \
                                script set the event)"
                         .to_string(),
                 };
@@ -815,7 +815,7 @@ fn spawn_quit_watcher() -> Result<()> {
 #[cfg(windows)]
 fn spawn_alive_heartbeat() {
     let _ = std::thread::Builder::new()
-        .name("bethterm-host-alive".into())
+        .name("bethstudio-host-alive".into())
         .spawn(|| {
             loop {
                 std::thread::sleep(Duration::from_secs(60));
@@ -869,7 +869,7 @@ fn signal_quit_event_for(id: Option<&str>) {
 }
 
 /// Patch 0162: kill only the host `id`, found by its pid file. The old
-/// version killed every `bethterm-host.exe`, so one stuck window host
+/// version killed every `bethstudio-host.exe`, so one stuck window host
 /// took every other window's terminals with it.
 #[cfg(windows)]
 fn terminate_host_process(id: Option<&str>) {
@@ -913,7 +913,7 @@ fn terminate_host_pid(pid: u32) {
         )
         .to_ascii_lowercase();
         // Match the name too: a stale pid file may name a reused pid.
-        if entry.th32ProcessID == pid && name == "bethterm-host.exe" {
+        if entry.th32ProcessID == pid && name == "bethstudio-host.exe" {
             note_life(&format!("TerminateProcess host pid {pid}"));
             let proc = unsafe { OpenProcess(PROCESS_TERMINATE, 0, entry.th32ProcessID) };
             if !proc.is_null() {
@@ -936,10 +936,10 @@ mod tests {
 
     #[test]
     fn domain_name_is_stable() {
-        assert_eq!(DOMAIN_NAME, "bethterm-host");
+        assert_eq!(DOMAIN_NAME, "bethstudio-host");
         assert_eq!(unix_domain().name, DOMAIN_NAME);
         assert!(unix_domain().connect_automatically);
-        assert_eq!(domain_name_for(Some("w1")), "bethterm-host-w1");
+        assert_eq!(domain_name_for(Some("w1")), "bethstudio-host-w1");
         assert_eq!(sanitize_id("a/b c"), "abc");
     }
 }

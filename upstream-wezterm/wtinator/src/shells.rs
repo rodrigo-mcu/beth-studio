@@ -70,7 +70,7 @@ pub fn default_shells() -> Vec<ShellEntry> {
         });
     }
 
-    // Patch 0183: user-defined entries from %APPDATA%\bethterm\shells.json.
+    // Patch 0183: user-defined entries from %APPDATA%\bethstudio\shells.json.
     shells.extend(custom_shells());
 
     shells
@@ -90,7 +90,7 @@ fn moba_local_bash_path() -> Option<String> {
         .find(|path| std::path::Path::new(path).is_file())
 }
 
-/// One entry of `%APPDATA%\bethterm\shells.json` (patch 0183).
+/// One entry of `%APPDATA%\bethstudio\shells.json` (patch 0183).
 #[derive(serde::Deserialize)]
 struct CustomShell {
     id: String,
@@ -99,7 +99,7 @@ struct CustomShell {
 }
 
 /// User-defined shells, read once per process from
-/// `%APPDATA%\bethterm\shells.json`:
+/// `%APPDATA%\bethstudio\shells.json`:
 ///
 /// ```json
 /// [ { "id": "my.tool", "label": "My tool log", "args": ["powershell.exe", "-NoExit", "-Command", "..."] } ]
@@ -139,7 +139,7 @@ fn custom_shells() -> Vec<ShellEntry> {
 
 fn parse_custom_shells(text: &str) -> Vec<CustomShell> {
     let Ok(list) = serde_json::from_str::<Vec<CustomShell>>(text) else {
-        log::warn!("bethterm: shells.json is not a valid list of {{id,label,args}}; ignored");
+        log::warn!("bethstudio: shells.json is not a valid list of {{id,label,args}}; ignored");
         return Vec::new();
     };
     let mut seen = std::collections::HashSet::new();

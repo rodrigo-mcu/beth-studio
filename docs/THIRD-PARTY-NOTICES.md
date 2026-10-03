@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-This file is **regenerated** by `cargo about` and `cargo deny` at release time. The list below is a **placeholder** that names the categories of third-party software BethTerm links against.
+This file is **regenerated** by `cargo about` and `cargo deny` at release time. The list below is a **placeholder** that names the categories of third-party software Beth Studio links against.
 
 The authoritative list is in `THIRD-PARTY-NOTICES.md` (to be generated before v0.1.0 ships):
 

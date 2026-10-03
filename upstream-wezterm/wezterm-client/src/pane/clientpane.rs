@@ -31,9 +31,9 @@ use wezterm_term::{
     TerminalConfiguration, TerminalSize,
 };
 
-/// BethTerm (patch 0122): visual overrides the GUI keeps for a host pane.
+/// Beth Studio (patch 0122): visual overrides the GUI keeps for a host pane.
 #[derive(Debug, Clone)]
-pub struct BethTermVisual {
+pub struct BethStudioVisual {
     /// Host-side pane id (stable across GUI reconnect).
     pub remote_pane_id: usize,
     /// Header label above the pane.
@@ -50,12 +50,12 @@ pub struct BethTermVisual {
     pub font_italic: bool,
 }
 
-/// Called after a ClientPane visual field changes so BethTerm can persist it.
-pub static BETHTERM_VISUAL_CHANGED: OnceLock<fn(&BethTermVisual)> = OnceLock::new();
+/// Called after a ClientPane visual field changes so Beth Studio can persist it.
+pub static BETHSTUDIO_VISUAL_CHANGED: OnceLock<fn(&BethStudioVisual)> = OnceLock::new();
 
-/// BethTerm (patch 0170): called with the key -> host -> render-delta
+/// Beth Studio (patch 0170): called with the key -> host -> render-delta
 /// round trip in ms. Set by `wtinator::echo_latency::install`.
-pub static BETHTERM_ECHO_RTT: OnceLock<fn(u64)> = OnceLock::new();
+pub static BETHSTUDIO_ECHO_RTT: OnceLock<fn(u64)> = OnceLock::new();
 
 pub struct ClientPane {
     client: Arc<ClientInner>,
@@ -174,8 +174,8 @@ impl ClientPane {
         }
     }
 
-    fn visual_snapshot(&self) -> BethTermVisual {
-        BethTermVisual {
+    fn visual_snapshot(&self) -> BethStudioVisual {
+        BethStudioVisual {
             remote_pane_id: self.remote_pane_id,
             header_text: self.header_text.lock().clone(),
             theme_id: self.theme_id.lock().clone(),
@@ -187,7 +187,7 @@ impl ClientPane {
     }
 
     fn emit_visual(&self) {
-        if let Some(persist) = BETHTERM_VISUAL_CHANGED.get() {
+        if let Some(persist) = BETHSTUDIO_VISUAL_CHANGED.get() {
             persist(&self.visual_snapshot());
         }
     }

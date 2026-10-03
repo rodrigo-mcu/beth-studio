@@ -1,14 +1,14 @@
-//! BethTerm (patch 0148): keep each OS window's placement and name
+//! Beth Studio (patch 0148): keep each OS window's placement and name
 //! across GUI restarts.
 //!
-//! Since patch 0121 the terminals live in `bethterm-host.exe`; a GUI
+//! Since patch 0121 the terminals live in `bethstudio-host.exe`; a GUI
 //! restart re-attaches and re-creates one OS window per host window.
 //! Nothing remembered where those windows were, so every one was
 //! healed to the same corner, and `session.json` matched window names
 //! by enumeration index, which changes on re-attach. The stable key is
 //! the set of **host pane ids** a window shows.
 //!
-//! Store: `%APPDATA%\bethterm\host-windows.json`.
+//! Store: `%APPDATA%\bethstudio\host-windows.json`.
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,7 @@ pub struct Placement {
 /// One OS window, identified by the host panes it contained.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WindowRecord {
-    /// `bethterm-host` or `bethterm-host-<id>`. Absent on records
+    /// `bethstudio-host` or `bethstudio-host-<id>`. Absent on records
     /// written by the single-host builds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub host_id: Option<String>,
@@ -80,7 +80,7 @@ pub fn unregister_hwnd(mux_window_id: usize) {
     }
 }
 
-/// Any registered BethTerm window. They all share the UI thread, so
+/// Any registered Beth Studio window. They all share the UI thread, so
 /// the UI watchdog (patch 0162) needs only one.
 pub fn any_hwnd() -> Option<isize> {
     HWNDS
@@ -168,7 +168,7 @@ pub fn remote_pane_ids_of_window(mux: &mux::Mux, window_id: mux::window::WindowI
 fn hosts_match(record: Option<&str>, window: Option<&str>) -> bool {
     match (record, window) {
         (None, None) => true,
-        (None, Some(window)) => window == "bethterm-host",
+        (None, Some(window)) => window == "bethstudio-host",
         (Some(record), Some(window)) => record == window,
         (Some(_), None) => false,
     }
@@ -388,7 +388,7 @@ pub fn restore_for_window(mux_window_id: usize, hwnd: isize) -> Option<Restored>
         }
     }
     log::info!(
-        "bethterm: window {} restored from host-windows.json (panes {:?}, title {:?}, placement {}, hidden {})",
+        "bethstudio: window {} restored from host-windows.json (panes {:?}, title {:?}, placement {}, hidden {})",
         mux_window_id,
         ids,
         rec.user_title,
@@ -416,21 +416,21 @@ mod tests {
     fn best_match_prefers_most_shared_panes() {
         let records = vec![rec(&[1, 2], "a"), rec(&[3, 4, 5], "b"), rec(&[9], "c")];
         assert_eq!(
-            best_match(&records, &[3, 5], Some("bethterm-host"))
+            best_match(&records, &[3, 5], Some("bethstudio-host"))
                 .unwrap()
                 .user_title
                 .as_deref(),
             Some("b")
         );
         assert_eq!(
-            best_match(&records, &[2], Some("bethterm-host"))
+            best_match(&records, &[2], Some("bethstudio-host"))
                 .unwrap()
                 .user_title
                 .as_deref(),
             Some("a")
         );
-        assert!(best_match(&records, &[7], Some("bethterm-host")).is_none());
-        assert!(best_match(&records, &[2], Some("bethterm-host-w9")).is_none());
+        assert!(best_match(&records, &[7], Some("bethstudio-host")).is_none());
+        assert!(best_match(&records, &[2], Some("bethstudio-host-w9")).is_none());
     }
 
     #[test]

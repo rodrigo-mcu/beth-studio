@@ -1,11 +1,11 @@
-# GitHub Actions for BethTerm.
+# GitHub Actions for BethStudio.
 #
 # The Cargo workspace is `upstream-wezterm/` (vendored WezTerm + delta).
 # We do not treat it as a git submodule and we do not `cargo fmt --all`
 # or `-D warnings` over upstream — that tree is full of inherited lints.
 #
 # Full `wezterm-gui` / installer builds stay local (MSVC + Perl, 30+ min).
-# CI runs the BethTerm delta tests (`wtinator`) on Linux.
+# CI runs the Beth Studio delta tests (`wtinator`) on Linux.
 
 name: CI
 
@@ -34,7 +34,7 @@ jobs:
           test -f CONTRIBUTING.md
           test -f upstream-wezterm/PATCHES.md
           test -f upstream-wezterm/wtinator/data/gogh-themes.json
-          test -f upstream-wezterm/bethterm-setup/Cargo.toml
+          test -f upstream-wezterm/bethstudio-setup/Cargo.toml
           test ! -e HANDOFF.md
           test ! -e STATUS.md
           test ! -d upstream-wezterm/target-test-release-20260830

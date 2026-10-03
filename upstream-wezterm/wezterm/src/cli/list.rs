@@ -75,7 +75,7 @@ impl ListCommand {
     }
 }
 
-/// BethTerm (patch 0171): shared by `cli list` and `cli bridge`.
+/// Beth Studio (patch 0171): shared by `cli list` and `cli bridge`.
 pub(super) async fn collect_items(client: &Client) -> anyhow::Result<Vec<CliListResultItem>> {
     let mut output_items = vec![];
     let panes = client.list_panes().await?;

@@ -1,26 +1,26 @@
 # Hacking — building, testing, debugging, releasing
 
-This is the contributor's guide. If you just want to **use** BethTerm, see the [README](../README.md) and the [user-facing config docs](CONFIG.md). If you want to **change** it, you're in the right place.
+This is the contributor's guide. If you just want to **use** Beth Studio, see the [README](../README.md) and the [user-facing config docs](CONFIG.md). If you want to **change** it, you're in the right place.
 
 ---
 
 ## 1. Repository layout
 
 ```
-bethterm/
+bethstudio/
 ├── README.md
 ├── LICENSE.md
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
-├── run-bethterm-release.cmd
-├── run-bethterm-debug.cmd
+├── run-bethstudio-release.cmd
+├── run-bethstudio-debug.cmd
 ├── docs/                       # Product and contributor docs
 ├── .github/workflows/ci.yml
-└── upstream-wezterm/           # Vendored WezTerm + BethTerm delta
+└── upstream-wezterm/           # Vendored WezTerm + Beth Studio delta
     ├── Cargo.toml              # Workspace root
-    ├── wtinator/               # BethTerm delta crate (historical name)
+    ├── wtinator/               # Beth Studio delta crate (historical name)
     ├── wtinator-config/        # Settings app
-    ├── wezterminator/          # Placeholder binary (package `bethterm`)
+    ├── wezterminator/          # Placeholder binary (package `bethstudio`)
     ├── PATCHES.md
     └── patches/
 ```
@@ -233,7 +233,7 @@ cargo test -p wtinator --test '*' -- --ignored --test-threads=1
 Current Windows flow:
 
 1. Build release: `cargo +nightly build --release -p wezterm -p wezterm-gui -p wezterm-mux-server`.
-2. Launch from the repository root: `.\run-bethterm.cmd`.
+2. Launch from the repository root: `.\run-bethstudio.cmd`.
 3. Left-click the `+` button. The native shell picker appears; selecting a shell opens a new tab.
 4. Right-click inside the pane. The native full menu appears; `Split right` splits vertically.
 5. Click the `| Split` label. The native split picker appears.
@@ -244,7 +244,7 @@ see [§9](#9-debugging).
 
 Legacy v0.1 checklist:
 
-On Windows, keep using `.\run-bethterm.cmd` instead of
+On Windows, keep using `.\run-bethstudio.cmd` instead of
 `cargo run --release`. That starts the release GUI with no arguments.
 
 1. `cargo run --release`

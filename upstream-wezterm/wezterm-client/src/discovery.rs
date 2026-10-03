@@ -334,7 +334,7 @@ pub fn publish_gui_sock_path(path: &Path, class_name: &str) -> anyhow::Result<Na
 /// a running instance; it is just the last published path.
 pub fn resolve_gui_sock_path(class_name: &str) -> anyhow::Result<PathBuf> {
     let path = NameHolder::resolve(class_name)?;
-    // BethTerm (patch 0165): Windows publishes only the file name, so a
+    // Beth Studio (patch 0165): Windows publishes only the file name, so a
     // second launch from any other working directory (the shortcut
     // starts in the install folder) never reached the running GUI.
     if path.is_relative() {

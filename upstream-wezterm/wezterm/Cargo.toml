@@ -6,10 +6,10 @@ edition = "2018"
 publish = false
 autobins = false
 
-# BethTerm (patch 0089): ship the CLI as bethterm.exe. The Cargo package
+# Beth Studio (patch 0089): ship the CLI as bethstudio.exe. The Cargo package
 # name stays `wezterm` so `-p wezterm` keeps working.
 [[bin]]
-name = "bethterm"
+name = "bethstudio"
 path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

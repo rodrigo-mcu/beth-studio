@@ -1,6 +1,6 @@
 // wtinator::session — Phase 1.D (patch 0029).
 //
-// BethTerm persists the full terminal layout so the user
+// Beth Studio persists the full terminal layout so the user
 // gets their tabs, splits, working directories, and custom
 // names back after a restart.
 //
@@ -18,11 +18,11 @@
 //
 // ## Path resolution
 //
-// - Windows: `%APPDATA%\bethterm\session.json`
-// - Linux / macOS: `~/.config/bethterm/session.json`
+// - Windows: `%APPDATA%\bethstudio\session.json`
+// - Linux / macOS: `~/.config/bethstudio/session.json`
 //
 // If only the legacy `%APPDATA%\wezterminator` (or `~/.config/wezterminator`)
-// directory exists, it is renamed to `bethterm` on first access.
+// directory exists, it is renamed to `bethstudio` on first access.
 //
 // ## Schema versioning
 //
@@ -143,11 +143,11 @@ pub struct PaneEntry {
 }
 
 static SAVE_LOCK: Mutex<()> = Mutex::new(());
-/// BethTerm (patch 0134): bytes of the last session.json we wrote (or
+/// Beth Studio (patch 0134): bytes of the last session.json we wrote (or
 /// handed to the background writer). An auto-save whose serialized
 /// snapshot equals this is skipped: no disk I/O, no info log.
 static LAST_WRITTEN: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-/// BethTerm (patch 0134): when the last background auto-save ran. If
+/// Beth Studio (patch 0134): when the last background auto-save ran. If
 /// more than one 30 s timer is alive (one per TermWindow), only the
 /// first tick inside this window does work.
 static LAST_AUTO_SAVE: Mutex<Option<std::time::Instant>> = Mutex::new(None);
@@ -209,7 +209,7 @@ pub fn session_dir() -> Result<PathBuf> {
             Ok(()) => return Ok(new_dir),
             Err(e) => {
                 log::warn!(
-                    "bethterm: could not migrate {} to {}: {:#}; using the legacy directory",
+                    "bethstudio: could not migrate {} to {}: {:#}; using the legacy directory",
                     old_dir.display(),
                     new_dir.display(),
                     e
@@ -348,7 +348,7 @@ pub fn save() -> Result<usize> {
 
 /// Snapshot on the caller (mux) thread, then write AppData in the
 /// background. Used by the 30s auto-save so a stalled disk cannot
-/// freeze the GUI (BethTerm patch 0113).
+/// freeze the GUI (Beth Studio patch 0113).
 pub fn save_async() -> Result<usize> {
     persist_session(PersistMode::Background)
 }
@@ -358,7 +358,7 @@ enum PersistMode {
     Background,
 }
 
-/// BethTerm (patch 0134): true when `bytes` equal the last written
+/// Beth Studio (patch 0134): true when `bytes` equal the last written
 /// snapshot. Updates the record when they differ.
 fn unchanged_since_last_write(bytes: &[u8]) -> bool {
     let mut last = LAST_WRITTEN.lock().unwrap_or_else(|e| e.into_inner());
@@ -369,7 +369,7 @@ fn unchanged_since_last_write(bytes: &[u8]) -> bool {
     false
 }
 
-/// BethTerm (patch 0134): rate guard for the background auto-save.
+/// Beth Studio (patch 0134): rate guard for the background auto-save.
 fn auto_save_due() -> bool {
     let mut last = LAST_AUTO_SAVE.lock().unwrap_or_else(|e| e.into_inner());
     let now = std::time::Instant::now();
@@ -389,7 +389,7 @@ fn persist_session(mode: PersistMode) -> Result<usize> {
     let session = snapshot()?;
     // Patch 0148: window placements/names keyed by host panes.
     if let Err(e) = crate::window_geom::save_now() {
-        log::debug!("bethterm: host-windows save failed: {e:#}");
+        log::debug!("bethstudio: host-windows save failed: {e:#}");
     }
     let n = session.tabs.len();
     let path = session_path()?;
@@ -465,7 +465,7 @@ pub fn load() -> Result<Option<Session>> {
     if session.version > SESSION_VERSION {
         anyhow::bail!(
             "session.json has version {} but this build only understands up to {}. \
-             Refusing to load — please remove the file or upgrade BethTerm.",
+             Refusing to load — please remove the file or upgrade BethStudio.",
             session.version,
             SESSION_VERSION
         );
@@ -981,7 +981,7 @@ mod tests {
     }
 
     #[test]
-    fn session_path_is_under_a_bethterm_dir() {
+    fn session_path_is_under_a_bethstudio_dir() {
         let p = session_path().unwrap();
         assert_eq!(p.file_name().and_then(|s| s.to_str()), Some(SESSION_FILENAME));
         let ancestors: Vec<String> = p
@@ -992,7 +992,7 @@ mod tests {
             ancestors
                 .iter()
                 .any(|c| c == crate::DATA_DIR_NAME || c == crate::LEGACY_DATA_DIR_NAME),
-            "session path {:?} is not under a bethterm/ (or legacy wezterminator/) dir",
+            "session path {:?} is not under a bethstudio/ (or legacy wezterminator/) dir",
             p
         );
     }
@@ -1025,7 +1025,7 @@ mod tests {
     #[test]
     fn session_fs_helpers_round_trip() {
         let dir = std::env::temp_dir().join(format!(
-            "bethterm-session-fs-{}",
+            "bethstudio-session-fs-{}",
             std::process::id()
         ));
         let _ = fs::create_dir_all(&dir);

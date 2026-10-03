@@ -1,6 +1,6 @@
 # Configuration
 
-BethTerm uses the **same** `wezterm.lua` / `.wezterm.lua` config file as upstream WezTerm. Every WezTerm key works unchanged. BethTerm-specific keys are namespaced under `wtinator = { ... }` (historical crate name).
+Beth Studio uses the **same** `wezterm.lua` / `.wezterm.lua` config file as upstream WezTerm. Every WezTerm key works unchanged. BethStudio-specific keys are namespaced under `wtinator = { ... }` (historical crate name).
 
 This document covers both:
 
@@ -33,7 +33,7 @@ local config = wezterm.config_builder()
 config.font_size = 11
 config.color_scheme = 'Dracula'
 
--- BethTerm keys (historical table name)
+-- Beth Studio keys (historical table name)
 config.wtinator = {
   features = {
     tab_groups = true,

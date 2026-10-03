@@ -1,4 +1,4 @@
-//! BethTerm (patch 0170): measure typing latency in the running GUI.
+//! Beth Studio (patch 0170): measure typing latency in the running GUI.
 //!
 //! Every key sent to the host carries an `InputSerial`; the host echoes
 //! it on the next render delta. That gives the key -> host -> key round
@@ -7,7 +7,7 @@
 //! user feels as echo delay.
 //!
 //! Once a minute (only when keys were typed) one summary line is appended
-//! to `%APPDATA%\bethterm\echo-latency.log`.
+//! to `%APPDATA%\bethstudio\echo-latency.log`.
 
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -40,7 +40,7 @@ fn with_stats<T>(f: impl FnOnce(&mut Stats) -> T) -> T {
 
 /// Register the ClientPane hook (once per GUI process).
 pub fn install() {
-    let _ = wezterm_client::pane::BETHTERM_ECHO_RTT.set(record_rtt);
+    let _ = wezterm_client::pane::BETHSTUDIO_ECHO_RTT.set(record_rtt);
 }
 
 /// A render delta answering a key arrived after `rtt_ms`.

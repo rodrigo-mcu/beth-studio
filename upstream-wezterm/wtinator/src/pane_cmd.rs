@@ -92,7 +92,7 @@ pub fn record(pane: &dyn Pane, argv: Option<&[String]>) {
         .panes
         .retain(|k, _| crate::host::domain_host_running(domain_of_key(k)));
     if let Err(err) = save(store) {
-        log::warn!("bethterm: saving {FILENAME} failed: {err:#}");
+        log::warn!("bethstudio: saving {FILENAME} failed: {err:#}");
     }
 }
 
@@ -109,17 +109,17 @@ mod tests {
 
     #[test]
     fn key_keeps_host_and_pane_apart() {
-        let k = key("bethterm-host-w12-3", 4);
-        assert_eq!(k, "bethterm-host-w12-3#4");
-        assert_eq!(domain_of_key(&k), "bethterm-host-w12-3");
-        assert_ne!(key("bethterm-host-w1-1", 1), key("bethterm-host-w1-2", 1));
+        let k = key("bethstudio-host-w12-3", 4);
+        assert_eq!(k, "bethstudio-host-w12-3#4");
+        assert_eq!(domain_of_key(&k), "bethstudio-host-w12-3");
+        assert_ne!(key("bethstudio-host-w1-1", 1), key("bethstudio-host-w1-2", 1));
     }
 
     #[test]
     fn store_roundtrips() {
         let mut store = Store::default();
         store.panes.insert(
-            key("bethterm-host", 7),
+            key("bethstudio-host", 7),
             vec!["wsl.exe".into(), "-d".into(), "Debian".into()],
         );
         let bytes = serde_json::to_vec(&store).expect("json");

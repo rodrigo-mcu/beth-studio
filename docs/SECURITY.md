@@ -40,8 +40,8 @@ We aim to acknowledge within **3 business days**.
 
 **In scope:**
 
-- The `wtinator` crate, `wtinator-config`, and the `bethterm` placeholder binary.
-- BethTerm session restore, native menus, per-pane config, and the Settings app IPC.
+- The `wtinator` crate, `wtinator-config`, and the `bethstudio` placeholder binary.
+- Beth Studio session restore, native menus, per-pane config, and the Settings app IPC.
 - The configuration Lua surface we add.
 
 **Out of scope** (file upstream):
@@ -51,7 +51,7 @@ We aim to acknowledge within **3 business days**.
 
 ## Threat model
 
-BethTerm is a local application.
+Beth Studio is a local application.
 
 - A local attacker with the same user account can read the config and run the binary. We cannot defend against that.
 - We do not add network attack surface beyond what WezTerm already exposes, except the opt-in theme download and the local named pipe used by the Settings app.
@@ -66,4 +66,4 @@ We do **not** protect against:
 ## History
 
 - 2026-06-06 — Page created.
-- 2026-09-05 — Rebranded to BethTerm; reporting path is GitHub private advisories.
+- 2026-09-05 — Rebranded to Beth Studio; reporting path is GitHub private advisories.

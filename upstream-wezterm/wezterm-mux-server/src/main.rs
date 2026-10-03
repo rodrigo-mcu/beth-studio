@@ -187,19 +187,19 @@ fn run() -> anyhow::Result<()> {
         }
     }
 
-    // BethTerm (patch 0121): this process owns PTYs. Take the
+    // Beth Studio (patch 0121): this process owns PTYs. Take the
     // single-instance mutex before binding so a second host never
     // unlink()s a live socket.
     if wtinator::host::is_host_exe() {
         wtinator::host::adopt_id_from_env();
-        std::env::set_var("BETHTERM_ACTIVE", "1");
+        std::env::set_var("BETHSTUDIO_ACTIVE", "1");
         std::env::set_var("WTINATOR_ACTIVE", "1");
         if let Err(err) = wtinator::install() {
             log::warn!("wtinator install: {:#}", err);
         }
         if !wtinator::host::try_become_owner()? {
             wtinator::host::note_life("second host exited because one is already running");
-            log::info!("bethterm-host already running; exiting");
+            log::info!("bethstudio-host already running; exiting");
             return Ok(());
         }
         let prev = std::panic::take_hook();
@@ -306,10 +306,10 @@ async fn async_run(cmd: Option<CommandBuilder>) -> anyhow::Result<()> {
         }
     }
 
-    // BethTerm (patch 0165): a window host exits after its last pane.
+    // Beth Studio (patch 0165): a window host exits after its last pane.
     if wtinator::host::is_host_exe() {
         wtinator::host::exit_when_emptied(&mux);
-        // BethTerm (patch 0168): every terminal opened/closed.
+        // Beth Studio (patch 0168): every terminal opened/closed.
         wtinator::host::log_pane_changes(&mux);
     }
 

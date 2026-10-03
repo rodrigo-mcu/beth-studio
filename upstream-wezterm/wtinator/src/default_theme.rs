@@ -3,14 +3,14 @@
 // The Settings app can mark one theme as the default for every terminal.
 // That choice is stored next to session.json:
 //
-//   %APPDATA%\bethterm\default-theme.json     (Windows)
-//   ~/.config/bethterm/default-theme.json     (other)
+//   %APPDATA%\bethstudio\default-theme.json     (Windows)
+//   ~/.config/bethstudio/default-theme.json     (other)
 //
 // Shape: `{ "theme": "dracula" }` or `{ "theme": null }` to clear.
 // New tabs/windows with no explicit per-pane theme stamp this id;
 // splits keep inheriting the source pane (patch 0054).
 //
-// BethTerm (patch 0132): the file also carries the default FONT
+// Beth Studio (patch 0132): the file also carries the default FONT
 // (`font_family`, `font_scale`, `font_bold`, `font_italic`). A new
 // terminal that has no font override of its own picks these up too.
 
@@ -36,7 +36,7 @@ struct Store {
     font_italic: bool,
 }
 
-/// BethTerm (patch 0132): everything a new terminal inherits by default.
+/// Beth Studio (patch 0132): everything a new terminal inherits by default.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct DefaultStyle {
     pub theme: Option<String>,
@@ -86,7 +86,7 @@ impl From<&DefaultStyle> for Store {
     }
 }
 
-/// Absolute path to the default-theme file (under the BethTerm config dir).
+/// Absolute path to the default-theme file (under the Beth Studio config dir).
 fn default_theme_path() -> Result<PathBuf> {
     Ok(crate::session::session_dir()?.join(FILENAME))
 }
@@ -97,7 +97,7 @@ pub fn load() -> Option<String> {
     load_from(&default_theme_path().ok()?)
 }
 
-/// BethTerm (patch 0132): load the whole default style (theme + font).
+/// Beth Studio (patch 0132): load the whole default style (theme + font).
 pub fn load_style() -> Option<DefaultStyle> {
     load_style_from(&default_theme_path().ok()?)
 }
@@ -108,7 +108,7 @@ pub fn save(theme: Option<&str>) -> Result<()> {
     save_to(&default_theme_path()?, theme)
 }
 
-/// BethTerm (patch 0132): persist the whole default style.
+/// Beth Studio (patch 0132): persist the whole default style.
 pub fn save_style(style: &DefaultStyle) -> Result<()> {
     save_style_to(&default_theme_path()?, style)
 }
@@ -154,7 +154,7 @@ pub fn palette_for(id: &str) -> Option<ColorPalette> {
 
 /// Stamp the persisted default onto a pane that has no explicit theme yet.
 /// No-op when the pane already has a theme_id or no default is saved.
-/// BethTerm (patch 0132): the default font is stamped as well, but only
+/// Beth Studio (patch 0132): the default font is stamped as well, but only
 /// on a pane that has no font override of its own.
 pub fn apply_to_pane_if_unset(pane: &dyn Pane) {
     let Some(style) = load_style() else {
@@ -180,7 +180,7 @@ pub fn pane_font_is_untouched(pane: &dyn Pane) -> bool {
         && !pane.get_font_italic()
 }
 
-/// BethTerm (patch 0132): copy the default font fields onto a pane. The
+/// Beth Studio (patch 0132): copy the default font fields onto a pane. The
 /// GUI reflows the pane grid on its next paint (`ensure_pane_geometry`).
 pub fn apply_font_to_pane(pane: &dyn Pane, style: &DefaultStyle) {
     pane.set_font_family(style.font_family.clone());
@@ -195,7 +195,7 @@ mod tests {
     use serde_json::json;
 
     fn unique_temp(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join("bethterm-default-theme-tests");
+        let dir = std::env::temp_dir().join("bethstudio-default-theme-tests");
         let _ = std::fs::create_dir_all(&dir);
         dir.join(name)
     }

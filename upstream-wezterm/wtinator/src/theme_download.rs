@@ -77,10 +77,10 @@ const GOGH_THEMES_MIRRORS: &[&str] = &[
 /// catalog on first launch.
 const BUNDLED_GOGH_JSON: &[u8] = include_bytes!("../data/gogh-themes.json");
 
-/// Result of installing the catalog into `%APPDATA%\bethterm\themes`.
+/// Result of installing the catalog into `%APPDATA%\bethstudio\themes`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CatalogSource {
-    /// Fetched from the network (mirror or `BETHTERM_THEMES_URL`).
+    /// Fetched from the network (mirror or `BETHSTUDIO_THEMES_URL`).
     Network,
     /// Unpacked from the binary snapshot.
     Bundled,
@@ -264,8 +264,8 @@ impl GoghEntry {
 }
 
 /// Directory where downloaded themes are cached:
-/// `%APPDATA%\bethterm\themes\` (Windows) /
-/// `~/.config/bethterm/themes/` (other). Created on demand.
+/// `%APPDATA%\bethstudio\themes\` (Windows) /
+/// `~/.config/bethstudio/themes/` (other). Created on demand.
 pub fn themes_dir() -> Result<PathBuf> {
     let dir = crate::session::session_dir()?.join("themes");
     fs::create_dir_all(&dir)
@@ -337,15 +337,15 @@ pub fn download_catalog() -> Result<CatalogResult> {
             Ok(body) => match parse_gogh_json(&body) {
                 Ok(entries) => {
                     let count = write_catalog(entries)?;
-                    log::info!("bethterm: installed {count} theme(s) from {url}");
+                    log::info!("bethstudio: installed {count} theme(s) from {url}");
                     return Ok(CatalogResult {
                         count,
                         source: CatalogSource::Network,
                     });
                 }
-                Err(e) => log::warn!("bethterm: catalog from {url} did not parse: {e:#}"),
+                Err(e) => log::warn!("bethstudio: catalog from {url} did not parse: {e:#}"),
             },
-            Err(e) => log::warn!("bethterm theme download via {url} failed: {e:#}"),
+            Err(e) => log::warn!("bethstudio theme download via {url} failed: {e:#}"),
         }
     }
     let count = install_bundled_catalog()?;
@@ -355,20 +355,20 @@ pub fn download_catalog() -> Result<CatalogResult> {
     })
 }
 
-/// If `%APPDATA%\bethterm\themes` has no JSON yet, unpack the bundled
+/// If `%APPDATA%\bethstudio\themes` has no JSON yet, unpack the bundled
 /// catalog so Settings is useful without a network click.
 pub fn ensure_local_themes() {
     if load_saved_themes().is_empty() {
         match install_bundled_catalog() {
-            Ok(n) => log::info!("bethterm: seeded {n} bundled theme(s)"),
-            Err(e) => log::warn!("bethterm: could not seed bundled themes: {e:#}"),
+            Ok(n) => log::info!("bethstudio: seeded {n} bundled theme(s)"),
+            Err(e) => log::warn!("bethstudio: could not seed bundled themes: {e:#}"),
         }
     }
 }
 
 fn catalog_urls() -> Vec<String> {
     let mut urls = Vec::new();
-    if let Ok(custom) = std::env::var("BETHTERM_THEMES_URL") {
+    if let Ok(custom) = std::env::var("BETHSTUDIO_THEMES_URL") {
         let custom = custom.trim().to_string();
         if !custom.is_empty() {
             urls.push(custom);
@@ -400,7 +400,7 @@ fn fetch_catalog_bytes(url: &str) -> Result<Vec<u8>> {
 
 fn fetch_reqwest(url: &str) -> Result<Vec<u8>> {
     let client = reqwest::blocking::Client::builder()
-        .user_agent("BethTerm-theme-downloader/1.0")
+        .user_agent("BethStudio-theme-downloader/1.0")
         .timeout(std::time::Duration::from_secs(45))
         .build()
         .context("building reqwest blocking client")?;
@@ -432,7 +432,7 @@ fn fetch_curl(url: &str) -> Result<Vec<u8>> {
         "--max-time",
         "60",
         "-A",
-        "BethTerm-theme-downloader/1.0",
+        "BethStudio-theme-downloader/1.0",
         url,
     ]);
     hide_window(&mut cmd);

@@ -191,10 +191,10 @@ async fn process_unilateral_inner_async(
     client_pane.process_unilateral(decoded.pdu).await
 }
 
-/// BethTerm (patch 0175): a client without a local domain (the
-/// `bethterm cli bridge`) gets every unilateral PDU here instead of having
+/// Beth Studio (patch 0175): a client without a local domain (the
+/// `bethstudio cli bridge`) gets every unilateral PDU here instead of having
 /// it dropped, so it can forward pane alerts (bell, OSC 9, user vars).
-pub static BETHTERM_UNILATERAL: std::sync::OnceLock<fn(&Pdu)> = std::sync::OnceLock::new();
+pub static BETHSTUDIO_UNILATERAL: std::sync::OnceLock<fn(&Pdu)> = std::sync::OnceLock::new();
 
 fn process_unilateral(
     local_domain_id: Option<DomainId>,
@@ -203,7 +203,7 @@ fn process_unilateral(
     let local_domain_id = match local_domain_id {
         Some(id) => id,
         None => {
-            if let Some(hook) = BETHTERM_UNILATERAL.get() {
+            if let Some(hook) = BETHSTUDIO_UNILATERAL.get() {
                 hook(&decoded.pdu);
                 return Ok(());
             }
@@ -1128,7 +1128,7 @@ impl Client {
                             .ok_or_else(|| {
                                 anyhow!("domain {} is not a ClientDomain instance", local_domain_id)
                             })?;
-                    // BethTerm (patch 0165): only this path is a lost host.
+                    // Beth Studio (patch 0165): only this path is a lost host.
                     client_domain.note_connection_lost();
                     client_domain.perform_detach();
                 }
@@ -1235,7 +1235,7 @@ impl Client {
         class_name: &str,
     ) -> anyhow::Result<config::UnixDomain> {
         match std::env::var_os("WEZTERM_UNIX_SOCKET") {
-            // BethTerm (patch 0171): a process started from the GUI inherits
+            // Beth Studio (patch 0171): a process started from the GUI inherits
             // WEZTERM_UNIX_SOCKET=<gui-sock-PID>. With prefer_mux that GUI
             // socket must not win over the host (it may even be from a GUI
             // that has since restarted).
@@ -1262,11 +1262,11 @@ impl Client {
                     }
                 }
 
-                // BethTerm (patch 0139): the GUI does not publish a
-                // gui-sock; the panes live in bethterm-host. When its
-                // socket exists, `bethterm cli ...` talks to it without
+                // Beth Studio (patch 0139): the GUI does not publish a
+                // gui-sock; the panes live in bethstudio-host. When its
+                // socket exists, `bethstudio cli ...` talks to it without
                 // WEZTERM_UNIX_SOCKET.
-                if let Some(host) = bethterm_host_socket() {
+                if let Some(host) = bethstudio_host_socket() {
                     return Ok(config::UnixDomain {
                         socket_path: Some(host),
                         no_serve_automatically: true,
@@ -1427,28 +1427,28 @@ impl Client {
     rpc!(adjust_pane_size, AdjustPaneSize, UnitResponse);
 }
 
-/// BethTerm (patch 0139): `%APPDATA%\bethterm\host.sock` (Windows) or
-/// `~/.config/bethterm/host.sock`, when it exists. Mirrors
+/// Beth Studio (patch 0139): `%APPDATA%\bethstudio\host.sock` (Windows) or
+/// `~/.config/bethstudio/host.sock`, when it exists. Mirrors
 /// `wtinator::host::socket_path`; this crate cannot depend on `wtinator`.
-fn bethterm_host_socket() -> Option<std::path::PathBuf> {
+fn bethstudio_host_socket() -> Option<std::path::PathBuf> {
     let dir = if cfg!(windows) {
         std::env::var_os("APPDATA").map(std::path::PathBuf::from)?
     } else {
         std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config"))?
     };
-    // Patch 0197: BETHTERM_HOST_ID (the same filter the host applies) picks
+    // Patch 0197: BETHSTUDIO_HOST_ID (the same filter the host applies) picks
     // `hosts\<id>.sock`, so tests can reach a host of their own without ever
     // seeing the user's host. Unset: the single host, as always.
-    let id: String = std::env::var("BETHTERM_HOST_ID")
+    let id: String = std::env::var("BETHSTUDIO_HOST_ID")
         .unwrap_or_default()
         .chars()
         .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
         .take(48)
         .collect();
     let sock = if id.is_empty() {
-        dir.join("bethterm").join("host.sock")
+        dir.join("bethstudio").join("host.sock")
     } else {
-        dir.join("bethterm").join("hosts").join(format!("{id}.sock"))
+        dir.join("bethstudio").join("hosts").join(format!("{id}.sock"))
     };
     if sock.exists() {
         Some(sock)

@@ -1,4 +1,0 @@
-/bethterm-web.exe
-/webui/dist/*
-!/webui/dist/.gitkeep
-web-settings.json

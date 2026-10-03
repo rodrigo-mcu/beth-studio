@@ -1,3 +1,3 @@
 @echo off
-rem Compatibility wrapper. The product name is BethTerm.
-call "%~dp0run-bethterm-debug.cmd"
+rem Compatibility wrapper. The product name is BethStudio.
+call "%~dp0run-bethstudio-debug.cmd"

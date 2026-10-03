@@ -1,6 +1,6 @@
 # Features
 
-This document is the **spec**. Every BethTerm feature is described here in enough detail to implement, test, and document for end users.
+This document is the **spec**. Every Beth Studio feature is described here in enough detail to implement, test, and document for end users.
 
 The features are split into three groups:
 
@@ -24,15 +24,15 @@ Status legend: 🟢 done · 🟡 in progress · ⚪ planned · 🔵 research.
 | Scrollback | Configurable, default 10 000 lines | upstream | 🟢 done |
 | Performance target | 60 fps at 200×50 cells on integrated GPU | upstream | 🟢 done (verified) |
 | Hidden / minimized | Skip GPU paint; PTY and session keep running | patch 0116 | 🟢 done |
-| Persistent host | `bethterm-host.exe` owns PTYs; GUI attaches | patch 0121 | 🟢 done |
+| Persistent host | `bethstudio-host.exe` owns PTYs; GUI attaches | patch 0121 | 🟢 done |
 | Pane dashboard | Fixed list of names; click switches the terminal | patch 0124 | 🟢 done |
 | Output floods (Tab) | Paint frames; keep line caches; coalesce PTY | patch 0119 | 🟢 done |
 
-BethTerm ships **the same renderer** as wezterm. There is no rewrite, no rewrite-into-wgpu, no "we'll do it later." If the wezterm GPU pipeline ever changes upstream, we follow it. While a window is minimized or hidden in the notification area, the GPU does not paint; restore invalidates so the first frame is current.
+Beth Studio ships **the same renderer** as wezterm. There is no rewrite, no rewrite-into-wgpu, no "we'll do it later." If the wezterm GPU pipeline ever changes upstream, we follow it. While a window is minimized or hidden in the notification area, the GPU does not paint; restore invalidates so the first frame is current.
 
 ### 1.2 Connect to any local shell
 
-BethTerm must be able to spawn a terminal backed by any of the following, selectable per pane. **In v0.1.0, the shell picker is exposed as a native Win32 popup menu** (see §1.4 below) when the user clicks the `+` button on the tab bar, and as the **Novo terminal** submenu on the notification-area icon (patch 0117).
+Beth Studio must be able to spawn a terminal backed by any of the following, selectable per pane. **In v0.1.0, the shell picker is exposed as a native Win32 popup menu** (see §1.4 below) when the user clicks the `+` button on the tab bar, and as the **Novo terminal** submenu on the notification-area icon (patch 0117).
 
 | Backend | Spawn command (Windows) | Notes | Status |
 | --- | --- | --- | --- |
@@ -165,7 +165,7 @@ Both directions support **N-level nesting**. A 2×2 grid is two horizontal split
 
 ### 1.6 Tab groups (the key differentiator from Terminator)
 
-> This is why someone installs BethTerm over Terminator and over wezterm.
+> This is why someone installs Beth Studio over Terminator and over wezterm.
 
 **Definition.** A **tab group** is a named, switchable, saveable collection of **N tabs**, where each tab has its own layout. Switching groups brings all the tabs in that group to the foreground in the current window.
 
@@ -316,7 +316,7 @@ A **layout** is a group plus the contents of every pane. Layouts can be:
 
 - **Saved to a file** (JSON) — shareable, version-controllable.
 - **Restored from a file**.
-- **Tagged with a project root** — BethTerm detects a `.bethterm/` directory in the cwd and offers to restore the layout.
+- **Tagged with a project root** — Beth Studio detects a `.bethstudio/` directory in the cwd and offers to restore the layout.
 
 ### 2.3 Per-pane tags
 
@@ -351,7 +351,7 @@ These are listed so future contributors know what we plan, but **they are not in
 Reuse wezterm's `wezterm-ssh` crate. Add:
 
 - A connection dialog: host, port, user, key, jump host.
-- A **hosts** list persisted to `~/.ssh/config` parse + a BethTerm-side cache.
+- A **hosts** list persisted to `~/.ssh/config` parse + a BethStudio-side cache.
 - Per-host thumbnails (screenshot of last session).
 - A **"recent hosts"** list in the right-click menu.
 
@@ -365,7 +365,7 @@ A **profile** is a named bundle of:
 - A set of panes to open (e.g. "Editor + REPL + Server logs").
 - Optional post-startup commands (run after the shell is ready).
 
-Profiles are exposed in the right-click menu as a top-level section. `~/.bethterm/profiles/` is scanned for Lua/JSON files.
+Profiles are exposed in the right-click menu as a top-level section. `~/.bethstudio/profiles/` is scanned for Lua/JSON files.
 
 ### 3.3 Graphical SCP — "Bitvise-like" file transfer (v0.7+)
 

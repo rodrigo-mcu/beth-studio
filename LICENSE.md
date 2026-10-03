@@ -1,13 +1,13 @@
-# BethTerm License
+# Beth Studio License
 
-BethTerm is based on [Wez's Terminal Emulator (WezTerm)](https://github.com/wezterm/wezterm) and is a derivative work of that project. Both are released under the **MIT License**. The short attribution for redistributors is [`NOTICE.md`](NOTICE.md). The origin policy is [`docs/ORIGIN.md`](docs/ORIGIN.md).
+Beth Studio is based on [Wez's Terminal Emulator (WezTerm)](https://github.com/wezterm/wezterm) and is a derivative work of that project. Both are released under the **MIT License**. The short attribution for redistributors is [`NOTICE.md`](NOTICE.md). The origin policy is [`docs/ORIGIN.md`](docs/ORIGIN.md).
 
 ---
 
 ## MIT License
 
 Copyright (c) 2018-Present Wez Furlong
-Copyright (c) 2026-Present BethTerm contributors
+Copyright (c) 2026-Present Beth Studio contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,7 @@ are in `upstream-wezterm/assets/fonts`.
 
 ## Brand
 
-- The product name is **BethTerm**.
-- BethTerm is named for Elizabeth.
-- The shipped binaries are `bethterm.exe` and `bethterm-gui.exe` (patched WezTerm CLI/GUI).
-- Do not use the WezTerm or Wez Furlong names to imply endorsement of BethTerm.
+- The product name is **Beth Studio**.
+- Beth Studio is named for Elizabeth.
+- The shipped binaries are `bethstudio.exe` and `bethstudio-host.exe` (patched WezTerm CLI and host).
+- Do not use the WezTerm or Wez Furlong names to imply endorsement of BethStudio.

@@ -19,7 +19,7 @@ Last updated: 2026-10-03.
 
 ## Participants & Credits
 
-BethTerm was built as a relay between **Rodrigo** and a team of AI
+Beth Studio was built as a relay between **Rodrigo** and a team of AI
 collaborators. Every feature was requested, directed, and acceptance-tested by
 Rodrigo; the AI models did the design and implementation under his direction.
 
@@ -49,11 +49,11 @@ top of a vendored upstream snapshot:
 
 - **`upstream-wezterm/`** — a vendored, mostly read‑only copy of wezterm. It
   keeps wezterm's terminal core and multiplexer.
-- **`wtinator`** — the BethTerm delta crate: host helpers, themes, groups,
+- **`wtinator`** — the Beth Studio delta crate: host helpers, themes, groups,
   session persistence, notifications, etc. Wired into the upstream binary
   through a single `wtinator::install()` hook (patch 0003).
-- **Binaries**: `bethterm.exe` (CLI and `cli bridge`), `bethterm-host.exe`
-  (every PTY), and `bethterm-web.exe` (**Beth Studio**, Go + React in
+- **Binaries**: `bethstudio.exe` (CLI and `cli bridge`), `bethstudio-host.exe`
+  (every PTY), and `bethstudio-web.exe` (**Beth Studio**, Go + React in
   WebView2, supervises the host). The Cargo package names are still
   `wezterm` and `wezterm-mux-server`.
 
@@ -76,7 +76,7 @@ title bar and window controls, the window‑level tray (**Janela nativa**,
 **Painel**, **Esconder tudo**, **Reiniciar a janela nativa**, **Desenho**
 GPU/CPU), image paste and screenshots, Ctrl+C / Ctrl+V and zoom keybindings,
 VS Code font auto‑config, and the config app's theme browser. The subcommands
-`bethterm gui-restart`, `start`, `ssh`, `serial`, and `connect` now fail with
+`bethstudio gui-restart`, `start`, `ssh`, `serial`, and `connect` now fail with
 a message asking you to use Beth Studio. See `docs/HISTORY.md`.
 
 ## 2. Shells
@@ -84,27 +84,27 @@ a message asking you to use Beth Studio. See `docs/HISTORY.md`.
 🟢 Quick‑launch entries for **cmd.exe, PowerShell 5.1, PowerShell 7+, WSL
 (default + named distros), Git Bash**, surfaced in Beth Studio's new‑terminal menu. Optional
 **MobaXterm local bash** entry appears when its local path exists (patch 0026),
-and users can add their own entries in `%APPDATA%\bethterm\shells.json`
+and users can add their own entries in `%APPDATA%\bethstudio\shells.json`
 (patch 0183).
 
 ## 3. Themes
 
 - 🟢 **Theme downloader** — one click fetches the **Gogh community catalog**
   (~365 themes: Dracula, Nord, Tokyo Night, One Dark, Catppuccin, …), slugifies
-  and caches them under `%APPDATA%\bethterm\themes\` (patch 0038).
+  and caches them under `%APPDATA%\bethstudio\themes\` (patch 0038).
 - 🟢 **Favourites persist on disk** as theme presets in
-  `%APPDATA%\bethterm\theme-favorites.json`, shared with Beth Studio.
+  `%APPDATA%\bethstudio\theme-favorites.json`, shared with Beth Studio.
 - 🟢 **Default theme for all terminals** — saved to
-  `%APPDATA%\bethterm\default-theme.json` and applied to new terminals that
+  `%APPDATA%\bethstudio\default-theme.json` and applied to new terminals that
   have no theme of their own (patch 0110).
 
 ## 4. Session & persistent host
 
-- 🟢 **Persistent PTY host** — shells live in `bethterm-host.exe`. Closing or
+- 🟢 **Persistent PTY host** — shells live in `bethstudio-host.exe`. Closing or
   updating Beth Studio does not kill agents. Reopening attaches to the same
   panes (patch 0121). The Studio also recreates terminals after a host crash
   (see section 7).
-- 🟢 **Session file** — `%APPDATA%\bethterm\session.json` is written
+- 🟢 **Session file** — `%APPDATA%\bethstudio\session.json` is written
   atomically in the background with a 2 s timeout, and restore drops
   unreachable network/WSL working directories after a 300 ms probe
   (patches 0029, 0049).
@@ -122,7 +122,7 @@ cannot freeze it:
   (`1.24.2604.02001`).
 - 🟢 **Encerrar host** — tray **Encerrar tudo** confirms, then stops the
   host (patch 0122). A setup while the host is live writes
-  `bethterm-host.exe.new` and swaps it on the next host start.
+  `bethstudio-host.exe.new` and swaps it on the next host start.
 
 ## 6. Build / integration foundation
 
@@ -132,14 +132,17 @@ cannot freeze it:
 
 ## 7. Beth Studio
 
-🟢 The interface for the terminals (`bethterm-web.exe`, tray label
-**Beth Studio**, patches 0171–0173, 0186). It talks to `bethterm cli bridge`
+🟢 The interface for the terminals (`bethstudio-web.exe`, tray label
+**Beth Studio**, patches 0171–0173, 0186). It talks to `bethstudio cli bridge`
 and supervises the host (starts it, restarts it after a crash, never stops
 it without a confirmed **Encerrar tudo**). Closing a Studio tab does
 not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 
+- 🟢 **Alt does not open the window menu** (2026-10-03) — a tap on Alt (or Alt+letter) no
+  longer opens the Windows system menu over the Studio and detached terminal windows, so it
+  does not steal focus while you type in a terminal. Alt+Space still opens it.
 - 🟢 **Studio supervises the host and has its own tray icon** (2026-10-03).
-  Opening the Studio without a running `bethterm-host.exe` starts it. If the
+  Opening the Studio without a running `bethstudio-host.exe` starts it. If the
   host crashes it is restarted, at most 3 times in 10 minutes; after that a
   banner says **Host indisponível** with **Tentar de novo**. Closing the window
   hides it to the tray. The tray menu has **Beth Studio**, **Novo terminal**,
@@ -147,19 +150,19 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   tudo** (asks first, then closes every terminal). The icon gets an amber dot
   while an agent waits for you.
 - 🟢 **Terminals come back after a host crash** (2026-10-03). The Studio keeps a recipe
-  for every live terminal in `%APPDATA%\bethterm\pane-specs.json` (shell, folder, WSL
+  for every live terminal in `%APPDATA%\bethstudio\pane-specs.json` (shell, folder, WSL
   distro, saved SSH host or serial port). When the host comes back **empty and as a
   different process**, it recreates them in the same tabs and folders and re-links names
   and themes to the new ids. A terminal closed on purpose never comes back. A banner
   shows the progress and, at the end, anything that did not return.
 - 🟢 **Smart WSL start** (2026-10-03). Before a WSL terminal opens, the Studio waits for
   the distro to answer, runs the optional per-distro init command once per VM boot
-  (`%APPDATA%\bethterm\wsl-distros.json`: `{"Debian":{"init":"...","user":"root","timeout_sec":60}}`)
+  (`%APPDATA%\bethstudio\wsl-distros.json`: `{"Debian":{"init":"...","user":"root","timeout_sec":60}}`)
   and waits for the folder to exist; if it never does, the terminal opens in the home folder,
   not in `/`. The same wait applies to **Novo terminal** on a stopped distro (patch 0197 makes
   `--cd` and `-d` work).
 - 🟢 Own tabs and splits (drag, new terminal to the right / below / above /
-  left), views **Minha organização**, **Como no BethTerm**, **Por tipo**,
+  left), views **Minha organização**, **Como no Beth Studio**, **Por tipo**,
   and **Por pasta** (groups by each terminal's current folder, follows
   `cd`; same-named folders get their parent). Every card shows the folder
   name in bold and the start of the path dimmed (2026-09-29).
@@ -179,7 +182,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   says "Abrindo Beth Studio…", then a spinner with the current step
   (connecting, terminal list, "Abrindo os terminais desta aba (2 de 6)").
   After 10 s it offers **Tentar de novo** / **Mostrar assim mesmo**. Each
-  opening logs its phase times (`abertura` in `bethterm-web.log`). Only
+  opening logs its phase times (`abertura` in `bethstudio-web.log`). Only
   one Studio runs: opening it again brings the open window to the front
   (2026-09-29).
 - 🟢 **Nova aba** → **Pasta inicial** has **Procurar…**. It opens the Windows
@@ -255,7 +258,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 - 🟢 Fit the pane to the Studio window when it is alone in its host tab
   (patch 0178). A split that exists only in Beth Studio keeps that
   column's size, so the text in the column stays intact (patch 0194).
-  **Separar no BethTerm** pulls a pane out of a host split
+  **Separar no Beth Studio** pulls a pane out of a host split
   (patch 0182). Scrollback stays put while a program redraws (patch 0187).
 - 🟢 Shared themes and fonts. The Studio theme is pushed to the pane so
   Codex and Cursor see light backgrounds (OSC 10/11, patch 0189).
@@ -267,7 +270,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   `.md` / `.txt` / `.log` and images open in a preview panel.
 - 🟢 **Colar arquivo do Explorer** (Ctrl+V or Colar, 2026-10-01). A file
   copied in Explorer — PDF, video, or anything else — is copied into
-  `C:\tmp\bethterm\clipboard-images` (or `%TEMP%\bethterm\clipboard-images`
+  `C:\tmp\bethstudio\clipboard-images` (or `%TEMP%\bethstudio\clipboard-images`
   when `C:\tmp` is missing) and the path is pasted for the agent. Images
   still arrive as `![image](path)`; other files arrive as the path, quoted
   when it contains a space. In a WSL pane the path is rewritten
@@ -292,7 +295,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 - 🟢 **Notas** (2026-10-02). What you type in **Novo arquivo** is saved by
   itself, 1.5 s after the last key and again on Fechar, as one `.md` per
   note named by its creation time (`AAAA-MM-DD_HH-MM-SS.md`) in
-  `%APPDATA%\bethterm\notes\`. The notebook button in the panel title
+  `%APPDATA%\bethstudio\notes\`. The notebook button in the panel title
   shows a side list (title = first line, date and time); click a note to
   open and keep editing it, **+** starts a blank note, and the trash icon
   on a row deletes it after an inline "Apagar esta nota?". Opening another
@@ -312,7 +315,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 - 🟢 Voice: record, transcribe, and optionally correct with an LLM before
   paste (no Enter). Per-call cost in `ai-usage.jsonl`; audio and text are
   not stored. API keys stay in DPAPI `secrets.dat`.
-- 🟢 Task manager: CPU, RAM, GPU, disk, BethTerm processes, each terminal,
+- 🟢 Task manager: CPU, RAM, GPU, disk, Beth Studio processes, each terminal,
   and WSL distros that are already running. The system section shows one
   card per metric (large percentage, absolute value beside it, bar that
   turns yellow at 75 % and red at 90 %), then the WSL2 card: a memory
@@ -349,7 +352,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 - 🟢 SSH and serial opened from Studio land in workspace `beth-studio`
   (patch 0190).
 - 🟢 SFTP in its own taskbar window (folder icon on an SSH terminal, or
-  `bethterm-web.exe --sftp`): Local | Remote panes and an upload/download
+  `bethstudio-web.exe --sftp`): Local | Remote panes and an upload/download
   queue (patch 0188).
 - 🟢 If an SSH session prints an `http://localhost:port` link, that port
   is opened on this PC and forwarded through the SSH session already
@@ -425,7 +428,7 @@ panel to close it. Hover previews and does not save.
   connections and for one connection. Stored in `db-queries.json` with an
   empty `connId`.
 
-## 10. BethTerm Mobile
+## 10. Beth Studio Mobile
 
 ⚪ Android/iOS skeleton (Expo). Connection list, terminal list, and an
 xterm screen. Remote access from the phone is not wired on the PC yet.
@@ -437,7 +440,7 @@ xterm screen. Remote access from the phone is not wired on the PC yet.
 - ⚪ ER diagram, BI, scheduling, and a Backups folder.
 - ⚪ ProxyJump, agent forwarding, snippets, SFTP as a drive letter,
   folder sync.
-- ⚪ X11, RDP, or VNC inside BethTerm.
+- ⚪ X11, RDP, or VNC inside BethStudio.
 - ⚪ Cloud sync of hosts.
 - ⚪ Linux and macOS builds.
 
@@ -451,11 +454,11 @@ export PATH="/c/Strawberry/perl/bin:$PATH"
 cargo +nightly build --release -p wezterm -p wezterm-mux-server
 
 # Then, from the repository root (PowerShell):
-#   powershell -File bethterm-web\build.ps1   # Beth Studio
-#   pack-bethterm-setup.ps1                   # installer
+#   powershell -File bethstudio-web\build.ps1   # Beth Studio
+#   pack-bethstudio-setup.ps1                   # installer
 ```
 
-Daily launch: `run-bethterm.cmd` (starts `bethterm-web.exe`). Never use plain
+Daily launch: `run-bethstudio.cmd` (starts `bethstudio-web.exe`). Never use plain
 `wezterm` from PATH, which may resolve to an installed copy.
 
 Toolchain: **Rust nightly 2026‑06‑05**, **Strawberry Perl 5.36**, **MSVC
@@ -466,14 +469,14 @@ nmake**, **VS 2022 Build Tools**. Details in `upstream-wezterm/PATCHES.md`.
 | Path | What |
 | --- | --- |
 | `upstream-wezterm/` | Vendored wezterm (read‑only except documented patches). |
-| `upstream-wezterm/wtinator/` | The BethTerm delta crate (host helpers, themes, groups, session, notifications). |
+| `upstream-wezterm/wtinator/` | The Beth Studio delta crate (host helpers, themes, groups, session, notifications). |
 | `upstream-wezterm/PATCHES.md` | The authoritative log of every upstream change. |
 | `upstream-wezterm/patches/NNNN-*.md` | Per‑patch design notes. |
-| `bethterm-web/` | Beth Studio (Go + React, WebView2). |
-| `bethterm-mobile/` | Phone app skeleton. |
+| `bethstudio-web/` | Beth Studio (Go + React, WebView2). |
+| `bethstudio-mobile/` | Phone app skeleton. |
 | `docs/FEATURES.md` | The original design spec (includes planned/future ideas). |
 | `docs/ARCHITECTURE.md`, `docs/PROJECT_LAYOUT.md` | How the pieces fit together. |
-| `%APPDATA%\bethterm\` | Runtime data: `session.json`, downloaded `themes\`, Studio settings. |
+| `%APPDATA%\bethstudio\` | Runtime data: `session.json`, downloaded `themes\`, Studio settings. |
 
 ## Full patch index
 

@@ -23,7 +23,7 @@ mod cli;
 
 #[derive(Debug, Parser)]
 #[command(
-    about = "BethTerm — based on Wez's Terminal Emulator\nhttps://github.com/wezterm/wezterm",
+    about = "Beth Studio — based on Wez's Terminal Emulator\nhttps://github.com/wezterm/wezterm",
     version = wezterm_version()
 )]
 pub struct Opt {
@@ -775,11 +775,11 @@ fn run() -> anyhow::Result<()> {
 
 fn delegate_to_gui(saver: UmaskSaver) -> anyhow::Result<()> {
     // Beth Studio (patch 0198): there is no native terminal window any more.
-    // The terminals are shown by bethterm-web (Beth Studio); `bethterm cli`
+    // The terminals are shown by bethstudio-web (Beth Studio); `bethstudio cli`
     // talks to the host directly.
     drop(saver);
     anyhow::bail!(
-        "esta versão não tem janela nativa: abra o Beth Studio (bethterm-web) \
-         ou use `bethterm cli` para falar com o host"
+        "esta versão não tem janela nativa: abra o Beth Studio (bethstudio-web) \
+         ou use `bethstudio cli` para falar com o host"
     )
 }

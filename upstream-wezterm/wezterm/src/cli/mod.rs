@@ -79,7 +79,7 @@ enum CliSubCommand {
     #[command(name = "list", about = "list windows, tabs and panes")]
     List(list::ListCommand),
 
-    /// BethTerm (patch 0171): JSON-lines bridge for the web front end
+    /// Beth Studio (patch 0171): JSON-lines bridge for the web front end
     #[command(name = "bridge", rename_all = "kebab")]
     Bridge(bridge::Bridge),
 
@@ -177,9 +177,9 @@ async fn run_cli_async(opts: &crate::Opt, cli: CliCommand) -> anyhow::Result<()>
     let client = Client::new_default_unix_domain(
         initial,
         &mut ui,
-        // BethTerm (patch 0171): the bridge never spawns a mux server.
+        // Beth Studio (patch 0171): the bridge never spawns a mux server.
         cli.no_auto_start || matches!(cli.sub, CliSubCommand::Bridge(_)),
-        // BethTerm (patch 0171): the bridge talks to the host itself, so it
+        // Beth Studio (patch 0171): the bridge talks to the host itself, so it
         // survives GUI restarts and reports stable host pane ids.
         cli.prefer_mux || matches!(cli.sub, CliSubCommand::Bridge(_)),
         cli.class

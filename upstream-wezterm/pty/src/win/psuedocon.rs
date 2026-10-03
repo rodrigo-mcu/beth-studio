@@ -79,7 +79,7 @@ unsafe impl Sync for PsuedoCon {}
 
 impl Drop for PsuedoCon {
     fn drop(&mut self) {
-        // BethTerm patch 0113: ClosePseudoConsole can block forever
+        // Beth Studio patch 0113: ClosePseudoConsole can block forever
         // (OpenConsole deadlock / undrained output pipe). Never run it
         // on the GUI thread — that is the classic WezTerm-on-Windows
         // "close a pane and the whole app freezes" bug.
@@ -93,7 +93,7 @@ impl Drop for PsuedoCon {
         unsafe impl Send for SendHpcon {}
         let send = SendHpcon(con);
         if std::thread::Builder::new()
-            .name("bethterm-conpty-close".into())
+            .name("bethstudio-conpty-close".into())
             .spawn(move || unsafe {
                 (CONPTY.ClosePseudoConsole)(send.0);
             })
@@ -112,10 +112,10 @@ impl PsuedoCon {
                 size,
                 input.as_raw_handle() as _,
                 output.as_raw_handle() as _,
-                // BethTerm patch 0113: skip INHERIT_CURSOR. That flag
+                // Beth Studio patch 0113: skip INHERIT_CURSOR. That flag
                 // is the other documented ConPTY hang (Create /
                 // ClosePseudoConsole waiting on the previous console
-                // cursor). New BethTerm panes always start at 0,0.
+                // cursor). New Beth Studio panes always start at 0,0.
                 // Patch 0127: do not OR in 0x8. On ConPTY 1.24 that bit
                 // is glyph-width graphemes, not passthrough.
                 PSEUDOCONSOLE_RESIZE_QUIRK | PSEUDOCONSOLE_WIN32_INPUT_MODE,

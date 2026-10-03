@@ -1,6 +1,6 @@
-//! BethTerm (patch 0171): `bethterm cli bridge` — a long-lived mux client
+//! Beth Studio (patch 0171): `bethstudio cli bridge` — a long-lived mux client
 //! that speaks JSON lines on stdin/stdout, for the web front end
-//! (`bethterm-web`, Go + React). One request per stdin line, one event
+//! (`bethstudio-web`, Go + React). One request per stdin line, one event
 //! per stdout line.
 //!
 //! Requests:
@@ -10,7 +10,7 @@
 //!   {"op":"send","pane_id":N,"data":"..."}   raw bytes to the PTY
 //!   {"op":"paste","pane_id":N,"data":"..."}  bracketed paste
 //!   {"op":"spawn_tool","kind":"ssh"|"serial","id":"<16 hex>","window_id":W?,
-//!    "request_id":"..."?}   start `bethterm-tool.exe --ssh|--serial <id>`
+//!    "request_id":"..."?}   start `bethstudio-tool.exe --ssh|--serial <id>`
 //!       from this exe's folder as a new terminal (patch 0184). The pane
 //!       is created in workspace "beth-studio", not in the GUI's window
 //!       (patch 0190); window_id is accepted and ignored.
@@ -231,7 +231,7 @@ enum Request {
     },
     Shells,
     /// Patch 0184: start a companion tool (SSH or serial session) that
-    /// lives next to this exe, as `bethterm-tool.exe --ssh|--serial <id>`.
+    /// lives next to this exe, as `bethstudio-tool.exe --ssh|--serial <id>`.
     SpawnTool {
         kind: String,
         id: String,
@@ -297,13 +297,13 @@ enum Event<'a> {
         tab_id: mux::tab::TabId,
         window_id: mux::window::WindowId,
     },
-    /// BethTerm (patch 0188): full scrollback as plain text.
+    /// Beth Studio (patch 0188): full scrollback as plain text.
     Scrollback {
         request_id: &'a str,
         pane_id: PaneId,
         text: &'a str,
     },
-    /// BethTerm (patch 0175): an agent in the pane waits (or stopped
+    /// Beth Studio (patch 0175): an agent in the pane waits (or stopped
     /// waiting) for the user. Same rule as the GUI tab bar (patch 0152).
     Agent {
         pane_id: PaneId,
@@ -373,13 +373,13 @@ fn emit_error(message: &str) {
 
 impl Bridge {
     pub async fn run(self, client: Client) -> anyhow::Result<()> {
-        let _ = wezterm_client::client::BETHTERM_UNILATERAL.set(on_unilateral);
+        let _ = wezterm_client::client::BETHSTUDIO_UNILATERAL.set(on_unilateral);
         let alerts = alert_channel().1.clone();
         // Panes with an agent waiting: reason + detail, re-sent on `list`.
         let mut waiting: HashMap<PaneId, (&'static str, String)> = HashMap::new();
         let (tx, rx) = smol::channel::unbounded::<Option<String>>();
         std::thread::Builder::new()
-            .name("bethterm-bridge-stdin".into())
+            .name("bethstudio-bridge-stdin".into())
             .spawn(move || {
                 let stdin = std::io::stdin();
                 for line in stdin.lock().lines() {
@@ -512,7 +512,7 @@ impl Bridge {
                             match tab_of.get(&pane_id) {
                                 None => emit_error(&format!("separate: unknown pane {pane_id}")),
                                 Some((_, 1)) => emit_error(&format!(
-                                    "separate: pane {pane_id} is already alone in its BethTerm tab"
+                                    "separate: pane {pane_id} is already alone in its Beth Studio tab"
                                 )),
                                 Some(_) => {
                                     let window_id = super::list::collect_items(&client)
@@ -567,7 +567,7 @@ impl Bridge {
                             // host tree and can squeeze its neighbours (see
                             // patches 0163/0172): refuse.
                             Some((_, n)) if *n > 1 => emit_error(&format!(
-                                "resize: pane {pane_id} shares its BethTerm tab with {} other pane(s)",
+                                "resize: pane {pane_id} shares its Beth Studio tab with {} other pane(s)",
                                 n - 1
                             )),
                             Some((tab_id, _)) => {
@@ -866,7 +866,7 @@ fn valid_tool_id(id: &str) -> bool {
 /// GUI process and is not involved.
 const STUDIO_WORKSPACE: &str = "beth-studio";
 
-/// Start `bethterm-tool.exe --ssh|--serial <id>` (next to this exe) as a
+/// Start `bethstudio-tool.exe --ssh|--serial <id>` (next to this exe) as a
 /// new terminal in the host. The command line is built here from a fixed
 /// table; the client only chooses the kind and a validated profile id.
 ///
@@ -885,10 +885,10 @@ async fn spawn_tool(
         .parent()
         .ok_or_else(|| anyhow::anyhow!("exe has no parent dir"))?
         .to_path_buf();
-    let tool = dir.join("bethterm-tool.exe");
+    let tool = dir.join("bethstudio-tool.exe");
     anyhow::ensure!(
         tool.is_file(),
-        "bethterm-tool.exe não encontrado em {}",
+        "bethstudio-tool.exe não encontrado em {}",
         dir.display()
     );
     let config = config::configuration();

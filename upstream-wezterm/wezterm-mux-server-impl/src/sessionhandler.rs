@@ -82,7 +82,7 @@ impl PerPane {
 
         let old_seqno = self.seqno;
         self.seqno = pane.get_current_seqno();
-        // BethTerm (patch 0174): start at the scrollback top, not row 0;
+        // Beth Studio (patch 0174): start at the scrollback top, not row 0;
         // the rows before it are gone and a client pane scanned them one
         // by one (241 s GUI freeze on 2026-09-25).
         let mut all_dirty_lines = pane.get_changed_since(
@@ -645,7 +645,7 @@ impl SessionHandler {
                             let pane = mux
                                 .get_pane(pane_id)
                                 .ok_or_else(|| anyhow!("no such pane {}", pane_id))?;
-                            // BethTerm (patch 0138): a client that shrinks
+                            // Beth Studio (patch 0138): a client that shrinks
                             // a working pane to one row is a bug on its
                             // side (patch 0130 was one). Refuse it and say
                             // so instead of putting the shell in a one-row
@@ -653,7 +653,7 @@ impl SessionHandler {
                             let prev = pane.get_dimensions();
                             if size.rows < 2 && prev.viewport_rows >= 2 {
                                 log::warn!(
-                                    "bethterm-host: refusing resize of pane {} to {}x{} \
+                                    "bethstudio-host: refusing resize of pane {} to {}x{} \
                                      (it has {} rows); client-side layout bug?",
                                     pane_id,
                                     size.cols,
@@ -944,7 +944,7 @@ impl SessionHandler {
                                 .get_pane(pane_id)
                                 .ok_or_else(|| anyhow!("no such pane {}", pane_id))?;
 
-                            // BethTerm (patch 0189): fork the terminal palette
+                            // Beth Studio (patch 0189): fork the terminal palette
                             // so OSC 10/11 answers this scheme even when a
                             // dynamic palette was already copied. The client
                             // palette below still covers panes that have not

@@ -44,14 +44,14 @@ WezTerminator, com referência rápida aos patches, arquivos, e tests.
 | 0105 | [docs](upstream-wezterm/patches/0105-close-to-tray.md) | X esconde no ícone do relógio | `wtinator/src/tray.rs` |
 | 0106 | [docs](upstream-wezterm/patches/0106-tray-window-stack.md) | Menu do tray empilha janelas escondidas | `wtinator/src/tray.rs` |
 | 0107 | [docs](upstream-wezterm/patches/0107-tray-icon-must-exist.md) | Hide só se o ícone existir | `wtinator/src/tray.rs` |
-| 0108 | [docs](upstream-wezterm/patches/0108-reuse-running-gui.md) | Atalho reusa o GUI em execução | `bethterm-setup/src/main.rs` |
+| 0108 | [docs](upstream-wezterm/patches/0108-reuse-running-gui.md) | Atalho reusa o GUI em execução | `bethstudio-setup/src/main.rs` |
 | 0109 | [docs](upstream-wezterm/patches/0109-focus-existing-and-hide-wgl-probe.md) | Foca GUI existente; esconde probe WGL | `wezterm-gui/src/main.rs`, `window/.../wgl.rs` |
 | 0110 | [docs](upstream-wezterm/patches/0110-default-theme.md) | Tema default em todos os terminais | `wtinator/src/default_theme.rs`, Settings |
 | 0111 | [docs](upstream-wezterm/patches/0111-tray-always-on-and-new-window.md) | Tray sempre visível + Novo terminal | `wtinator/src/tray.rs` |
 | 0112 | [docs](upstream-wezterm/patches/0112-system-panel.md) | Painel Sistema (CPU/RAM/disco) | `wtinator/src/sysmon.rs`, `syspanel.rs` |
 | 0113 | [docs](upstream-wezterm/patches/0113-conpty-stability.md) | Para congeladas: ConPTY 1.24 + close off-UI | `pty/src/win/*`, `session.rs`, `sysmon.rs` |
 | 0114 | [docs](upstream-wezterm/patches/0114-fluid-ui.md) | UI fluida: sem log debug, cursor barato | `cursor_anim.rs`, `pane.rs`, launchers |
-| 0115 | [docs](upstream-wezterm/patches/0115-release-default-no-args.md) | Release GUI sem args é o launch padrão | `run-bethterm.cmd`, setup shortcuts |
+| 0115 | [docs](upstream-wezterm/patches/0115-release-default-no-args.md) | Release GUI sem args é o launch padrão | `run-bethstudio.cmd`, setup shortcuts |
 | 0116 | [docs](upstream-wezterm/patches/0116-skip-paint-when-hidden.md) | Sem paint GPU no tray/minimizado | `window.rs`, `termwindow/mod.rs`, `tray.rs` |
 | 0117 | [docs](upstream-wezterm/patches/0117-tray-new-terminal-picker.md) | Novo terminal do tray escolhe o shell | `tray.rs`, `spawn.rs` |
 | 0118 | [docs](upstream-wezterm/patches/0118-tray-spawn-on-gui-thread.md) | Spawn do tray não derruba o processo | `spawn.rs`, `tray.rs` |

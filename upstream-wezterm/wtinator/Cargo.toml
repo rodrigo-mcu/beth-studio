@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.78"
 license = "MIT"
 publish = false
-description = "BethTerm delta: tab groups, broadcast, VS Code themes, smart paste."
+description = "Beth Studio delta: tab groups, broadcast, VS Code themes, smart paste."
 
 [lib]
 path = "src/lib.rs"
@@ -38,7 +38,7 @@ serde_json = { workspace = true }
 
 # WezTerminator (patch 0038): theme downloader. We fetch the Gogh
 # community theme catalog over HTTPS and cache each theme as JSON
-# under `%APPDATA%\bethterm\themes\`. We use `reqwest::blocking`
+# under `%APPDATA%\bethstudio\themes\`. We use `reqwest::blocking`
 # (NOT the async client) because the config app — the primary
 # caller — has no tokio runtime; the blocking client spins up its
 # own single-threaded runtime internally. The `default-tls`

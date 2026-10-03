@@ -7,10 +7,10 @@ resolver = "2"
 publish = false
 autobins = false
 
-# BethTerm (patch 0121): ship the mux as bethterm-host.exe so the GUI
+# Beth Studio (patch 0121): ship the mux as bethstudio-host.exe so the GUI
 # can attach/detach without owning the PTYs.
 [[bin]]
-name = "bethterm-host"
+name = "bethstudio-host"
 path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -23,7 +23,7 @@ bcz rel
 
 then the files can be copied from `bin/x64/Release` to this location.
 
-BethTerm patch 0113 ships the matched Microsoft redistributable pair
+Beth Studio patch 0113 ships the matched Microsoft redistributable pair
 from `Microsoft.Windows.Console.ConPTY.1.24.260402001` (file version
 `1.24.2604.02001`):
 

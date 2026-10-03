@@ -1,6 +1,6 @@
 # Roadmap
 
-This is the BethTerm release plan. Versions follow semver. The "we ship in this release" column is the **user-visible** scope — internal refactors don't appear here.
+This is the Beth Studio release plan. Versions follow semver. The "we ship in this release" column is the **user-visible** scope — internal refactors don't appear here.
 
 | Version | Codename | Theme | Status |
 | --- | --- | --- | --- |

@@ -9,7 +9,7 @@ This is the *why* behind the directory structure. For the *what*, see [`HACKING.
 > `upstream-wezterm/patches/` with a documented exception.
 > **New directories we add inside the upstream tree** (specifically
 > `upstream-wezterm/wtinator/` and `upstream-wezterm/wezterminator/`)
-> are not patches — they are our own code (the BethTerm delta), and the
+> are not patches — they are our own code (the Beth Studio delta), and the
 > upstream `Cargo.toml` is the only *existing* file that mentions them.
 
 This is the most important rule. Every patch to *existing* upstream
@@ -23,16 +23,16 @@ The reason for the rule is the strategy in [`ARCHITECTURE.md §"Strategy: vendor
 Operational files at the repository root:
 
 - `AGENTS.md` is the local runbook for future agents.
-- `run-bethterm.cmd` (same as `run-bethterm-release.cmd`) and
-  `run-bethterm-debug.cmd` are the supported Windows launchers for manual
-  testing. They start `bethterm-web.exe` (Beth Studio) from this checkout;
-  build it first with `powershell -File bethterm-webuild.ps1`.
+- `run-bethstudio.cmd` (same as `run-bethstudio-release.cmd`) and
+  `run-bethstudio-debug.cmd` are the supported Windows launchers for manual
+  testing. They start `bethstudio-web.exe` (Beth Studio) from this checkout;
+  build it first with `powershell -File bethstudio-webuild.ps1`.
   The `run-wezterminator-*.cmd` names are compatibility wrappers.
-- `bethterm-web/` is Beth Studio (Go + React); `pack-bethterm-setup.ps1`
+- `bethstudio-web/` is Beth Studio (Go + React); `pack-bethstudio-setup.ps1`
   builds the installer.
 
 ```
-bethterm/
+bethstudio/
 │
 ├── CHANGELOG.md
 ├── LICENSE.md
@@ -69,7 +69,7 @@ bethterm/
 │   ├── wtinator/               # Our delta crate — added by patch 0001
 │   │   ├── Cargo.toml
 │   │   └── src/...
-│   ├── wezterminator/          # Placeholder binary crate (package name `bethterm`)
+│   ├── wezterminator/          # Placeholder binary crate (package name `bethstudio`)
 │   │   ├── Cargo.toml
 │   │   └── src/main.rs
 │   ├── PATCHES.md              # Index of local patches

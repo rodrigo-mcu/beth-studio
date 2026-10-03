@@ -4,8 +4,8 @@ This document explains the licensing situation so a contributor can answer "can 
 
 ## TL;DR
 
-- BethTerm is MIT. You can do almost anything.
-- BethTerm is based on WezTerm. That origin is documented in [`NOTICE.md`](../NOTICE.md) and [`ORIGIN.md`](ORIGIN.md) and must not be omitted.
+- Beth Studio is MIT. You can do almost anything.
+- Beth Studio is based on WezTerm. That origin is documented in [`NOTICE.md`](../NOTICE.md) and [`ORIGIN.md`](ORIGIN.md) and must not be omitted.
 - The two hard rules are: (1) keep the LICENSE, NOTICE, and copyright notice, (2) don't use the WezTerm project name to endorse derived products.
 - All third-party deps we link against keep their original licenses. We do **not** relicense anything.
 
@@ -27,8 +27,8 @@ There is no copyleft obligation and no requirement to disclose source, though th
 ## What we explicitly don't do
 
 - **No CLA.** By submitting a PR, you assert you have the right to submit the code under MIT, same as upstream.
-- **No re-licensing.** BethTerm stays MIT.
-- **No "WezTerm" branding in our product or package name.** The GUI binary remains `wezterm-gui.exe` because it is a patched upstream binary; the product name is BethTerm.
+- **No re-licensing.** Beth Studio stays MIT.
+- **No "WezTerm" branding in our product or package name.** The GUI binary remains `wezterm-gui.exe` because it is a patched upstream binary; the product name is BethStudio.
 
 ## Files we don't relicense
 
@@ -39,7 +39,7 @@ Our delta lives in:
 
 - `upstream-wezterm/wtinator/`
 - `upstream-wezterm/wtinator-config/`
-- `upstream-wezterm/wezterminator/` (Cargo package `bethterm`)
+- `upstream-wezterm/wezterminator/` (Cargo package `bethstudio`)
 
 Edits to *existing* upstream files are listed in `upstream-wezterm/PATCHES.md`.
 
@@ -60,8 +60,8 @@ Before tagging a release:
 - [ ] `cargo deny check licenses` passes (when wired in CI).
 - [ ] `LICENSE.md` and `NOTICE.md` are present in the release artifact.
 - [ ] `upstream-wezterm/LICENSE.md` is present in the release artifact.
-- [ ] README still says BethTerm is based on WezTerm, in the first screenful.
-- [ ] Release notes do not present BethTerm as official WezTerm.
+- [ ] README still says Beth Studio is based on WezTerm, in the first screenful.
+- [ ] Release notes do not present Beth Studio as official WezTerm.
 
 ## Resources
 

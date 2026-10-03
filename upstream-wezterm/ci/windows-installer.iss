@@ -2,9 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; vim:ts=2:sw=2:et:
 
-#define MyAppName "BethTerm"
+#define MyAppName "Beth Studio"
 ;#define MyAppVersion "1.5"
-#define MyAppPublisher "BethTerm contributors"
+#define MyAppPublisher "Beth Studio contributors"
 #define MyAppURL "https://github.com/wezterm/wezterm"
 #define MyAppExeName "bethterm-gui.exe"
 
@@ -26,7 +26,7 @@ DisableProgramGroupPage=yes
 ;PrivilegesRequired=lowest
 ;PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=..
-OutputBaseFilename=BethTerm-Setup
+OutputBaseFilename=BethStudio-Setup
 SetupIconFile=..\assets\windows\terminal.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma
@@ -43,7 +43,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\target\release\bethterm.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\target\release\bethstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\target\release\bethterm-gui.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\target\release\wezterm-mux-server.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\target\release\mesa\opengl32.dll"; DestDir: "{app}\mesa"; Flags: ignoreversion

@@ -1,6 +1,6 @@
 //! Per-window taskbar icon color (patch 0151).
 //!
-//! Every BethTerm window otherwise shares the executable icon, so a
+//! Every Beth Studio window otherwise shares the executable icon, so a
 //! row of taskbar buttons all looks the same. The right-click menu
 //! picks a color; `WM_SETICON` puts that color on this window's
 //! taskbar button, Alt+Tab entry and thumbnail. The choice is stored

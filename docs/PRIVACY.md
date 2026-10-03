@@ -1,13 +1,13 @@
 # Privacy
 
-BethTerm is a **local** application. We do not collect, store, or transmit any data about you, your machine, or your usage.
+Beth Studio is a **local** application. We do not collect, store, or transmit any data about you, your machine, or your usage.
 
 Upstream WezTerm already states "no telemetry"; we keep that stance.
 
 ## What we don't do
 
 - **No telemetry.** No usage events, no crash reports, no anonymous stats.
-- **No remote calls without your action.** The only outbound HTTP requests BethTerm makes are:
+- **No remote calls without your action.** The only outbound HTTP requests Beth Studio makes are:
   - Theme catalog / VS Code Marketplace, **only** when you explicitly download or browse themes.
   - Font download CDNs, **only** when you accept a first-run font prompt (if enabled).
 - **No third-party analytics SDKs.**
@@ -15,24 +15,24 @@ Upstream WezTerm already states "no telemetry"; we keep that stance.
 
 ## What we store on your machine
 
-All BethTerm state is local:
+All Beth Studio state is local:
 
 | File | What it is | Where |
 | --- | --- | --- |
 | `~/.wezterm.lua` | Your config (WezTerm reads this; we only extend) | platform standard |
-| `session.json` | Tabs, splits, names, groups | `%APPDATA%\bethterm\` (Windows), `~/.config/bethterm/` (other) |
+| `session.json` | Tabs, splits, names, groups | `%APPDATA%\bethstudio\` (Windows), `~/.config/bethstudio/` (other) |
 | `themes/` | Cached downloaded themes | same directory |
 | `theme-favorites.json` | Theme favorites for the Settings app | same directory |
 | `default-theme.json` | Default theme for new terminals | same directory |
 | `clipboard-images/` | Temporary PNGs from image paste | temp dir |
 
-A previous WezTerminator install used `%APPDATA%\wezterminator\`. BethTerm migrates that folder to `bethterm` on first launch when possible.
+A previous WezTerminator install used `%APPDATA%\wezterminator\`. Beth Studio migrates that folder to `bethstudio` on first launch when possible.
 
 None of these files are uploaded.
 
 ## The clipboard
 
-The clipboard is a local channel. BethTerm reads it on paste and writes it on copy. It does not sync the clipboard to any other device.
+The clipboard is a local channel. Beth Studio reads it on paste and writes it on copy. It does not sync the clipboard to any other device.
 
 ## Logging
 
@@ -45,4 +45,4 @@ If this policy ever needs to change, we will note it in the release notes and in
 ## History
 
 - 2026-06-06 — Page created.
-- 2026-09-05 — Rebranded to BethTerm; data directory is `%APPDATA%\bethterm`.
+- 2026-09-05 — Rebranded to Beth Studio; data directory is `%APPDATA%\bethstudio`.

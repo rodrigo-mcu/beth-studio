@@ -171,12 +171,12 @@ pub enum Request {
         #[serde(default)]
         id: Option<u32>,
     },
-    /// BethTerm (patch 0110):
+    /// Beth Studio (patch 0110):
     /// `{"type":"set_default_theme","id":10,"theme":"dracula"}`
     /// — persists `theme` as the default for new terminals and applies
     /// it to every live pane in every window. Empty `theme` clears the
     /// saved default without recolouring open panes.
-    /// BethTerm (patch 0132): the optional font fields make the
+    /// Beth Studio (patch 0132): the optional font fields make the
     /// default a full style. `font_size` is in points (converted to a
     /// scale against the window base size). Omitted fields keep the
     /// previously saved font.
@@ -262,7 +262,7 @@ pub fn palette_from_theme_id(id: &str) -> Option<ColorPalette> {
     crate::default_theme::palette_for(id)
 }
 
-/// BethTerm (patch 0110): apply a theme to every live pane in every
+/// Beth Studio (patch 0110): apply a theme to every live pane in every
 /// mux window. Collects pane ids first so we do not hold a window
 /// lock while mutating palettes. Returns the number of panes touched.
 pub fn apply_theme_to_all_panes(
@@ -289,7 +289,7 @@ pub fn apply_theme_to_all_panes(
     Ok(n)
 }
 
-/// BethTerm (patch 0132): stamp the default font on every live pane and
+/// Beth Studio (patch 0132): stamp the default font on every live pane and
 /// reflow every tab. Runs on the GUI thread (via `notify_apply`).
 pub fn apply_font_to_all_panes(style: &crate::default_theme::DefaultStyle) -> usize {
     let mux = Mux::get();
@@ -493,7 +493,7 @@ pub fn handle_request(req: Request, notify_apply: &ApplyCallback) -> Response {
             match crate::theme_download::download_catalog() {
                 Ok(result) => {
                     log::info!(
-                        "bethterm: installed {} theme(s) ({:?})",
+                        "bethstudio: installed {} theme(s) ({:?})",
                         result.count,
                         result.source
                     );
@@ -640,7 +640,7 @@ pub fn handle_request(req: Request, notify_apply: &ApplyCallback) -> Response {
         Request::ListFonts { .. } => ResponseBody::Fonts {
             fonts: available_fonts(),
         },
-        // BethTerm (patch 0110): persist the default theme and apply
+        // Beth Studio (patch 0110): persist the default theme and apply
         // it to every live pane. Persistence is disk-only (safe on
         // the pipe thread); the mux apply is posted to the GUI thread.
         Request::SetDefaultTheme {
@@ -710,18 +710,18 @@ pub fn handle_request(req: Request, notify_apply: &ApplyCallback) -> Response {
             notify_apply(Box::new(move || {
                 match apply_theme_to_all_panes(palette, Some(theme_for_apply)) {
                     Ok(n) => log::info!(
-                        "bethterm: applied default theme to {} pane(s)",
+                        "bethstudio: applied default theme to {} pane(s)",
                         n
                     ),
                     Err(e) => log::warn!(
-                        "bethterm patch 0110: set_default_theme apply failed: {}",
+                        "bethstudio patch 0110: set_default_theme apply failed: {}",
                         e
                     ),
                 }
                 // Patch 0132: the default font goes to every open pane
                 // too, then each tab reflows its PTY grids.
                 let n = apply_font_to_all_panes(&style);
-                log::info!("bethterm: applied default font to {} pane(s)", n);
+                log::info!("bethstudio: applied default font to {} pane(s)", n);
             }));
             ResponseBody::Ok { ok: true }
         }

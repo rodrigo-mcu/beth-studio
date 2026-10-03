@@ -25,7 +25,7 @@ impl PtySystem for ConPtySystem {
 
         // `con` is last so Rust drops the pipe handles first.
         // ClosePseudoConsole blocks while those pipes stay open
-        // (BethTerm patch 0113 / Microsoft ConPTY contract).
+        // (Beth Studio patch 0113 / Microsoft ConPTY contract).
         let master = ConPtyMasterPty {
             inner: Arc::new(Mutex::new(Inner {
                 readable: stdout.read,
@@ -51,7 +51,7 @@ struct Inner {
     writable: Option<FileDescriptor>,
     size: PtySize,
     /// Dropped last so the communication pipes are already closed
-    /// when `ClosePseudoConsole` runs (BethTerm patch 0113).
+    /// when `ClosePseudoConsole` runs (Beth Studio patch 0113).
     con: PsuedoCon,
 }
 

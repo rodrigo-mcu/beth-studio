@@ -1,21 +1,21 @@
-# BethTerm — drive the "Claude is waiting" tab indicator (patch 0061).
+# Beth Studio — drive the "Claude is waiting" tab indicator (patch 0061).
 #
 # Emits  OSC 1337 ; SetUserVar=claude_status=<status>  to the terminal so
-# BethTerm lights (status "waiting") or clears (any other value) the
+# Beth Studio lights (status "waiting") or clears (any other value) the
 # yellow dot on the tab. See upstream-wezterm/patches/0061-tab-alert-claude-waiting.md.
 #
 # Wire it from Claude Code hooks (e.g. ~/.claude/settings.json).
-# Replace <bethterm-clone> with this repository's path:
+# Replace <bethstudio-clone> with this repository's path:
 #
 #   "hooks": {
 #     "Notification":     [ { "matcher": "", "hooks": [ { "type": "command",
-#       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<bethterm-clone>\\hooks\\claude-tab-status.ps1\" waiting" } ] } ],
+#       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<bethstudio-clone>\\hooks\\claude-tab-status.ps1\" waiting" } ] } ],
 #     "UserPromptSubmit": [ {                "hooks": [ { "type": "command",
-#       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<bethterm-clone>\\hooks\\claude-tab-status.ps1\" idle" } ] } ]
+#       "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<bethstudio-clone>\\hooks\\claude-tab-status.ps1\" idle" } ] } ]
 #   }
 #
 # Notes:
-#   * Only emits inside a WezTerm / BethTerm pane (WEZTERM_PANE is set), so
+#   * Only emits inside a WezTerm / Beth Studio pane (WEZTERM_PANE is set), so
 #     it is a harmless no-op in any other terminal.
 #   * The sequence is written to the console device (CONOUT$), NOT stdout,
 #     because a hook's stdout is captured by Claude Code and never reaches the

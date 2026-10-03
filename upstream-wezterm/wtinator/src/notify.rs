@@ -49,7 +49,7 @@ pub struct TabSnapshot {
     pub active_pane_font_family: Option<String>,
 }
 
-/// BethTerm (patch 0131): the visual state of one live pane, so the
+/// Beth Studio (patch 0131): the visual state of one live pane, so the
 /// Settings app opens showing what the terminal already uses (theme,
 /// family, size, bold, italic) instead of blank controls.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
@@ -142,7 +142,7 @@ pub struct ConfigSnapshot {
     /// not bump `PROTOCOL_VERSION`.
     #[serde(default)]
     pub base_font_size: f64,
-    /// BethTerm (patch 0110): theme id to stamp on new terminals and
+    /// Beth Studio (patch 0110): theme id to stamp on new terminals and
     /// to show as the "default" badge in the Settings app. `None` when
     /// the user has not chosen a default. Additive — does not bump
     /// `PROTOCOL_VERSION`.
@@ -150,7 +150,7 @@ pub struct ConfigSnapshot {
     pub default_theme: Option<String>,
     pub tabs: Vec<TabSnapshot>,
     pub themes: Vec<ThemeSnapshot>,
-    /// BethTerm (patch 0131): every live pane's visual state. Additive.
+    /// Beth Studio (patch 0131): every live pane's visual state. Additive.
     #[serde(default)]
     pub panes: Vec<PaneSnapshot>,
 }
@@ -254,7 +254,7 @@ pub fn snapshot_tab(tab: &Arc<Tab>, tab_index: usize) -> TabSnapshot {
     // "(default theme)" for tabs that have not
     // been customised.
     let active_pane = tab.get_active_pane();
-    // BethTerm (patch 0131): report the theme the active pane really
+    // Beth Studio (patch 0131): report the theme the active pane really
     // has, so the Settings app can mark it as applied.
     let current_theme = active_pane
         .as_ref()
@@ -322,7 +322,7 @@ pub fn snapshot_for_config() -> ConfigSnapshot {
             if let Some(window) = mux.get_window(window_id) {
                 for (tab_index, tab) in window.iter().enumerate() {
                     tabs.push(snapshot_tab(tab, tab_index));
-                    // BethTerm (patch 0131): per-pane visual state.
+                    // Beth Studio (patch 0131): per-pane visual state.
                     for pos in tab.iter_panes_ignoring_zoom() {
                         panes.push(PaneSnapshot {
                             pane_id: pos.pane.pane_id(),

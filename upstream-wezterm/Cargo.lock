@@ -415,7 +415,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bethterm-setup"
+name = "bethstudio-setup"
 version = "0.1.0"
 dependencies = [
  "anyhow",

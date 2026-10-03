@@ -1,8 +1,8 @@
 PATCHES.md
-assets/icon/bethterm-source.png
-bethterm-setup/Cargo.toml
-bethterm-setup/build.rs
-bethterm-setup/src/main.rs
+assets/icon/bethstudio-source.png
+bethstudio-setup/Cargo.toml
+bethstudio-setup/build.rs
+bethstudio-setup/src/main.rs
 wezterm/src/cli/bridge.rs
 wtinator/Cargo.toml
 wtinator/data/README.md

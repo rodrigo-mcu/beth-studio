@@ -395,34 +395,34 @@ fn mux_notify_client_domain(local_domain_id: DomainId, notif: MuxNotification) -
     true
 }
 
-/// BethTerm (patch 0136): name of the persistent PTY host domain. Must
+/// Beth Studio (patch 0136): name of the persistent PTY host domain. Must
 /// match `wtinator::host::DOMAIN_NAME` (this crate cannot depend on
 /// `wtinator`).
-pub const BETHTERM_HOST_DOMAIN_NAME: &str = "bethterm-host";
+pub const BETHSTUDIO_HOST_DOMAIN_NAME: &str = "bethstudio-host";
 
-/// BethTerm (patch 0165): the legacy host or a window host
-/// (`bethterm-host-<id>`, patch 0159). Exact comparisons with
-/// `BETHTERM_HOST_DOMAIN_NAME` missed every window host.
-pub fn is_bethterm_host_domain(name: &str) -> bool {
-    name == BETHTERM_HOST_DOMAIN_NAME
+/// Beth Studio (patch 0165): the legacy host or a window host
+/// (`bethstudio-host-<id>`, patch 0159). Exact comparisons with
+/// `BETHSTUDIO_HOST_DOMAIN_NAME` missed every window host.
+pub fn is_bethstudio_host_domain(name: &str) -> bool {
+    name == BETHSTUDIO_HOST_DOMAIN_NAME
         || name
-            .strip_prefix(BETHTERM_HOST_DOMAIN_NAME)
+            .strip_prefix(BETHSTUDIO_HOST_DOMAIN_NAME)
             .is_some_and(|rest| rest.starts_with('-'))
 }
 
-/// BethTerm (patch 0165): host domains whose connection dropped while
+/// Beth Studio (patch 0165): host domains whose connection dropped while
 /// this GUI still showed panes from them. The mux also detaches a
 /// domain when its last window closes, so only the connection-loss
 /// path records here. The GUI then asks `wtinator::host` whether the
 /// host exited on purpose (empty) or died with terminals in it.
-pub static BETHTERM_HOSTS_LOST_WITH_PANES: Mutex<Vec<String>> = Mutex::new(Vec::new());
+pub static BETHSTUDIO_HOSTS_LOST_WITH_PANES: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
-/// BethTerm (patch 0168): `wtinator::host::note_life`, set by the GUI
+/// Beth Studio (patch 0168): `wtinator::host::note_life`, set by the GUI
 /// (this crate cannot depend on `wtinator`).
-pub static BETHTERM_LIFE_LOG: std::sync::OnceLock<fn(&str)> = std::sync::OnceLock::new();
+pub static BETHSTUDIO_LIFE_LOG: std::sync::OnceLock<fn(&str)> = std::sync::OnceLock::new();
 
-fn bethterm_life(message: &str) {
-    if let Some(log) = BETHTERM_LIFE_LOG.get() {
+fn bethstudio_life(message: &str) {
+    if let Some(log) = BETHSTUDIO_LIFE_LOG.get() {
         log(message);
     }
 }
@@ -448,11 +448,11 @@ impl ClientDomain {
         self.config.connect_automatically()
     }
 
-    /// BethTerm (patch 0165): the connection to this domain dropped.
+    /// Beth Studio (patch 0165): the connection to this domain dropped.
     /// Called before `perform_detach` on the connection-loss path only.
     pub fn note_connection_lost(&self) {
         let name = self.config.name();
-        if !is_bethterm_host_domain(&name) {
+        if !is_bethstudio_host_domain(&name) {
             return;
         }
         let shown = Mux::get()
@@ -460,22 +460,22 @@ impl ClientDomain {
             .iter()
             .filter(|p| p.domain_id() == self.local_domain_id)
             .count();
-        bethterm_life(&format!(
+        bethstudio_life(&format!(
             "GUI lost its connection to {name} (showing {shown} pane(s) from it)"
         ));
         if shown > 0 {
             log::warn!(
-                "bethterm: lost the connection to host {name} while it still showed panes; \
-                 see %APPDATA%\\bethterm\\host-life.log for the host's own exit line"
+                "bethstudio: lost the connection to host {name} while it still showed panes; \
+                 see %APPDATA%\\bethstudio\\host-life.log for the host's own exit line"
             );
-            BETHTERM_HOSTS_LOST_WITH_PANES.lock().unwrap().push(name.to_string());
+            BETHSTUDIO_HOSTS_LOST_WITH_PANES.lock().unwrap().push(name.to_string());
         }
     }
 
     pub fn perform_detach(&self) {
         log::info!("detached domain {}", self.local_domain_id);
-        if is_bethterm_host_domain(&self.config.name()) {
-            bethterm_life(&format!(
+        if is_bethstudio_host_domain(&self.config.name()) {
+            bethstudio_life(&format!(
                 "GUI detached domain {} ({})",
                 self.config.name(),
                 self.local_domain_id
@@ -682,7 +682,7 @@ impl ClientDomain {
                 });
 
                 if let Some(local_window_id) = inner.remote_to_local_window(remote_window_id) {
-                    // BethTerm (patch 0140): the mapped local window can be
+                    // Beth Studio (patch 0140): the mapped local window can be
                     // gone. "Move tab to new window" empties the old local
                     // window, the mux drops it, and the next host sync used
                     // to `expect` it and kill the whole GUI. Re-map the
@@ -734,7 +734,7 @@ impl ClientDomain {
 
                 if let Some(local_window_id) = primary_window_id {
                     // Verify that the workspace is consistent between the local and remote
-                    // windows. BethTerm (patch 0123): the primary window can
+                    // windows. Beth Studio (patch 0123): the primary window can
                     // already be gone during session restore onto a ClientDomain;
                     // do not panic the GUI.
                     let workspace_ok = mux
@@ -772,7 +772,7 @@ impl ClientDomain {
 
         for (remote_window_id, window_title) in panes.window_titles {
             if let Some(local_window_id) = inner.remote_to_local_window(remote_window_id) {
-                // BethTerm (patch 0140): never panic on a vanished window.
+                // Beth Studio (patch 0140): never panic on a vanished window.
                 if let Some(mut window) = mux.get_window_mut(local_window_id) {
                     window.set_title(&window_title);
                 }
@@ -1039,14 +1039,14 @@ impl Domain for ClientDomain {
         let config = self.config.clone();
 
         let activity = mux::activity::Activity::new();
-        // BethTerm (patch 0136): the local host is on a Unix socket on
+        // Beth Studio (patch 0136): the local host is on a Unix socket on
         // the same machine and attaches in well under a second. The
         // upstream progress UI opens a "Connecting..." mux window with
-        // a termwiz pane; in BethTerm the window X hides to the tray
+        // a termwiz pane; in Beth Studio the window X hides to the tray
         // instead of closing, so that window survived as a hidden
         // zero-size ghost with its own timers (duplicate session
         // snapshots, duplicate pipe servers). Use the headless UI.
-        let ui = if window_id.is_none() && is_bethterm_host_domain(&self.config.name()) {
+        let ui = if window_id.is_none() && is_bethstudio_host_domain(&self.config.name()) {
             ConnectionUI::new_headless()
         } else {
             ConnectionUI::with_params(ConnectionUIParams {

@@ -30,12 +30,12 @@ Non-working or incomplete paths:
 
 - Git Bash: `./app.exe -debug` showed no terminal output.
 - Git Bash with winpty: `winpty ./app.exe -debug` showed no terminal output.
-- BethTerm with the extracted MobaXterm local bash showed no equivalent output.
-- Launching the extracted MobaXterm shell inside BethTerm does not make BethTerm
+- Beth Studio with the extracted MobaXterm local bash showed no equivalent output.
+- Launching the extracted MobaXterm shell inside Beth Studio does not make Beth Studio
   become MobaXterm; the terminal backend is still ConPTY.
 
 Reliable fallback: if the application also writes a log file, follow that file
-in a terminal. A user-defined entry in `%APPDATA%\bethterm\shells.json`
+in a terminal. A user-defined entry in `%APPDATA%\bethstudio\shells.json`
 (patch 0183) can start the application and follow its log in one click, e.g.
 PowerShell with `-NoExit`, `Start-Process` for the app and
 `Get-Content -Tail 120 -Wait` on the log.
@@ -47,7 +47,7 @@ Working theory:
 - MobaXterm's `/usr/bin/winpty` resolves to `conin.exe`; Git for Windows
   `winpty.exe` is not equivalent.
 - The extracted MobaXterm `bash.exe` / `conin.exe` binaries alone have not
-  reproduced the real MobaXterm console behavior inside BethTerm.
+  reproduced the real MobaXterm console behavior inside BethStudio.
 - This is a known limitation to study later if a native Moba-compatible console
   bridge becomes a priority.
 
@@ -94,7 +94,7 @@ strings C:\path\to\app.exe | Select-String OutputDebugString
 
 If `OutputDebugString` appears, use Sysinternals DebugView or WinDbg. That
 output is not stdout/stderr and will not appear in cmd, Git Bash, WSL, or
-BethTerm unless a debugger/debug-output listener is attached.
+Beth Studio unless a debugger/debug-output listener is attached.
 
 ## Debugger path
 
@@ -113,9 +113,9 @@ For a deeper trace, set breakpoints on:
 
 The stack trace tells which output path the executable is using.
 
-## BethTerm implication
+## Beth Studio implication
 
-BethTerm displays normal stdout/stderr written through the process' inherited
+Beth Studio displays normal stdout/stderr written through the process' inherited
 console handles. For applications that only show output under MobaXterm's
 bridge, follow the application's own log file (optionally through a
 `shells.json` entry). If the target app uses `OutputDebugString`, even `winpty`

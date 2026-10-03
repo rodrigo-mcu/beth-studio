@@ -1,7 +1,7 @@
-// wtinator — BethTerm's delta crate (historical crate name).
+// wtinator — Beth Studio's delta crate (historical crate name).
 //
 // This is the **only** place we add new code. Everything that distinguishes
-// us from upstream wezterm lives here. The product name is BethTerm; this
+// us from upstream wezterm lives here. The product name is Beth Studio; this
 // crate kept the `wtinator` identifier so existing patches and call sites
 // stay stable.
 //
@@ -11,7 +11,7 @@
 
 #![warn(missing_docs)]
 
-//! BethTerm delta over upstream wezterm.
+//! Beth Studio delta over upstream wezterm.
 //!
 //! See `docs/ARCHITECTURE.md` for the design and `docs/IMPLEMENTATION.md`
 //! for the phased build plan.
@@ -54,18 +54,18 @@ pub mod window_geom;
 use anyhow::Result;
 
 /// Public product name.
-pub const PRODUCT_NAME: &str = "BethTerm";
-/// Directory under `%APPDATA%` / `$XDG_CONFIG_HOME` for BethTerm state.
-pub const DATA_DIR_NAME: &str = "bethterm";
+pub const PRODUCT_NAME: &str = "Beth Studio";
+/// Directory under `%APPDATA%` / `$XDG_CONFIG_HOME` for Beth Studio state.
+pub const DATA_DIR_NAME: &str = "bethstudio";
 /// Previous WezTerminator data directory. `session_dir` migrates this.
 pub const LEGACY_DATA_DIR_NAME: &str = "wezterminator";
 
-/// True when this process should run in BethTerm (WezTerminator) mode.
+/// True when this process should run in Beth Studio (WezTerminator) mode.
 pub fn is_active() -> bool {
-    std::env::var_os("BETHTERM_ACTIVE").is_some() || std::env::var_os("WTINATOR_ACTIVE").is_some()
+    std::env::var_os("BETHSTUDIO_ACTIVE").is_some() || std::env::var_os("WTINATOR_ACTIVE").is_some()
 }
 
-/// Install BethTerm into the running wezterm process.
+/// Install Beth Studio into the running wezterm process.
 ///
 /// Called once from `wezterminator/src/main.rs` after config has been
 /// loaded and before the GUI starts. This function:
@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn install_does_not_panic_with_no_features_enabled() {
-        // Phase 0: install() must succeed when no BethTerm-specific
+        // Phase 0: install() must succeed when no BethStudio-specific
         // Lua config is present. The real test in Phase 1.A.3 will feed
         // synthetic Lua tables through config_lua::load and assert the
         // deserialized shape.

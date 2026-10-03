@@ -535,7 +535,7 @@ fn apply_sizes_from_splits(tree: &Tree, size: &TerminalSize) {
     }
 }
 
-/// BethTerm (patch 0130): how many base rows of pane header the layout
+/// Beth Studio (patch 0130): how many base rows of pane header the layout
 /// adds on top of the content sizes a mux host reports for `tree`.
 /// Stacked panes (a `Vertical` split) add their headers; side-by-side
 /// panes share the tallest column.
@@ -558,7 +558,7 @@ fn header_rows_for_tree(tree: &Tree) -> usize {
     }
 }
 
-/// BethTerm (patch 0130): inverse of `reserve_pane_header_row` for a
+/// Beth Studio (patch 0130): inverse of `reserve_pane_header_row` for a
 /// whole tab: grow a host-reported content size by `rows` base rows.
 fn add_header_rows(size: &TerminalSize, rows: usize) -> TerminalSize {
     if rows == 0 || size.rows == 0 {
@@ -1088,7 +1088,7 @@ impl TabInner {
                 }
             }
         }
-        // BethTerm (patch 0130): `size` is the CONTENT size the mux host
+        // Beth Studio (patch 0130): `size` is the CONTENT size the mux host
         // reports (its panes carry no header row). The local layout adds
         // one base row per stacked header (patch 0067). Feeding the
         // content size straight into `resize` reserved the header again,
@@ -1443,7 +1443,7 @@ impl TabInner {
         self.resize_impl(size, true)
     }
 
-    /// BethTerm (patch 0130): `resize_leaves == false` re-lays the split
+    /// Beth Studio (patch 0130): `resize_leaves == false` re-lays the split
     /// tree without pushing sizes into the panes. Used by
     /// `sync_with_pane_tree`, where the panes already have the sizes the
     /// mux host reported.
@@ -2805,7 +2805,7 @@ mod test {
         assert_eq!(reserve_pane_header_row(&layout), layout);
     }
 
-    /// BethTerm (patch 0130): a host reports CONTENT sizes. Syncing must
+    /// Beth Studio (patch 0130): a host reports CONTENT sizes. Syncing must
     /// grow the layout by the header rows and must not resize the pane,
     /// otherwise the GUI sends the host a one-row-smaller pane, the host
     /// answers `TabResized`, and the loop shrinks the pane to 1 row.

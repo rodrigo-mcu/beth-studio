@@ -1,4 +1,4 @@
-# BethTerm — top-level .gitignore
+# Beth Studio — top-level .gitignore
 #
 # Layered on top of upstream-wezterm/.gitignore. The WezTerm tree is a
 # vendored snapshot (not a live submodule).
@@ -58,7 +58,7 @@ zig-pkg/
 .cache-fresh/
 **/node_modules/
 
-# Packed installer output (rebuild with pack-bethterm-setup.cmd)
+# Packed installer output (rebuild with pack-bethstudio-setup.cmd)
 /dist/
 
 # Local cargo / agent logs and machine-specific handoff notes
@@ -71,4 +71,4 @@ HANDOFF-*.md
 STATUS.md
 docs/2026-06-07-codex-titlebar-window-controls.md
 .playwright-mcp/
-bethterm-web/bethstudio-proxy-linux
+bethstudio-web/bethstudio-proxy-linux

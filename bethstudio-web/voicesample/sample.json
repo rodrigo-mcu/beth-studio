@@ -1,0 +1,6 @@
+﻿{
+    "culture":  "pt-BR",
+    "voice":  "Microsoft Maria Desktop",
+    "warning":  "",
+    "text":  "Abre o Beth Studio no PowerShell e roda o arquivo main ponto go no WSL."
+}

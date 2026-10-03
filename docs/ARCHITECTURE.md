@@ -6,7 +6,7 @@ This document maps the upstream wezterm codebase so a new contributor (or anothe
 
 > **Related docs**
 > - [`IMPLEMENTATION.md`](IMPLEMENTATION.md) — the phased plan that turns the architecture into work.
-> - [`FEATURES.md`](FEATURES.md) — the spec of every BethTerm feature.
+> - [`FEATURES.md`](FEATURES.md) — the spec of every Beth Studio feature.
 > - [`PROJECT_LAYOUT.md`](PROJECT_LAYOUT.md) — the directory tree and the *why* behind it.
 > - [`HACKING.md`](HACKING.md) — build, test, debug.
 
@@ -22,15 +22,15 @@ This document maps the upstream wezterm codebase so a new contributor (or anothe
 Three programs, one set of terminals:
 
 ```
-bethterm-web.exe (Beth Studio, Go + React in WebView2)
-    ├─ supervises ─────────────► bethterm-host.exe   (package wezterm-mux-server; owns every PTY)
-    └─ JSON lines over stdio ──► bethterm.exe cli bridge (package wezterm) ── mux ──► bethterm-host.exe
+bethstudio-web.exe (Beth Studio, Go + React in WebView2)
+    ├─ supervises ─────────────► bethstudio-host.exe   (package wezterm-mux-server; owns every PTY)
+    └─ JSON lines over stdio ──► bethstudio.exe cli bridge (package wezterm) ── mux ──► bethstudio-host.exe
 ```
 
-- **`bethterm-host.exe`** owns the PTYs. It outlives every window, so shells, agents, and WSL sessions survive a Studio restart. Nothing but the user (tray **Encerrar tudo**, after a confirmation) stops it.
-- **`bethterm.exe`** is the CLI plus `cli bridge`, the only way the Studio talks to the host. The subcommands that used to delegate to the native window (`gui-restart`, `start`, `ssh`, `serial`, `connect`) now fail with a message asking you to use Beth Studio.
-- **`bethterm-web.exe`** (Beth Studio) serves the React UI in WebView2, starts the host when none runs, restarts it after a crash, restores the terminals, and owns the tray icon. A phone web app and an optional Linux relay (`bethstudio-proxy`) reach it remotely.
-- The installer (`bethterm-setup`) packs `bethterm.exe`, `bethterm-host.exe`, `bethterm-web.exe`, `bethterm-tool.exe`, `OpenConsole.exe`, and `conpty.dll`.
+- **`bethstudio-host.exe`** owns the PTYs. It outlives every window, so shells, agents, and WSL sessions survive a Studio restart. Nothing but the user (tray **Encerrar tudo**, after a confirmation) stops it.
+- **`bethstudio.exe`** is the CLI plus `cli bridge`, the only way the Studio talks to the host. The subcommands that used to delegate to the native window (`gui-restart`, `start`, `ssh`, `serial`, `connect`) now fail with a message asking you to use Beth Studio.
+- **`bethstudio-web.exe`** (Beth Studio) serves the React UI in WebView2, starts the host when none runs, restarts it after a crash, restores the terminals, and owns the tray icon. A phone web app and an optional Linux relay (`bethstudio-proxy`) reach it remotely.
+- The installer (`bethstudio-setup`) packs `bethstudio.exe`, `bethstudio-host.exe`, `bethstudio-web.exe`, `bethstudio-tool.exe`, `OpenConsole.exe`, and `conpty.dll`.
 - The `wtinator` delta crate keeps only host-side modules: `agent_wait`, `config_lua`, `default_theme`, `echo_latency`, `groups`, `host`, `notify`, `notify_ipc`, `pane_cmd`, `session`, `shells` (`default_shells`), `taskbar_icon`, `theme_download`, `vscode_theme`, and `window_geom`.
 
 ---
@@ -62,12 +62,12 @@ An experimental rewrite-from-scratch in Zig (libghostty VT parser + Win32) was c
 
 ## The wezterm codebase in 90 seconds
 
-Wezterm is a Cargo workspace with ~50 crates. The ones that matter for BethTerm are:
+Wezterm is a Cargo workspace with ~50 crates. The ones that matter for Beth Studio are:
 
 | Crate | What it does | Public API worth knowing |
 | --- | --- | --- |
 | `mux` | The multiplexer. Tabs, panes, domains (local / SSH / WSL), workspaces, RPC. | `Mux`, `Tab`, `Pane`, `Domain`, `Window`, `MuxNotification` |
-| `wezterm` | The CLI binary (`bethterm.exe`), including `cli bridge`. | Cargo package `wezterm` |
+| `wezterm` | The CLI binary (`bethstudio.exe`), including `cli bridge`. | Cargo package `wezterm` |
 | `config` | Loads and merges `wezterm.lua` with default config. | `Config`, `lua::load_config` |
 | `wezterm-font` | Font discovery, shaping, ligatures, fallback. | `FontConfiguration`, `LoadedFont` |
 | `wezterm-surface` | The terminal "screen" abstraction (cells, attributes, dirty regions). | `Surface`, `Cell` |
@@ -176,9 +176,9 @@ When you type in a Beth Studio terminal:
 
 ```
 [xterm.js key event in WebView2]
-    → bethterm-web.exe          (WebSocket → Go)
-    → bethterm cli bridge       (JSON line: send / paste)
-    → mux client → bethterm-host.exe
+    → bethstudio-web.exe          (WebSocket → Go)
+    → bethstudio cli bridge       (JSON line: send / paste)
+    → mux client → bethstudio-host.exe
     → mux::Pane::input          (writes to the PTY; output goes through the escape parser)
     → wezterm-surface           (screen state)
     → bridge screen frames      → Go → WebSocket → xterm.js

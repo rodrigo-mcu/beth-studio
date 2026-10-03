@@ -132,7 +132,7 @@ separate UI for the same terminals.
   opening screen lists the terminals being assembled, a 28 px tab bar.
 - The installer now packages Beth Studio.
 
-### 2026-10-03 — Tray menu, a clean tree, and the Studio takes over the host (0194–0198)
+### 2026-10-03 — Tray menu, a clean tree, and the Studio takes over the host (0194–0199)
 
 - **Beth Studio now supervises the host** (phase A of the plan to retire the
   native window): it starts `bethterm-host.exe`, restarts it after a crash
@@ -150,6 +150,9 @@ separate UI for the same terminals.
   plus `wtinator` trimmed to what they use. The installer ships `bethterm-web.exe`;
   `start`/`ssh`/`serial`/`connect` now point to Beth Studio. 611 base files were
   removed (`UPSTREAM_REMOVED.txt`); 27 are still modified.
+- **The product is renamed to Beth Studio (0199).** `bethterm` became `bethstudio` in every
+  executable, folder, environment variable, host mutex and token header; no migration. The
+  Alt key stopped opening the Windows menu over the Studio window.
 - Tray menu regrouped: Beth Studio first, everything about the native window
   in one submenu, and clearer exit labels (0196).
 - Test fixtures made neutral (no real hosts, addresses or personal paths),
