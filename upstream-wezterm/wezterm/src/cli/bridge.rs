@@ -246,6 +246,9 @@ enum Request {
         window_id: Option<mux::window::WindowId>,
         #[serde(default)]
         cwd: Option<String>,
+        /// Patch 0197: WSL distro for `wsl.exe` shells (`-d <distro>`).
+        #[serde(default)]
+        distro: Option<String>,
         #[serde(default)]
         request_id: Option<String>,
     },
@@ -484,10 +487,11 @@ impl Bridge {
                             shell_id,
                             window_id,
                             cwd,
+                            distro,
                             request_id,
                         }) => {
                             let request_id = request_id.unwrap_or_default();
-                            match spawn_shell(&client, &shell_id, window_id, cwd).await {
+                            match spawn_shell(&client, &shell_id, window_id, cwd, distro).await {
                                 Ok(spawned) => {
                                     emit(&Event::Spawned {
                                         request_id: &request_id,
@@ -920,16 +924,150 @@ mod tool_tests {
     }
 }
 
+/// Patch 0197: how a shell is started for the Studio.
+///
+/// For `wsl.exe` shells a Linux folder (`/home/x`, `/mnt/d/y`, `~`) becomes
+/// `--cd <folder>` and is NOT used as the Windows working directory (that
+/// directory does not exist, the host dropped it, and the terminal opened in
+/// the wrong place), and a requested distro becomes `-d <distro>`. Any other
+/// shell keeps its argv and gets `cwd` as the working directory.
+fn wsl_spawn_args(
+    args: &[String],
+    distro: Option<&str>,
+    cwd: Option<&str>,
+) -> anyhow::Result<(Vec<String>, Option<String>)> {
+    let cwd = cwd.filter(|c| !c.is_empty());
+    let is_wsl = args
+        .first()
+        .map(|a| {
+            let a = a.replace('\\', "/").to_ascii_lowercase();
+            a == "wsl.exe" || a == "wsl" || a.ends_with("/wsl.exe")
+        })
+        .unwrap_or(false);
+    if !is_wsl {
+        return Ok((args.to_vec(), cwd.map(String::from)));
+    }
+    let distro = distro.filter(|d| !d.is_empty());
+    if let Some(d) = distro {
+        let ok = d.len() <= 64
+            && d.chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-');
+        anyhow::ensure!(ok, "invalid WSL distro name {d:?}");
+    }
+    let linux_cwd = cwd.filter(|c| c.starts_with('/') || *c == "~");
+    let mut out = vec![args[0].clone()];
+    let mut rest = args[1..].iter();
+    while let Some(a) = rest.next() {
+        let drop_value = (distro.is_some() && (a == "-d" || a == "--distribution"))
+            || (linux_cwd.is_some() && a == "--cd");
+        if drop_value {
+            rest.next(); // the value that followed
+            continue;
+        }
+        out.push(a.clone());
+    }
+    let mut head = Vec::new();
+    if let Some(d) = distro {
+        head.push("-d".to_string());
+        head.push(d.to_string());
+    }
+    if let Some(c) = linux_cwd {
+        head.push("--cd".to_string());
+        head.push(c.to_string());
+    }
+    out.splice(1..1, head);
+    let command_dir = if linux_cwd.is_some() {
+        None
+    } else {
+        cwd.map(String::from)
+    };
+    Ok((out, command_dir))
+}
+
+#[cfg(test)]
+mod wsl_spawn_tests {
+    use super::wsl_spawn_args;
+
+    fn v(a: &[&str]) -> Vec<String> {
+        a.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn other_shells_keep_argv_and_use_cwd_as_directory() {
+        let (a, d) = wsl_spawn_args(&v(&["pwsh.exe", "-NoLogo"]), Some("Debian"), Some("C:\\work")).unwrap();
+        assert_eq!(a, v(&["pwsh.exe", "-NoLogo"]));
+        assert_eq!(d.as_deref(), Some("C:\\work"));
+    }
+
+    #[test]
+    fn wsl_linux_folder_becomes_cd_and_no_windows_directory() {
+        let (a, d) = wsl_spawn_args(&v(&["wsl.exe"]), None, Some("/home/dev/proj")).unwrap();
+        assert_eq!(a, v(&["wsl.exe", "--cd", "/home/dev/proj"]));
+        assert_eq!(d, None);
+    }
+
+    #[test]
+    fn wsl_distro_and_folder() {
+        let (a, d) = wsl_spawn_args(&v(&["wsl.exe"]), Some("Debian"), Some("/mnt/data")).unwrap();
+        assert_eq!(a, v(&["wsl.exe", "-d", "Debian", "--cd", "/mnt/data"]));
+        assert_eq!(d, None);
+    }
+
+    #[test]
+    fn requested_distro_replaces_the_one_in_argv() {
+        let (a, _) = wsl_spawn_args(&v(&["wsl.exe", "-d", "Ubuntu"]), Some("Debian"), None).unwrap();
+        assert_eq!(a, v(&["wsl.exe", "-d", "Debian"]));
+        let (a, _) = wsl_spawn_args(&v(&["wsl.exe", "-d", "Ubuntu"]), None, Some("/x")).unwrap();
+        assert_eq!(a, v(&["wsl.exe", "--cd", "/x", "-d", "Ubuntu"]));
+    }
+
+    #[test]
+    fn existing_cd_is_replaced() {
+        let (a, _) = wsl_spawn_args(&v(&["wsl.exe", "--cd", "/old"]), None, Some("/new")).unwrap();
+        assert_eq!(a, v(&["wsl.exe", "--cd", "/new"]));
+    }
+
+    #[test]
+    fn home_tilde_is_a_linux_folder() {
+        let (a, d) = wsl_spawn_args(&v(&["wsl.exe"]), None, Some("~")).unwrap();
+        assert_eq!(a, v(&["wsl.exe", "--cd", "~"]));
+        assert_eq!(d, None);
+    }
+
+    #[test]
+    fn windows_folder_with_wsl_stays_a_directory() {
+        let (a, d) = wsl_spawn_args(&v(&["wsl.exe"]), None, Some("C:\\Users\\dev")).unwrap();
+        assert_eq!(a, v(&["wsl.exe"]));
+        assert_eq!(d.as_deref(), Some("C:\\Users\\dev"));
+    }
+
+    #[test]
+    fn empty_cwd_is_nothing() {
+        let (a, d) = wsl_spawn_args(&v(&["wsl.exe"]), None, Some("")).unwrap();
+        assert_eq!(a, v(&["wsl.exe"]));
+        assert_eq!(d, None);
+    }
+
+    #[test]
+    fn invalid_distro_is_rejected() {
+        assert!(wsl_spawn_args(&v(&["wsl.exe"]), Some("a b; calc"), None).is_err());
+        assert!(wsl_spawn_args(&v(&["wsl.exe"]), Some("../x"), None).is_err());
+        assert!(wsl_spawn_args(&v(&["wsl.exe"]), Some(&"a".repeat(65)), None).is_err());
+    }
+}
+
 async fn spawn_shell(
     client: &Client,
     shell_id: &str,
     window_id: Option<mux::window::WindowId>,
     cwd: Option<String>,
+    distro: Option<String>,
 ) -> anyhow::Result<codec::SpawnResponse> {
     let shell = wtinator::context_menu::default_shells()
         .into_iter()
         .find(|s| s.id == shell_id)
         .ok_or_else(|| anyhow::anyhow!("unknown shell id {shell_id:?}"))?;
+    let (argv, command_dir) = wsl_spawn_args(&shell.args, distro.as_deref(), cwd.as_deref())?;
     let config = config::configuration();
     let workspace = config
         .default_workspace
@@ -941,9 +1079,9 @@ async fn spawn_shell(
             domain: config::keyassignment::SpawnTabDomain::DefaultDomain,
             window_id,
             command: Some(portable_pty::cmdbuilder::CommandBuilder::from_argv(
-                shell.args.iter().map(Into::into).collect(),
+                argv.iter().map(Into::into).collect(),
             )),
-            command_dir: cwd.filter(|c| !c.is_empty()),
+            command_dir,
             size: config.initial_size(0, None),
             workspace,
         })

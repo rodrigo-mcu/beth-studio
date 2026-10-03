@@ -361,6 +361,18 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   tudo** (asks first, then closes every terminal). The icon gets an amber dot
   while an agent waits for you. With an old `bethterm-gui.exe` running, the
   Studio leaves the host and the tray to it.
+- 🟢 **Terminals come back after a host crash** (2026-10-03). The Studio keeps a recipe
+  for every live terminal in `%APPDATA%\bethterm\pane-specs.json` (shell, folder, WSL
+  distro, saved SSH host or serial port). When the host comes back **empty and as a
+  different process**, it recreates them in the same tabs and folders and re-links names
+  and themes to the new ids. A terminal closed on purpose never comes back. A banner
+  shows the progress and, at the end, anything that did not return.
+- 🟢 **Smart WSL start** (2026-10-03). Before a WSL terminal opens, the Studio waits for
+  the distro to answer, runs the optional per-distro init command once per VM boot
+  (`%APPDATA%\bethterm\wsl-distros.json`: `{"Debian":{"init":"...","user":"root","timeout_sec":60}}`)
+  and waits for the folder to exist; if it never does, the terminal opens in the home folder,
+  not in `/`. The same wait applies to **Novo terminal** on a stopped distro (patch 0197 makes
+  `--cd` and `-d` work).
 - 🟢 Own tabs and splits (drag, new terminal to the right / below / above /
   left), views **Minha organização**, **Como no BethTerm**, **Por tipo**,
   and **Por pasta** (groups by each terminal's current folder, follows

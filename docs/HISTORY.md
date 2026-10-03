@@ -140,6 +140,10 @@ separate UI for the same terminals.
   is closed. Stopping the host still needs a confirmed **Encerrar tudo**.
   Spec: [`superpowers/specs/2026-10-03-studio-supervisor-design.md`](superpowers/specs/2026-10-03-studio-supervisor-design.md).
   Tests use a host id so the real host is never seen.
+- **Phase A2: terminals come back after a host crash.** A per-terminal recipe
+  (`pane-specs.json`), a restore that recreates terminals in the same tabs and
+  folders, and a WSL gate that waits for the distro, runs an optional init command
+  once per boot, and waits for the folder (patch 0197: `--cd` and `-d`).
 - Tray menu regrouped: Beth Studio first, everything about the native window
   in one submenu, and clearer exit labels (0196).
 - Test fixtures made neutral (no real hosts, addresses or personal paths),

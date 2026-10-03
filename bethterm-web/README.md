@@ -49,6 +49,10 @@ navegador (WebView2)  <-- WebSocket -->  bethterm-web.exe (Go)  <-- stdin/stdout
   host por conta própria: só **Encerrar tudo** na bandeja, depois de uma
   confirmação que diz quantos terminais serão fechados. Se a GUI antiga
   (`bethterm-gui.exe`) estiver rodando, não supervisiona nem cria bandeja.
+- Depois de uma queda, o Studio recria os terminais (supervisor + restore.go): a receita de cada
+  terminal fica em `%APPDATA%\bethterm\pane-specs.json`; só restaura quando o host é **outro processo**,
+  está vazio e a receita tem menos de 7 dias. Terminais WSL esperam a distro, o comando de
+  inicialização opcional de `wsl-distros.json` (uma vez por boot da VM) e a pasta (wsl_ready.go).
 - A janela principal, ao fechar, esconde na bandeja (o ícone fica no relógio);
   **Sair da bandeja** fecha o Studio e deixa o host e os terminais rodando.
 - Fechar uma aba/visualização no web nunca encerra um terminal — só

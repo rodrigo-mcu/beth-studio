@@ -1436,7 +1436,20 @@ fn bethterm_host_socket() -> Option<std::path::PathBuf> {
     } else {
         std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config"))?
     };
-    let sock = dir.join("bethterm").join("host.sock");
+    // Patch 0197: BETHTERM_HOST_ID (the same filter the host applies) picks
+    // `hosts\<id>.sock`, so tests can reach a host of their own without ever
+    // seeing the user's host. Unset: the single host, as always.
+    let id: String = std::env::var("BETHTERM_HOST_ID")
+        .unwrap_or_default()
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+        .take(48)
+        .collect();
+    let sock = if id.is_empty() {
+        dir.join("bethterm").join("host.sock")
+    } else {
+        dir.join("bethterm").join("hosts").join(format!("{id}.sock"))
+    };
     if sock.exists() {
         Some(sock)
     } else {

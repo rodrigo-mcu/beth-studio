@@ -3,6 +3,7 @@ import { applyAgent, Pending, requestIdFromError, type AgentState } from "./agen
 import { apiBase } from "./remote";
 import type { TermDragEvent } from "./termDrop";
 import type { HostEvent } from "./hostBanner";
+import type { RestoreEvent } from "./restoreBanner";
 
 // Conexao WebSocket com o backend Go. Um unico socket por pagina; as telas
 // (screen) vao direto para os assinantes de cada pane, sem passar pelo
@@ -23,6 +24,10 @@ export interface ConnectionSnapshot {
   termWindows: number[];
   /** estado do host visto pelo supervisor do Studio (null = ainda sem informacao) */
   host: HostEvent | null;
+  /** restauracao dos terminais depois de uma queda (null = nenhuma) */
+  restore: RestoreEvent | null;
+  /** quando a restauracao terminou (ms; 0 = nao terminou) */
+  restoreFinishedAt: number;
 }
 
 function readParams() {
@@ -62,6 +67,8 @@ export class Connection {
     shells: null,
     termWindows: [],
     host: null,
+    restore: null,
+    restoreFinishedAt: 0,
   };
   private spawns = new Pending<SpawnedEvent>();
   private separations = new Pending<number>();
@@ -207,6 +214,9 @@ export class Connection {
           break;
         case "host":
           this.patch({ host: ev });
+          break;
+        case "restore":
+          this.patch({ restore: ev, restoreFinishedAt: ev.stage === "finished" ? Date.now() : 0 });
           break;
         case "ui_open":
           this.uiOpenListeners.forEach((fn) => fn(ev.what));

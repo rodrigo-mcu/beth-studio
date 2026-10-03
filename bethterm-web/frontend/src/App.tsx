@@ -13,6 +13,8 @@ import { TabBar } from "@/components/TabBar";
 import { buildStudioActions } from "@/components/StudioActions";
 import { HostBanner } from "@/components/HostBanner";
 import { hostBanner } from "@/lib/hostBanner";
+import { RestoreBanner } from "@/components/RestoreBanner";
+import { restoreBanner } from "@/lib/restoreBanner";
 import { GoneLeaf, SplitView } from "@/components/SplitView";
 import { PaneMenu, type PaneMenuActions } from "@/components/PaneMenu";
 import { SearchPalette } from "@/components/SearchPalette";
@@ -565,6 +567,16 @@ export function App() {
     />
   );
   // Botoes de ferramenta: na barra lateral (na barra de abas so' com a lateral recolhida).
+  // Restauracao dos terminais depois de uma queda do host: faixa com o progresso e, no fim, o resumo.
+  const [restoreDismissed, setRestoreDismissed] = useState(false);
+  const [, restoreTick] = useState(0);
+  useEffect(() => {
+    setRestoreDismissed(false);
+    if (snap.restoreFinishedAt === 0) return;
+    const t = window.setTimeout(() => restoreTick((n) => n + 1), 8200); // o resumo "tudo certo" some sozinho
+    return () => window.clearTimeout(t);
+  }, [snap.restore]);
+  const restoreInfo = restoreBanner(snap.restore, Date.now(), snap.restoreFinishedAt);
   const studioActions = buildStudioActions({
     onSearch: () => setPalette(true),
     onGeneral: () => openSettings("aparencia"),
@@ -789,6 +801,7 @@ export function App() {
             />
           )}
           {hostBanner(snap.host) && <HostBanner conn={conn} info={hostBanner(snap.host)!} />}
+          {!restoreDismissed && restoreInfo && <RestoreBanner info={restoreInfo} onDismiss={() => setRestoreDismissed(true)} />}
           <div className="flex min-h-0 flex-1 p-2">
             {!layout || !act ? (
               <div className="flex flex-1 items-center justify-center text-text-2">Carregando…</div>

@@ -128,13 +128,13 @@ type SettingsSnapshot struct {
 type paneMeta struct{ title, cwd string }
 
 type settingsStore struct {
-	mu      sync.Mutex
-	dir     string
-	s       webSettings
-	live    map[int]paneMeta // from the last bridge list
+	mu   sync.Mutex
+	dir  string
+	s    webSettings
+	live map[int]paneMeta // from the last bridge list
 	// frozen: restauracao de terminais em andamento (settings_remap.go); o
 	// reconcile so' atualiza st.live e nao mexe no layout nem na aparencia
-	frozen bool
+	frozen  bool
 	dirty   bool
 	savedAt time.Time
 	onChg   func(SettingsSnapshot)
@@ -229,6 +229,9 @@ func (st *settingsStore) reloadIfChangedLocked() {
 // hostID identifies the running host: pid + host.pid mtime (pids repeat).
 func (st *settingsStore) hostID() string {
 	p := filepath.Join(st.dir, "host.pid")
+	if id := hostID(); id != "" { // host de teste com id proprio (hostctl.go)
+		p = filepath.Join(st.dir, "hosts", id+".pid")
+	}
 	b, err := os.ReadFile(p)
 	if err != nil {
 		return ""
