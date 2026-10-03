@@ -1,0 +1,4 @@
+repository: https://github.com/wez/wezterm.git
+commit: 05c5c9cc15e7bc195cd1938fdc7ba2f7dad26590
+commit-date: 2026-06-06T15:53:43+02:00
+subject: docs: changelog for #7137 & #7710

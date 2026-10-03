@@ -16,7 +16,7 @@ WezTerm already has tabs, splits, a multiplexer, SSH, GPU rendering, ligatures, 
 
 BethTerm keeps that engine and adds a Windows workflow you can use without a config file. The WezTerm tree is vendored in [`upstream-wezterm/`](upstream-wezterm/). BethTerm-specific code is the delta on top. Every edit to an existing WezTerm file is listed in [`upstream-wezterm/PATCHES.md`](upstream-wezterm/PATCHES.md).
 
-This is an **independent** fork. It is not affiliated with or endorsed by Wez Furlong or the WezTerm project. Attribution lives in [`NOTICE.md`](NOTICE.md) and the origin policy in [`docs/ORIGIN.md`](docs/ORIGIN.md). How the project got here: [`docs/HISTORY.md`](docs/HISTORY.md).
+This is an **independent** fork. It is not affiliated with or endorsed by Wez Furlong or the WezTerm project. Attribution lives in [`NOTICE.md`](NOTICE.md) and the origin policy in [`docs/ORIGIN.md`](docs/ORIGIN.md). How the project got here: [`docs/HISTORY.md`](docs/HISTORY.md). Which WezTerm commit it started from, the exact diff, and the policy for upstream changes: [`docs/UPSTREAM.md`](docs/UPSTREAM.md).
 
 > **Language.** The Beth Studio interface and several of its documents
 > (`bethterm-web/`, some files under `docs/`) are in Brazilian Portuguese.
