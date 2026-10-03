@@ -132,8 +132,14 @@ separate UI for the same terminals.
   opening screen lists the terminals being assembled, a 28 px tab bar.
 - The installer now packages Beth Studio.
 
-### 2026-10-03 — Tray menu and a clean tree (0194–0196)
+### 2026-10-03 — Tray menu, a clean tree, and the Studio takes over the host (0194–0196)
 
+- **Beth Studio now supervises the host** (phase A of the plan to retire the
+  native window): it starts `bethterm-host.exe`, restarts it after a crash
+  (3 in 10 minutes), has its own tray icon, and hides there when its window
+  is closed. Stopping the host still needs a confirmed **Encerrar tudo**.
+  Spec: [`superpowers/specs/2026-10-03-studio-supervisor-design.md`](superpowers/specs/2026-10-03-studio-supervisor-design.md).
+  Tests use a host id so the real host is never seen.
 - Tray menu regrouped: Beth Studio first, everything about the native window
   in one submenu, and clearer exit labels (0196).
 - Test fixtures made neutral (no real hosts, addresses or personal paths),

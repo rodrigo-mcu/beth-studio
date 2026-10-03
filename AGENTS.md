@@ -12,8 +12,15 @@ workspace. Read this before changing or testing the project.
 - **`bethterm-web/`** (Go + React, WebView2) is **Beth Studio**: a
   separate UI for the same terminals, reached through `bethterm cli bridge`
   (`upstream-wezterm/patches/0171-cli-bridge.md` onward). Tray label
-  "Beth Studio" (patch 0186). It never starts/stops/signals the host or
-  GUI. See `bethterm-web/README.md`.
+  "Beth Studio" (patch 0186). Since 2026-10-03 the Studio **supervises the
+  host**: it starts `bethterm-host.exe` when none runs, restarts it after a
+  crash (at most 3 times in 10 minutes), owns the tray icon, and hides to
+  the tray when its window is closed. It still **never stops the host on
+  its own**: only the tray entry "Encerrar tudo", after the user confirms in
+  a dialog, asks the host to quit. If an old `bethterm-gui.exe` is running,
+  the Studio leaves supervision and the tray to it. See
+  `docs/superpowers/specs/2026-10-03-studio-supervisor-design.md` and
+  `bethterm-web/README.md`.
 - **`bethterm-mobile/`** (Expo/TypeScript) is a skeleton Android/iOS app.
   The phone path that ships is the phone web app (separate build:
   `bethterm-web/frontend/phone.html`, `src/phone/`, output `dist/phone`;
@@ -60,6 +67,9 @@ asked for it.
 - Test in isolation: start the build from `target\release` with
   `APPDATA` pointed at a short temp folder (the socket path must stay
   under 108 characters) and stop only the processes you started.
+- To test the Studio supervisor, set `BETHTERM_HOST_ID=<unique id>` (a
+  separate mutex, quit event and files, so the real host is never seen) and
+  `BETHTERM_IGNORE_GUI=1`. Never run the supervisor tests without an id.
 - `%APPDATA%\bethterm\host-life.log` records every start, stop, pane
   open/close, and who asked for a stop (patch 0168). Read it before
   guessing why a terminal disappeared. A stop with

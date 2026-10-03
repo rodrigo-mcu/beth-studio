@@ -66,6 +66,10 @@ func hostExeIn(dir string) (string, error) {
 
 // hostExePath: bethterm-host.exe ao lado do exe do Studio.
 func hostExePath() (string, error) {
+	// BETHTERM_HOST_EXE: caminho do host escolhido à mão (testes de integração).
+	if v := strings.TrimSpace(os.Getenv("BETHTERM_HOST_EXE")); v != "" {
+		return hostExeIn(filepath.Dir(v))
+	}
 	self, err := os.Executable()
 	if err != nil {
 		return "", err

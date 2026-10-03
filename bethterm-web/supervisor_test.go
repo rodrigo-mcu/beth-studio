@@ -83,13 +83,13 @@ func TestSupervisorDoesNotRestartAfterQuitAsked(t *testing.T) {
 func TestSupervisorStopsAfterThreeRestartsInTenMinutes(t *testing.T) {
 	ctl := &fakeHostCtl{}
 	s, clk, _ := newTestSupervisor(t, ctl)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		ctl.running = false // o host morre de novo a cada ciclo
 		s.Tick()
 		clk.advance(time.Minute)
 	}
-	if ctl.starts != 3 {
-		t.Fatalf("starts = %d, quero 3 (o limite)", ctl.starts)
+	if ctl.starts != 4 {
+		t.Fatalf("starts = %d, quero 4 (o primeiro start mais 3 reinícios)", ctl.starts)
 	}
 	st, msg := s.State()
 	if st != hostUnavailable || !strings.Contains(msg, "3") {
@@ -100,7 +100,7 @@ func TestSupervisorStopsAfterThreeRestartsInTenMinutes(t *testing.T) {
 func TestSupervisorRetryResetsTheLimit(t *testing.T) {
 	ctl := &fakeHostCtl{}
 	s, _, _ := newTestSupervisor(t, ctl)
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 5; i++ {
 		ctl.running = false
 		s.Tick()
 	}
@@ -109,7 +109,7 @@ func TestSupervisorRetryResetsTheLimit(t *testing.T) {
 	}
 	ctl.running = false
 	s.Retry()
-	if ctl.starts != 4 {
+	if ctl.starts != 5 {
 		t.Fatalf("Retry deveria tentar de novo (starts=%d)", ctl.starts)
 	}
 }
@@ -125,8 +125,9 @@ func TestSupervisorStartFailureCountsAndShowsReason(t *testing.T) {
 	s.Tick()
 	s.Tick()
 	s.Tick()
-	if ctl.starts != 3 {
-		t.Fatalf("falhas contam para o limite: starts = %d, quero 3", ctl.starts)
+	s.Tick()
+	if ctl.starts != 4 {
+		t.Fatalf("falhas contam para o limite (menos a primeira): starts = %d, quero 4", ctl.starts)
 	}
 	if st, _ := s.State(); st != hostUnavailable {
 		t.Fatalf("estado = %s, quero unavailable", st)

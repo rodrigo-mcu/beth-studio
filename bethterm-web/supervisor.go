@@ -33,6 +33,7 @@ type supervisor struct {
 	state     hostState
 	msg       string
 	quitAsked bool
+	attempted bool // já tentou subir o host alguma vez
 }
 
 func newSupervisor(ctl hostCtl, lim *restartLimiter, now func() time.Time, onState func(hostState, string)) *supervisor {
@@ -101,6 +102,14 @@ func (s *supervisor) Tick() {
 		at := s.lim.RetryAt(now)
 		s.set(hostUnavailable, fmt.Sprintf("O host caiu 3 vezes em 10 minutos. Nova tentativa automática às %s, ou use Tentar de novo.", at.Format("15:04")))
 		return
+	}
+	// O primeiro start (abrir o Studio sem host) não é um reinício: não gasta vaga.
+	s.mu.Lock()
+	first := !s.attempted
+	s.attempted = true
+	s.mu.Unlock()
+	if first {
+		s.lim.Reset()
 	}
 	s.set(hostStarting, "Iniciando o host…")
 	lifeLog("host ausente; iniciando")

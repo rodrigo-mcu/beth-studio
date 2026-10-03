@@ -43,8 +43,15 @@ navegador (WebView2)  <-- WebSocket -->  bethterm-web.exe (Go)  <-- stdin/stdout
 - Chaves de provedores de IA ficam cifradas com DPAPI do Windows
   (`%APPDATA%\bethterm\secrets.dat`), fora do `web-settings.json`; a
   API só devolve uma máscara (`••••1234`), nunca a chave.
-- Nunca inicia, para ou sinaliza `bethterm-host.exe`/`bethterm-gui.exe`;
-  fechar uma aba/visualização no web nunca encerra um terminal — só
+- Sobe e vigia o `bethterm-host.exe` (supervisor.go, hostctl_windows.go):
+  se não existe, inicia; se cai, reinicia no máximo 3 vezes em 10 minutos e
+  depois mostra "Host indisponível" com **Tentar de novo**. Nunca encerra o
+  host por conta própria: só **Encerrar tudo** na bandeja, depois de uma
+  confirmação que diz quantos terminais serão fechados. Se a GUI antiga
+  (`bethterm-gui.exe`) estiver rodando, não supervisiona nem cria bandeja.
+- A janela principal, ao fechar, esconde na bandeja (o ícone fica no relógio);
+  **Sair da bandeja** fecha o Studio e deixa o host e os terminais rodando.
+- Fechar uma aba/visualização no web nunca encerra um terminal — só
   "Encerrar terminal…" com confirmação explícita (patch 0180) faz isso.
 - Os terminais abertos pelo Studio herdam o ambiente do `bethterm-web.exe`
   (o bridge cria o comando com `os.Environ`). Ao iniciar, ele tira as

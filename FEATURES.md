@@ -348,9 +348,19 @@ cannot freeze the GUI:
 
 🟢 A second window for the same terminals (`bethterm-web.exe`, tray label
 **Beth Studio**, patches 0171–0173, 0186). It talks to `bethterm cli bridge`
-and never starts or stops the host or the GUI. Closing a Studio tab does
+and supervises the host (starts it, restarts it after a crash, never stops
+it without a confirmed **Encerrar tudo**). Closing a Studio tab does
 not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 
+- 🟢 **Studio supervises the host and has its own tray icon** (2026-10-03).
+  Opening the Studio without a running `bethterm-host.exe` starts it. If the
+  host crashes it is restarted, at most 3 times in 10 minutes; after that a
+  banner says **Host indisponível** with **Tentar de novo**. Closing the window
+  hides it to the tray. The tray menu has **Beth Studio**, **Novo terminal**,
+  **Sistema**, **Sair da bandeja** (terminals keep running) and **Encerrar
+  tudo** (asks first, then closes every terminal). The icon gets an amber dot
+  while an agent waits for you. With an old `bethterm-gui.exe` running, the
+  Studio leaves the host and the tray to it.
 - 🟢 Own tabs and splits (drag, new terminal to the right / below / above /
   left), views **Minha organização**, **Como no BethTerm**, **Por tipo**,
   and **Por pasta** (groups by each terminal's current folder, follows
