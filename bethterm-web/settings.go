@@ -132,6 +132,9 @@ type settingsStore struct {
 	dir     string
 	s       webSettings
 	live    map[int]paneMeta // from the last bridge list
+	// frozen: restauracao de terminais em andamento (settings_remap.go); o
+	// reconcile so' atualiza st.live e nao mexe no layout nem na aparencia
+	frozen bool
 	dirty   bool
 	savedAt time.Time
 	onChg   func(SettingsSnapshot)
@@ -437,6 +440,10 @@ func (st *settingsStore) reconcile(list []byte) {
 	st.live = map[int]paneMeta{}
 	for _, p := range ev.Panes {
 		st.live[p.PaneID] = paneMeta{p.Title, p.Cwd}
+	}
+	if st.frozen {
+		st.mu.Unlock()
+		return
 	}
 	host := st.hostID()
 	changed := false
