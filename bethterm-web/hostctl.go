@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -75,10 +76,50 @@ func hostExePath() (string, error) {
 	return hostExeIn(filepath.Dir(self))
 }
 
-func hostSockPath() string { return filepath.Join(dataDir(), "host.sock") }
-func hostPidPath() string  { return filepath.Join(dataDir(), "host.pid") }
+// hostID: o id de host de BETHTERM_HOST_ID (o mesmo filtro do host Rust). Vazio
+// é o host único de sempre. Os testes usam um id para nunca enxergar o host do usuário:
+// com id, o mutex, o evento de saída e os arquivos são outros.
+func hostID() string {
+	var b strings.Builder
+	for _, c := range os.Getenv("BETHTERM_HOST_ID") {
+		if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '-' || c == '_' {
+			b.WriteRune(c)
+		}
+		if b.Len() >= 48 {
+			break
+		}
+	}
+	return b.String()
+}
 
-func quitRequestPath() string { return filepath.Join(dataDir(), "host.quit-request") }
+func hostMutex() string {
+	if id := hostID(); id != "" {
+		return hostMutexName + "-" + id
+	}
+	return hostMutexName
+}
+
+func hostQuitEvent() string {
+	if id := hostID(); id != "" {
+		return hostQuitEventName + "-" + id
+	}
+	return hostQuitEventName
+}
+
+// hostFile: host.<ext> (host único) ou hosts/<id>.<ext>.
+func hostFile(ext string) string {
+	if id := hostID(); id != "" {
+		return filepath.Join(dataDir(), "hosts", id+"."+ext)
+	}
+	return filepath.Join(dataDir(), "host."+ext)
+}
+
+func hostSockPath() string    { return hostFile("sock") }
+func hostPidPath() string     { return hostFile("pid") }
+func quitRequestPath() string { return hostFile("quit-request") }
+
+// ignoreOldGUI: BETHTERM_IGNORE_GUI=1 faz o Studio ignorar uma GUI antiga (só nos testes).
+func ignoreOldGUI() bool { return os.Getenv("BETHTERM_IGNORE_GUI") == "1" }
 
 // quitRequestText: o que o host lê para dizer quem pediu a saída (patch 0168).
 func quitRequestText(t time.Time, pid int, exe, reason string) string {

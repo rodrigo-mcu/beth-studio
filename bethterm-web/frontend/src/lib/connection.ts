@@ -67,6 +67,15 @@ export class Connection {
   private separations = new Pending<number>();
   private errorListeners = new Set<(msg: string) => void>();
   private termDragListeners = new Set<(e: TermDragEvent) => void>();
+  private uiOpenListeners = new Set<(what: string) => void>();
+
+  /** A bandeja pede para abrir uma tela do Studio (ex.: o gerenciador de tarefas). */
+  onUiOpen(fn: (what: string) => void) {
+    this.uiOpenListeners.add(fn);
+    return () => {
+      this.uiOpenListeners.delete(fn);
+    };
+  }
 
   /** Arrasto de uma janela de terminal destacada (posicao ja em pixels do Studio). */
   onTermDrag(fn: (e: TermDragEvent) => void) {
@@ -198,6 +207,9 @@ export class Connection {
           break;
         case "host":
           this.patch({ host: ev });
+          break;
+        case "ui_open":
+          this.uiOpenListeners.forEach((fn) => fn(ev.what));
           break;
         case "term_drag":
           this.termDragListeners.forEach((fn) => fn({ pane: ev.pane, x: ev.x, y: ev.y, end: ev.end, attach: ev.attach }));

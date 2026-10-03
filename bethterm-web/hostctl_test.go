@@ -55,3 +55,33 @@ func TestQuitRequestTextNamesTheRequester(t *testing.T) {
 		}
 	}
 }
+
+func TestHostIDSanitizedLikeTheHost(t *testing.T) {
+	t.Setenv("BETHTERM_HOST_ID", "../a b!c-1_x")
+	if got := hostID(); got != "abc-1_x" {
+		t.Fatalf("hostID = %q, quero abc-1_x", got)
+	}
+	t.Setenv("BETHTERM_HOST_ID", strings.Repeat("a", 60))
+	if got := hostID(); len(got) != 48 {
+		t.Fatalf("hostID com %d caracteres, quero 48", len(got))
+	}
+}
+
+func TestHostNamesAndFilesWithAndWithoutID(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("BETHTERM_DATA_DIR", dir)
+	t.Setenv("BETHTERM_HOST_ID", "")
+	if hostMutex() != `Local\BethTermHost` || hostQuitEvent() != `Local\BethTermHostQuit` {
+		t.Fatalf("host único: %q %q", hostMutex(), hostQuitEvent())
+	}
+	if hostSockPath() != filepath.Join(dir, "host.sock") || quitRequestPath() != filepath.Join(dir, "host.quit-request") || hostPidPath() != filepath.Join(dir, "host.pid") {
+		t.Fatalf("arquivos do host único: %q %q %q", hostSockPath(), quitRequestPath(), hostPidPath())
+	}
+	t.Setenv("BETHTERM_HOST_ID", "teste1")
+	if hostMutex() != `Local\BethTermHost-teste1` || hostQuitEvent() != `Local\BethTermHostQuit-teste1` {
+		t.Fatalf("host com id: %q %q", hostMutex(), hostQuitEvent())
+	}
+	if hostSockPath() != filepath.Join(dir, "hosts", "teste1.sock") || quitRequestPath() != filepath.Join(dir, "hosts", "teste1.quit-request") {
+		t.Fatalf("arquivos do host com id: %q %q", hostSockPath(), quitRequestPath())
+	}
+}

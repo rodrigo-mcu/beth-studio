@@ -462,6 +462,8 @@ export function App() {
   // Terminal destacado: o Go manda onde esta' o cursor enquanto a janela nativa
   // e' arrastada; aqui o arrasto vira eventos de drag da pagina, e as zonas de
   // soltar (paineis, abas, "+") funcionam como no arrasto da lista.
+  // A bandeja do Studio pede o gerenciador de tarefas ("Sistema").
+  useEffect(() => conn.onUiOpen((what) => what === "tasks" && setTaskManager(true)), []);
   const termDragLast = useRef<Element | null>(null);
   useEffect(
     () =>

@@ -186,6 +186,7 @@ export type ServerEvent =
   | { ev: "separated"; pane_id: number; tab_id: number; window_id: number }
   | { ev: "term_windows"; panes: number[] }
   | import("./hostBanner").HostEvent
+  | { ev: "ui_open"; what: "tasks" }
   | { ev: "term_drag"; pane: number; x: number; y: number; end: boolean; attach?: boolean }
   | import("./agents").AgentEvent;
 

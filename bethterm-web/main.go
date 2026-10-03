@@ -117,8 +117,11 @@ func main() {
 	// O Studio sobe e vigia o host (supervisor.go). Nos testes com
 	// --no-window só com --supervise, para nao mexer no host de ninguem.
 	if !*noWindow || *supervise {
-		hub.sup = newSupervisor(newHostCtl(), newRestartLimiter(3, 10*time.Minute), time.Now, hub.setHost)
+		ctl := newHostCtl()
+		hub.sup = newSupervisor(ctl, newRestartLimiter(3, 10*time.Minute), time.Now, hub.setHost)
 		go hub.sup.Run(ctx)
+		// Bandeja do Studio (tray_windows.go): só sobe se a GUI antiga não estiver cuidando dela.
+		go runTrayWhenFree(ctx, hub, hub.sup, ctl)
 	}
 	go br.run(ctx)
 	// Tipos dos terminais: pane-commands.json da GUI pode mudar sem a lista
@@ -171,6 +174,7 @@ func main() {
 	}
 
 	log.Printf("bethterm-web: encerrando")
+	stopTray()
 	hub.term.CloseAll() // só as janelas destacadas; os terminais seguem no host
 	cancel()
 	br.stop()

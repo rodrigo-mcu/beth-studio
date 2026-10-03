@@ -23,7 +23,7 @@ type realHostCtl struct{}
 func newHostCtl() hostCtl { return realHostCtl{} }
 
 func (realHostCtl) Running() bool {
-	name, err := windows.UTF16PtrFromString(hostMutexName)
+	name, err := windows.UTF16PtrFromString(hostMutex())
 	if err != nil {
 		return false
 	}
@@ -76,8 +76,9 @@ func (c realHostCtl) Start() error {
 // Só é chamado depois de o usuário confirmar "Encerrar tudo".
 func (c realHostCtl) RequestQuit(requester string) error {
 	exe, _ := os.Executable()
+	_ = os.MkdirAll(filepath.Dir(quitRequestPath()), 0o755)
 	_ = os.WriteFile(quitRequestPath(), []byte(quitRequestText(time.Now(), os.Getpid(), exe, requester)), 0o644)
-	name, err := windows.UTF16PtrFromString(hostQuitEventName)
+	name, err := windows.UTF16PtrFromString(hostQuitEvent())
 	if err != nil {
 		return err
 	}
@@ -118,6 +119,9 @@ func (c realHostCtl) terminateByPidFile() error {
 
 // GUIRunning: existe um bethterm-gui.exe (a GUI antiga) rodando?
 func (realHostCtl) GUIRunning() bool {
+	if ignoreOldGUI() {
+		return false
+	}
 	snap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, 0)
 	if err != nil {
 		return false

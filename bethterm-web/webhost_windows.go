@@ -245,6 +245,13 @@ func hostWndProc(hwnd, msg, wp, lp uintptr) uintptr {
 			paintSplash(hwnd) // "Abrindo Beth Studio…" enquanto o WebView2 inicia
 			return 0
 		}
+	case wmClose:
+		// Com o ícone na bandeja, fechar a janela principal só a esconde: o Studio
+		// segue vigiando o host. "Sair da bandeja" liga quitRequested e fecha de verdade.
+		if studioMainWindow && trayActive.Load() && !quitRequested.Load() {
+			_, _, _ = procShowWindow.Call(hwnd, swHide)
+			return 0
+		}
 	case wmDestroy:
 		_, _, _ = procPostQuitMessage.Call(0)
 		return 0
