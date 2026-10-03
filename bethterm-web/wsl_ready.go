@@ -52,6 +52,29 @@ func loadWSLDistroCfg(dir string) map[string]wslDistroCfg {
 	return out
 }
 
+// wslDistroForShell: a distro de um shell WSL do Studio. Vazio se não dá para saber.
+func wslDistroForShell(shellID, distro string, installed []string, def string) string {
+	if distro != "" {
+		return distro
+	}
+	if shellID == "wsl.default" {
+		return def
+	}
+	name := strings.TrimPrefix(shellID, "wsl.")
+	for _, d := range installed {
+		if strings.EqualFold(d, name) {
+			return d
+		}
+	}
+	return ""
+}
+
+// spawnErrorWithRequest: mensagem no formato que a interface reconhece
+// ("spawn x (request r1): ..."), para o terminal pendente falhar com o motivo.
+func spawnErrorWithRequest(reqID string, err error) string {
+	return fmt.Sprintf("spawn wsl (request %s): %v", reqID, err)
+}
+
 type wslGate struct {
 	run   cmdRunner
 	cfg   map[string]wslDistroCfg

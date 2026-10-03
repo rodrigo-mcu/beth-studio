@@ -248,3 +248,26 @@ func TestLoadWSLDistroCfgIsCaseInsensitive(t *testing.T) {
 		t.Fatalf("arquivo inválido deveria vir vazio: %+v", got)
 	}
 }
+
+func TestWSLDistroForShell(t *testing.T) {
+	installed := []string{"Debian", "Ubuntu-22.04"}
+	cases := []struct{ shell, distro, want string }{
+		{"wsl.default", "", "Debian"},
+		{"wsl.default", "Ubuntu-22.04", "Ubuntu-22.04"},
+		{"wsl.ubuntu-22.04", "", "Ubuntu-22.04"},
+		{"wsl.debian", "", "Debian"},
+		{"wsl.naoexiste", "", ""},
+	}
+	for _, c := range cases {
+		if got := wslDistroForShell(c.shell, c.distro, installed, "Debian"); got != c.want {
+			t.Errorf("wslDistroForShell(%q, %q) = %q, quero %q", c.shell, c.distro, got, c.want)
+		}
+	}
+}
+
+func TestSpawnErrorWithRequestIsRecognizedByTheHub(t *testing.T) {
+	msg := spawnErrorWithRequest("r42", errors.New("a distro Debian não respondeu"))
+	if got := spawnErrRequestID(msg); got != "r42" {
+		t.Fatalf("request id lido = %q em %q", got, msg)
+	}
+}

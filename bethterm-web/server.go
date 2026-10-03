@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -242,6 +243,7 @@ type clientRequest struct {
 	Rows    *int    `json:"rows"`
 	Kind    string  `json:"kind"` // spawn_tool: ssh | serial
 	ID      string  `json:"id"`   // spawn_tool: id do host/perfil salvo
+	Distro  string  `json:"distro"` // spawn: distro WSL (so' para shells wsl.*)
 }
 
 var (
@@ -494,10 +496,40 @@ func (s *server) handle(c *client, req clientRequest, sendErr func(string)) {
 			}
 			out["cwd"] = *req.Cwd
 		}
-		s.hub.noteSpawn(req.ReqID, req.ShellID)
-		if err := b.write(out); err != nil {
-			userErr(err)
+		if req.Distro != "" {
+			if !distroRe.MatchString(req.Distro) {
+				sendErr("spawn: distro inválida")
+				return
+			}
+			out["distro"] = req.Distro
 		}
+		send := func() {
+			s.hub.noteSpawn(req.ReqID, req.ShellID)
+			if err := b.write(out); err != nil {
+				userErr(err)
+			}
+		}
+		// Terminal WSL com a distro parada: espera ela responder (e a pasta existir)
+		// em vez de correr contra a VM fria (wsl_ready.go).
+		if gate := s.hub.wslGate; gate != nil && strings.HasPrefix(req.ShellID, "wsl.") {
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+				defer cancel()
+				distro := wslDistroForShell(req.ShellID, req.Distro, listWSLDistros(), defaultWSLDistro())
+				if distro != "" {
+					if _, err := gate.Ensure(ctx, distro); err != nil {
+						sendErr(spawnErrorWithRequest(req.ReqID, err))
+						return
+					}
+					if cwd, _ := out["cwd"].(string); strings.HasPrefix(cwd, "/") && !gate.WaitDir(ctx, distro, cwd) {
+						delete(out, "cwd") // a pasta nao apareceu: abre na home
+					}
+				}
+				send()
+			}()
+			return
+		}
+		send()
 	case "spawn_tool":
 		// Terminal de ferramenta no host (SSH salvo / porta serial). O comando
 		// e' montado pela ponte a partir de kind + id validados.
