@@ -1,0 +1,97 @@
+[package]
+name = "wtinator"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+license = "MIT"
+publish = false
+description = "BethTerm delta: tab groups, broadcast, VS Code themes, smart paste."
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# Upstream wezterm public crates — resolved via the upstream workspace
+# (the root Cargo.toml of this repo IS upstream-wezterm/Cargo.toml,
+# after the Option C restructure documented in IMPLEMENTATION.md).
+mux = { workspace = true }
+chrono = { workspace = true }
+config = { workspace = true }
+wezterm-client = { workspace = true }
+wezterm-term = { workspace = true }
+wezterm-input-types = { workspace = true }
+wezterm-color-types = { workspace = true }
+wezterm-dynamic = { workspace = true }
+
+# WezTerminator (patch 0022): encode the clipboard DIB to PNG for
+# the right-click "Paste image" menu entry. `image` is already a
+# workspace dep of wezterm-gui; we just declare it here so the
+# `image_paste` module can use `image::RgbaImage` / `PngEncoder`
+# directly.
+image = { workspace = true, features = ["jpeg"] }
+base64 = { workspace = true }
+
+# Third-party
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# WezTerminator (patch 0038): theme downloader. We fetch the Gogh
+# community theme catalog over HTTPS and cache each theme as JSON
+# under `%APPDATA%\bethterm\themes\`. We use `reqwest::blocking`
+# (NOT the async client) because the config app — the primary
+# caller — has no tokio runtime; the blocking client spins up its
+# own single-threaded runtime internally. The `default-tls`
+# (native-tls / schannel on Windows) backend is already in the
+# workspace dependency graph (see `sync-color-schemes`), so the
+# only feature we need to add over the default is `blocking`.
+# `json` is enabled for completeness (we parse the body ourselves
+# via serde_json, but it is cheap and keeps the door open).
+reqwest = { workspace = true, features = ["blocking", "json"] }
+# We use `log` (upstream-pinned) rather than `tracing` because the
+# upstream workspace does not declare a `tracing` entry in
+# `[workspace.dependencies]`. In a future minor we can either pin
+# tracing here or upstream a workspace entry for it.
+log = { workspace = true }
+
+# Windows-only: used to build the native right-click context menu
+# (HMENU / TrackPopupMenuEx). See wtinator::context_menu for the
+# menu-builder and the dispatch table.
+#
+# We use `windows-sys` rather than `winapi` because the latter's
+# reexports of HMENU change between feature flags and break the
+# `DestroyMenu` / `AppendMenuW` / `TrackPopupMenuEx` call sites.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Controls",
+    "Win32_UI_Controls_Dialogs",
+    "Win32_UI_Shell",
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_DataExchange",
+    "Win32_System_SystemInformation",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Memory",
+    "Win32_Storage_Xps",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Threading",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_Kernel",
+    "Win32_Security",
+] }
+
+[lints.rust]
+unused_must_use = "deny"
+# Patch 0030: `unsafe_code` was previously `deny`-ed at the
+# crate level via `#![deny(unsafe_code)]` in `lib.rs`. We
+# move it to a `warn` here so the `#[allow(unsafe_code)]`
+# on `header::win32_prompt` (and any future module that
+# needs raw Win32 FFI) actually silences the lint. With the
+# old `deny`, no module-level `allow` could override it
+# because the lint is hard-wired at `error` level by Rust.
+unsafe_code = "warn"
+
+[lints.clippy]
+unwrap_used = "deny"

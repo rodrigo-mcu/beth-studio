@@ -1,0 +1,5 @@
+# Frontend build deps — not committed. The built `dist/` IS committed
+# (rust-embed reads it at compile time), so it is NOT ignored here.
+node_modules/
+.vite/
+*.tsbuildinfo

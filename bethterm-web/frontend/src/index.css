@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tema da interface: VS Code Dark Modern ("Escuro"), valores NEUTROS ate' o tema salvo chegar (o Go injeta
+   o tema salvo no <head>; lib/uiTheme.ts troca em tempo real). Nada navy. */
+:root {
+  --bt-bg-body: 24 24 24;
+  --bt-bg-panel: 24 24 24;
+  --bt-bg-card: 31 31 31;
+  --bt-bg-hover: 42 45 46;
+  --bt-bg-term: 31 31 31;
+  --bt-text-1: 204 204 204;
+  --bt-text-2: 157 157 157;
+  --bt-text-3: 118 118 118;
+  --bt-border: 43 43 43;
+  --bt-border-strong: 60 60 60;
+  --bt-accent: 0 120 212;
+  --bt-accent-hover: 2 110 193;
+  --bt-accent-soft: 55 55 61;
+  --bt-accent-text: 122 184 240;
+  --bt-ok: 110 231 183;
+  --bt-err: 252 165 165;
+  --bt-warn: 217 119 6;
+  --bt-busy: 147 197 253;
+}
+html,
+body {
+  background: rgb(var(--bt-bg-body));
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* xterm: sem scrollbar (scrollback 0; o tamanho do pane e' do host). */
+.xterm .xterm-viewport {
+  overflow-y: hidden !important;
+  background-color: transparent !important;
+}
+.xterm {
+  padding: 0;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--bt-border-strong));
+  border-radius: 5px;
+  border: 2px solid rgb(var(--bt-bg-panel));
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Preview de Markdown (FilePreviewPanel): estilo proprio, no tema do app
+   (sem plugin de tipografia). Tamanhos em em: seguem a fonte do painel. */
+.md-view {
+  color: rgb(var(--bt-text-1));
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.md-view > :first-child { margin-top: 0; }
+.md-view h1, .md-view h2, .md-view h3, .md-view h4, .md-view h5, .md-view h6 {
+  color: rgb(var(--bt-text-1));
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 1.4em 0 0.6em;
+}
+.md-view h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid rgb(var(--bt-border-strong)); }
+.md-view h2 { font-size: 1.5em; padding-bottom: 0.25em; border-bottom: 1px solid rgb(var(--bt-border-strong)); }
+.md-view h3 { font-size: 1.25em; }
+.md-view h4 { font-size: 1.1em; }
+.md-view h5 { font-size: 1em; }
+.md-view h6 { font-size: 0.9em; color: rgb(var(--bt-text-2)); }
+.md-view p, .md-view ul, .md-view ol, .md-view blockquote, .md-view table, .md-view pre { margin: 0 0 1em; }
+.md-view ul, .md-view ol { padding-left: 2em; }
+.md-view ul { list-style: disc; }
+.md-view ol { list-style: decimal; }
+.md-view ul ul { list-style: circle; }
+.md-view li { margin: 0.2em 0; }
+.md-view li > p { margin: 0; }
+.md-view li input[type="checkbox"] { margin-right: 0.4em; vertical-align: middle; }
+.md-view blockquote {
+  padding: 0.1em 1em;
+  color: rgb(var(--bt-text-2));
+  border-left: 0.25em solid rgb(var(--bt-border-strong));
+}
+.md-view hr { border: 0; border-top: 1px solid rgb(var(--bt-border-strong)); margin: 1.5em 0; }
+.md-view table { border-collapse: collapse; display: block; max-width: 100%; overflow-x: auto; }
+.md-view th, .md-view td { border: 1px solid rgb(var(--bt-border-strong)); padding: 0.35em 0.75em; }
+.md-view th { font-weight: 600; background: rgb(var(--bt-bg-hover)); }
+.md-view tr:nth-child(2n) td { background: rgb(var(--bt-bg-hover) / 0.4); }
+.md-view code {
+  font-family: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  font-size: 0.9em;
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  background: rgb(var(--bt-bg-hover));
+}
+.md-view pre {
+  font-family: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  padding: 0.8em 1em;
+  border-radius: 6px;
+  background: rgb(var(--bt-bg-body));
+  border: 1px solid rgb(var(--bt-border));
+  overflow-x: auto;
+  white-space: pre;
+}
+.md-view pre code { padding: 0; background: none; font-size: 0.9em; }
+.md-view.md-wrap pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; }
+.md-view a, .md-view a[data-local-href] {
+  color: rgb(var(--bt-accent-text));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.md-view a:hover { color: rgb(var(--bt-text-1)); }
+.md-view .md-link-off { text-decoration: underline dotted; }
+.md-view img { max-width: 100%; height: auto; border-radius: 4px; }
+.md-view .md-remote-img, .md-view .md-img-missing {
+  display: inline-block;
+  padding: 0.3em 0.6em;
+  border: 1px dashed rgb(var(--bt-border-strong));
+  border-radius: 4px;
+  color: rgb(var(--bt-text-2));
+  font-size: 0.9em;
+}
+.md-view .md-remote-img { cursor: pointer; }
+.md-view .md-remote-img:hover { color: rgb(var(--bt-accent-text)); border-color: rgb(var(--bt-accent-text)); }

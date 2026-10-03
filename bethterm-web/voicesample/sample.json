@@ -1,0 +1,6 @@
+﻿{
+    "culture":  "pt-BR",
+    "voice":  "Microsoft Maria Desktop",
+    "warning":  "",
+    "text":  "Abre o BethTerm no PowerShell e roda o arquivo main ponto go no WSL."
+}

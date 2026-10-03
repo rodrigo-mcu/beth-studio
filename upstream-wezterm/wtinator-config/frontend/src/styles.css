@@ -1,0 +1,559 @@
+:root {
+  --bg: #181818;
+  --panel: #1f1f1f;
+  --panel-2: #252526;
+  --border: #303030;
+  --text: #d4d4d4;
+  --muted: #8a8a8a;
+  --accent: #0a84ff;
+  --accent-2: #2d6cdf;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.brand-mark {
+  color: var(--accent);
+  font-size: 18px;
+}
+.brand-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+.brand-sub {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refresh {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.refresh:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.refresh:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Patch 0038: the Download themes button. */
+.download {
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.download:hover:not(:disabled) {
+  background: var(--accent-2);
+}
+.download:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Patch 0040: the per-terminal font-size control in the toolbar. */
+.size-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin-right: 4px;
+}
+.size-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.size-step {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+.size-step:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.size-step:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.size-input {
+  width: 48px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 13px;
+  text-align: center;
+}
+.size-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.size-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.size-unit {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Patch 0043: per-terminal font family picker (pane mode). Mirrors
+   the size-control chrome so the toolbar stays visually consistent. */
+.font-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  margin-right: 4px;
+}
+.font-select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 13px;
+  max-width: 220px;
+}
+.font-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.font-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Patch 0040: subheading under the pane-mode title. */
+.subhead {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.rail {
+  width: 240px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.rail-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 6px 8px;
+}
+
+.rail-empty {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 8px;
+}
+
+.tab-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  color: var(--text);
+}
+.tab-item:hover {
+  background: var(--panel-2);
+}
+.tab-item.active {
+  background: var(--panel-2);
+  border-color: var(--accent);
+}
+.tab-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.tab-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.tab-theme {
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 4px;
+  font-family: ui-monospace, "Cascadia Code", monospace;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  min-width: 0;
+}
+
+.content-head h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.notice {
+  background: #3a2f1a;
+  border: 1px solid #5a4a22;
+  color: #e0c98a;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+.card-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.card-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--accent);
+  color: white;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-left: 6px;
+}
+/* Patch 0038: a muted badge marking downloaded (community) themes. */
+.card-badge.downloaded {
+  background: var(--panel-2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+/* Patch 0110: badge for the persisted default theme. */
+.card-badge.default {
+  background: #2e7d32;
+  color: white;
+}
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.apply-all {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.apply-all:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.apply-all:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.swatch {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0;
+  padding: 0 12px;
+}
+.chip {
+  height: 16px;
+}
+.chip:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.preview {
+  margin: 12px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 11.5px;
+  line-height: 1.45;
+  overflow: auto;
+  max-height: 150px;
+}
+.preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  gap: 8px;
+}
+.fgbg {
+  font-size: 10.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ui-monospace, monospace;
+}
+.dotc {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.apply {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.apply:hover:not(:disabled) {
+  background: var(--accent-2);
+}
+.apply:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-2);
+  color: white;
+  font-size: 12px;
+  padding: 5px 14px;
+}
+.statusbar .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dot.ok {
+  background: #3fd17a;
+}
+.dot.warn {
+  background: #f0c042;
+}
+
+/* Patch 0046: theme browser — search box, light/dark/favorites filter,
+   progressive-render footer, and the per-card favorite star. */
+.theme-filter {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  margin-bottom: 6px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.theme-search {
+  flex: 1 1 220px;
+  min-width: 160px;
+  padding: 7px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.theme-search:focus {
+  border-color: var(--accent);
+}
+.theme-modes {
+  display: flex;
+  gap: 4px;
+}
+.mode-chip {
+  padding: 6px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mode-chip:hover {
+  color: var(--text);
+}
+.mode-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.card-fav {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 6px 0 0;
+  cursor: pointer;
+}
+.card-fav:hover {
+  color: #f0c042;
+}
+.card-fav.on {
+  color: #f0c042;
+}
+.grid-more,
+.grid-empty {
+  padding: 14px 4px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Patch 0047: per-terminal bold / italic toggles in the toolbar. */
+.style-control {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.style-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+.style-check input {
+  margin: 0;
+}
+.style-check.on {
+  border-color: var(--accent);
+  color: var(--text);
+}

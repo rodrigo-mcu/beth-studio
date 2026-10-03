@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "BethTerm",
+    "slug": "bethterm-mobile",
+    "scheme": "bethterm",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0F1729",
+    "ios": {
+      "bundleIdentifier": "dev.bethterm.mobile",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "A câmera é usada só para ler o QR code de pareamento do BethTerm."
+      }
+    },
+    "android": {
+      "package": "dev.bethterm.mobile",
+      "backgroundColor": "#0F1729",
+      "permissions": ["android.permission.CAMERA"],
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "A câmera é usada só para ler o QR code de pareamento do BethTerm.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

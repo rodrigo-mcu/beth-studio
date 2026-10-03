@@ -1,0 +1,59 @@
+# wtinator-config — the standalone BethTerm Settings app
+# (patch 0036).
+#
+# A native Windows WebView2 window (via `tao` + `wry`) hosting a
+# React + TypeScript frontend. The frontend lets the user pick a
+# color theme per terminal tab and apply it live to a running
+# wezterm-gui over a named pipe.
+#
+# This is a separate binary from wezterm-gui (it ships next to
+# wezterm-gui.exe and is launched by the right-click "Open config
+# app…" menu entry with `--wezterm-pid <PID>`). It depends on
+# `wtinator` only for the theme model (`notify::snapshot_theme`,
+# `vscode_theme::ThemeId`) and the IPC contract types
+# (`notify_ipc::Request` / `Response` / `pipe_name_for_pid`).
+
+[package]
+name = "wtinator-config"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+license = "MIT"
+publish = false
+description = "BethTerm Settings — standalone WebView2 theme configurator."
+
+[[bin]]
+name = "wtinator-config"
+path = "src/main.rs"
+
+[dependencies]
+# The theme model + IPC contract live in the wtinator delta crate.
+wtinator = { workspace = true }
+
+# WebView2 host stack (the Tauri webview stack). `tao` is the
+# windowing layer; `wry` wraps the WebView2 control and provides
+# the JS<->Rust IPC bridge (`with_ipc_handler` + `evaluate_script`).
+tao = "0.35"
+wry = "0.55"
+
+# Embed the Vite-built frontend (`frontend/dist`) into the binary.
+rust-embed = { version = "8", features = ["interpolate-folder-path"] }
+
+# Serde for the IPC messages + JSON parsing.
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+anyhow = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+# Raw Win32 for the named-pipe CLIENT (CreateFileW + ReadFile /
+# WriteFile via std::fs::File wrapping). Also used to wait for the
+# pipe to become available (WaitNamedPipeW).
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Pipes",
+    "Win32_UI_WindowsAndMessaging",
+] }

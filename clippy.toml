@@ -1,0 +1,8 @@
+# clippy config — minimal, matches upstream style.
+#
+# Upstream wezterm does not have a top-level clippy.toml. We add one
+# here so our delta crate has the same baseline lints as the wider
+# Rust ecosystem default.
+#
+# If we need to suppress a specific lint across the workspace, prefer
+# `#[allow(...)]` at the call site with a comment explaining why.

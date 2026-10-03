@@ -1,0 +1,55 @@
+# GitHub Actions for BethTerm.
+#
+# The Cargo workspace is `upstream-wezterm/` (vendored WezTerm + delta).
+# We do not treat it as a git submodule and we do not `cargo fmt --all`
+# or `-D warnings` over upstream — that tree is full of inherited lints.
+#
+# Full `wezterm-gui` / installer builds stay local (MSVC + Perl, 30+ min).
+# CI runs the BethTerm delta tests (`wtinator`) on Linux.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  tree:
+    name: public-tree sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required files present, local junk absent
+        run: |
+          set -euo pipefail
+          test -f NOTICE.md
+          test -f LICENSE.md
+          test -f README.md
+          test -f CODE_OF_CONDUCT.md
+          test -f CONTRIBUTING.md
+          test -f upstream-wezterm/PATCHES.md
+          test -f upstream-wezterm/wtinator/data/gogh-themes.json
+          test -f upstream-wezterm/bethterm-setup/Cargo.toml
+          test ! -e HANDOFF.md
+          test ! -e STATUS.md
+          test ! -d upstream-wezterm/target-test-release-20260830
+
+  wtinator:
+    name: wtinator tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: upstream-wezterm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - name: Native deps (openssl-sys)
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
+      - name: cargo test -p wtinator --lib
+        run: cargo test -p wtinator --lib

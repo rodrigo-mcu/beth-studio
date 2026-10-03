@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Beth Studio</title>
+    <link rel="icon" href="/favicon.ico" />
+    <!-- Tela de abertura: aparece antes do JavaScript (~900 KB) carregar. O
+         React troca o conteúdo de #root e segue com a StartupOverlay (mesmo
+         visual). O giro é animação de CSS: continua mesmo com a página ocupada. -->
+    <style>
+      #boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font: 15px "Segoe UI", system-ui, sans-serif; color: #8c8c8c; }
+      #boot .spin { width: 28px; height: 28px; border-radius: 50%; border: 3px solid rgba(140, 140, 140, 0.25); border-top-color: #4b8cf5; animation: boot-spin 0.9s linear infinite; }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body class="bg-bg-body text-text-1">
+    <div id="root"><div id="boot"><div class="spin"></div><div>Abrindo Beth Studio…</div></div></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

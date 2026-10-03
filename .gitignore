@@ -1,0 +1,74 @@
+# BethTerm — top-level .gitignore
+#
+# Layered on top of upstream-wezterm/.gitignore. The WezTerm tree is a
+# vendored snapshot (not a live submodule).
+
+# Build artifacts
+/target/
+**/target/
+upstream-wezterm/target-test-release*/
+**/*.rs.bk
+*.pdb
+
+# Vendored upstream snapshot keeps its own .git/ — exclude it so
+# the root repo only sees the source files. The vendored clone's
+# git history is unused; we re-apply patches manually (see
+# upstream-wezterm/PATCHES.md).
+upstream-wezterm/.git/
+upstream-wezterm/.git.bak/
+upstream-wezterm/nul
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Rust
+Cargo.lock.bak
+.cargo/
+
+# Build output
+*.exe
+*.dll
+# Microsoft ConPTY host shipped next to the GUI (patch 0113).
+!upstream-wezterm/assets/windows/conhost/conpty.dll
+!upstream-wezterm/assets/windows/conhost/OpenConsole.exe
+*.so
+*.dylib
+*.pdb
+*.exp
+*.lib
+*.obj
+*.idb
+
+.zig-cache/
+zig-out/
+zig-pkg/
+
+# Cached themes (downloaded at runtime; not in the repo)
+.cache-fresh/
+**/node_modules/
+
+# Packed installer output (rebuild with pack-bethterm-setup.cmd)
+/dist/
+
+# Local cargo / agent logs and machine-specific handoff notes
+codex-cargo-*.log
+codex-cargo-*.err
+codex-cargo-*.exit
+codex-running-wezterm.txt
+HANDOFF.md
+HANDOFF-*.md
+STATUS.md
+docs/2026-06-07-codex-titlebar-window-controls.md
+.playwright-mcp/
+bethterm-web/bethstudio-proxy-linux

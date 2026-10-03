@@ -1,0 +1,20 @@
+---
+description: Atualizar FEATURES.md quando uma funcionalidade entra ou sai
+alwaysApply: true
+---
+
+# Catálogo de funcionalidades
+
+`FEATURES.md` na raiz é a lista do que a pessoa pode usar. Ao adicionar, mudar ou remover uma funcionalidade, atualize esse arquivo no mesmo cambio.
+
+Conta como funcionalidade o que aparece no BethTerm, no Beth Studio ou no BethTerm Mobile. Correção, log e refatoração interna não entram.
+
+1. Inclua ou ajuste o item na seção certa (janela nativa, Beth Studio, SSH, banco, mobile).
+2. Se estava em **Ainda não**, tire de lá.
+3. Troque a data em `Atualizado:` por a data de hoje.
+
+```markdown
+- Consultas salvas aparecem na pasta Queries da conexão.
+```
+
+Não descreva o que o código ainda não faz. O detalhe de patch continua em `upstream-wezterm/PATCHES.md`.

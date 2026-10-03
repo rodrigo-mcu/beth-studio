@@ -1,0 +1,5 @@
+# rustfmt — same style as upstream wezterm.
+# Keep in sync with upstream-wezterm/.rustfmt.toml.
+edition = "2018"
+imports_granularity = "Module"
+tab_spaces = 4
