@@ -2,6 +2,7 @@ import type { PaneInfo, ScreenEvent, ServerEvent, SettingsEvent, ShellInfo, Sock
 import { applyAgent, Pending, requestIdFromError, type AgentState } from "./agents";
 import { apiBase } from "./remote";
 import type { TermDragEvent } from "./termDrop";
+import type { HostEvent } from "./hostBanner";
 
 // Conexao WebSocket com o backend Go. Um unico socket por pagina; as telas
 // (screen) vao direto para os assinantes de cada pane, sem passar pelo
@@ -20,6 +21,8 @@ export interface ConnectionSnapshot {
   shells: ShellInfo[] | null;
   /** panes que estao em janela destacada (nativa) */
   termWindows: number[];
+  /** estado do host visto pelo supervisor do Studio (null = ainda sem informacao) */
+  host: HostEvent | null;
 }
 
 function readParams() {
@@ -58,6 +61,7 @@ export class Connection {
     agents: {},
     shells: null,
     termWindows: [],
+    host: null,
   };
   private spawns = new Pending<SpawnedEvent>();
   private separations = new Pending<number>();
@@ -191,6 +195,9 @@ export class Connection {
           break;
         case "term_windows":
           this.patch({ termWindows: ev.panes });
+          break;
+        case "host":
+          this.patch({ host: ev });
           break;
         case "term_drag":
           this.termDragListeners.forEach((fn) => fn({ pane: ev.pane, x: ev.x, y: ev.y, end: ev.end, attach: ev.attach }));

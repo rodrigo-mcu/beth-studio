@@ -51,6 +51,7 @@ func main() {
 		diag      = flag.Bool("diag", false, "a UI manda diagnosticos (fonte efetiva etc.) para o log")
 		sftpHost  = flag.String("sftp", "", "abre so' a janela SFTP do host salvo (id hex de 16 digitos)")
 		dbWindow  = flag.Bool("db", false, "abre só a janela Banco de dados (barra de tarefas própria)")
+		supervise = flag.Bool("supervise", false, "liga a supervisão do host mesmo com --no-window (testes)")
 		termPane  = flag.Int("term", -1, "abre só a janela destacada do terminal <pane> (aberta pelo Studio)")
 	)
 	flag.Parse()
@@ -113,6 +114,12 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	// O Studio sobe e vigia o host (supervisor.go). Nos testes com
+	// --no-window só com --supervise, para nao mexer no host de ninguem.
+	if !*noWindow || *supervise {
+		hub.sup = newSupervisor(newHostCtl(), newRestartLimiter(3, 10*time.Minute), time.Now, hub.setHost)
+		go hub.sup.Run(ctx)
+	}
 	go br.run(ctx)
 	// Tipos dos terminais: pane-commands.json da GUI pode mudar sem a lista
 	// mudar (a GUI grava o comando logo depois de criar o pane).

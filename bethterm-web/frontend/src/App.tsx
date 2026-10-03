@@ -11,6 +11,8 @@ import { TerminalView } from "@/components/TerminalView";
 import { IconButton } from "@/components/IconButton";
 import { TabBar } from "@/components/TabBar";
 import { buildStudioActions } from "@/components/StudioActions";
+import { HostBanner } from "@/components/HostBanner";
+import { hostBanner } from "@/lib/hostBanner";
 import { GoneLeaf, SplitView } from "@/components/SplitView";
 import { PaneMenu, type PaneMenuActions } from "@/components/PaneMenu";
 import { SearchPalette } from "@/components/SearchPalette";
@@ -784,6 +786,7 @@ export function App() {
               onNewTab={() => setNewTab(true)}
             />
           )}
+          {hostBanner(snap.host) && <HostBanner conn={conn} info={hostBanner(snap.host)!} />}
           <div className="flex min-h-0 flex-1 p-2">
             {!layout || !act ? (
               <div className="flex flex-1 items-center justify-center text-text-2">Carregando…</div>

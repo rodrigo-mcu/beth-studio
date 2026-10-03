@@ -23,6 +23,8 @@ type hub struct {
 	bridge   *bridge
 	// janelas de terminal destacadas (term_registry.go)
 	term *termRegistry
+	// supervisor do host (supervisor.go); nil nos modos --db, --sftp e --term
+	sup *supervisor
 
 	mu       sync.Mutex
 	clients  map[*client]struct{}
@@ -37,6 +39,8 @@ type hub struct {
 	// or by "dispensar" in the UI.
 	agents map[int][]byte
 	shells []byte
+	// hostMsg: ultimo {"ev":"host",...} do supervisor, para quem conecta depois
+	hostMsg []byte
 	// rawList: ultima lista da ponte SEM os tipos (para reclassificar
 	// quando pane-commands.json muda). spawnReq: request_id -> shell_id.
 	rawList  []byte
@@ -104,8 +108,12 @@ func (h *hub) add() *client {
 		agents = append(agents, a)
 	}
 	shells := h.shells
+	hostMsg := h.hostMsg
 	h.mu.Unlock()
 	c.enqueue(st)
+	if hostMsg != nil {
+		c.enqueue(hostMsg)
+	}
 	if list != nil {
 		c.enqueue(list)
 	}
@@ -174,6 +182,21 @@ func (h *hub) statusJSONLocked() []byte {
 	}
 	b, _ := json.Marshal(h.status)
 	return b
+}
+
+// setHost guarda e transmite o estado do host visto pelo supervisor.
+func (h *hub) setHost(state hostState, msg string) {
+	b, err := json.Marshal(map[string]any{"ev": "host", "state": string(state), "message": msg})
+	if err != nil {
+		return
+	}
+	h.mu.Lock()
+	h.hostMsg = b
+	cs := h.clientsLocked()
+	h.mu.Unlock()
+	for _, c := range cs {
+		c.enqueue(b)
+	}
 }
 
 func (h *hub) setStatus(state, msg string) {
