@@ -163,7 +163,7 @@ fn is_forbidden_dest(dest: &Path) -> bool {
 }
 
 fn is_existing_install(dest: &Path) -> bool {
-    dest.join("bethterm-gui.exe").is_file() || dest.join("bethterm.exe").is_file()
+    dest.join("bethterm-web.exe").is_file() || dest.join("bethterm.exe").is_file()
 }
 
 fn load_payload() -> Result<Vec<u8>> {
@@ -402,7 +402,9 @@ mod stop_all {
     };
 
     const SYNCHRONIZE: u32 = 0x0010_0000;
+    // inclui os nomes da janela nativa antiga: uma atualização por cima precisa fechá-los
     const INTERFACE: &[&str] = &[
+        "bethterm-web.exe",
         "bethterm-gui.exe",
         "bethterm.exe",
         "wtinator-config.exe",
@@ -768,10 +770,10 @@ mod native_lnk {
     }
 
     pub fn write(lnk: &Path, exe: &Path, workdir: &Path) -> Result<()> {
-        // Always shortcut the GUI binary. `bethterm.exe` is a console CLI
+        // Always shortcut the Studio binary. `bethterm.exe` is a console CLI
         // (like wezterm.exe); launching it from a .lnk opens a console and
         // dumps logs into it.
-        let gui = workdir.join("bethterm-gui.exe");
+        let gui = workdir.join("bethterm-web.exe");
         let target = if gui.is_file() { &gui } else { exe };
         let script = format!(
             "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('{}'); \
@@ -1295,7 +1297,7 @@ Para remover, apague a pasta (e os atalhos, se os criou).";
             "Instalar"
         };
         set_text(as_hwnd(h.install), label);
-        let can_open = dest.join("bethterm-gui.exe").is_file();
+        let can_open = dest.join("bethterm-web.exe").is_file();
         unsafe {
             EnableWindow(as_hwnd(h.open), if can_open { 1 } else { 0 });
         }
@@ -1304,10 +1306,10 @@ Para remover, apague a pasta (e os atalhos, se os criou).";
     fn launch_installed() {
         let h = *HWNDS.lock().unwrap();
         let dest = PathBuf::from(get_text(as_hwnd(h.path)).trim());
-        let gui = dest.join("bethterm-gui.exe");
+        let gui = dest.join("bethterm-web.exe");
         if !gui.is_file() {
             message(
-                "Não encontrei bethterm-gui.exe nessa pasta.\nInstale ou atualize primeiro.",
+                "Não encontrei bethterm-web.exe nessa pasta.\nInstale ou atualize primeiro.",
                 true,
             );
             return;
@@ -1434,9 +1436,9 @@ Para remover, apague a pasta (e os atalhos, se os criou).";
                     SendMessageW(as_hwnd(h0.progress), PBM_SETPOS, 80, 0);
                 }
                 let exe = dest.join("bethterm.exe");
-                let gui = dest.join("bethterm-gui.exe");
+                let gui = dest.join("bethterm-web.exe");
                 anyhow::ensure!(exe.is_file(), "falhou a extração: falta bethterm.exe");
-                anyhow::ensure!(gui.is_file(), "falhou a extração: falta bethterm-gui.exe");
+                anyhow::ensure!(gui.is_file(), "falhou a extração: falta bethterm-web.exe");
                 shortcut::refresh_or_create(&gui, &dest, want_shortcut)?;
                 let host_note = if skip_host_files && host_changed {
                     "\n\nA interface foi atualizada. Os hosts continuam com o executável anterior, como você pediu."

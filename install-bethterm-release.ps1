@@ -10,13 +10,9 @@ Set-StrictMode -Version Latest
 $source = Join-Path $PSScriptRoot 'upstream-wezterm\target\release'
 $packageFiles = @(
     'bethterm.exe',
-    'bethterm-gui.exe',
     'bethterm-host.exe',
-    'wtinator-config.exe',
     'OpenConsole.exe',
-    'conpty.dll',
-    'libEGL.dll',
-    'libGLESv2.dll'
+    'conpty.dll'
 )
 
 function Get-RunningTargetProcess {
@@ -52,7 +48,7 @@ foreach ($name in $packageFiles) {
 
 $running = @(Get-RunningTargetProcess -InstallPath $Destination)
 $blocking = @($running | Where-Object {
-    $_.ProcessName -in @('bethterm', 'bethterm-gui', 'wtinator-config')
+    $_.ProcessName -in @('bethterm', 'bethterm-web', 'bethterm-gui', 'wtinator-config')
 })
 $hostRunning = @($running | Where-Object { $_.ProcessName -eq 'bethterm-host' }).Count -gt 0
 # Patch 0141: files the running host keeps locked. They are staged as

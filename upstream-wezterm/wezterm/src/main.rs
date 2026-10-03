@@ -135,14 +135,6 @@ enum SubCommand {
     #[command(name = "replay", about = "Replay an asciicast terminal session")]
     Replay(asciicast::PlayCommand),
 
-    /// BethTerm (patch 0147): restart only the GUI process. The
-    /// terminals live in bethterm-host.exe and are reattached.
-    #[command(
-        name = "gui-restart",
-        about = "BethTerm: restart only bethterm-gui.exe; terminals stay in bethterm-host"
-    )]
-    GuiRestart(GuiRestartCommand),
-
     /// Generate shell completion information
     #[command(name = "shell-completion")]
     ShellCompletion {
@@ -746,15 +738,6 @@ fn init_config(opts: &Opt) -> anyhow::Result<ConfigHandle> {
     Ok(config)
 }
 
-/// BethTerm (patch 0147): arguments of `gui-restart`.
-#[derive(Debug, Parser, Clone)]
-struct GuiRestartCommand {
-    /// A GUI pid that is quitting on its own: wait for it (up to 15 s,
-    /// then terminate) instead of killing every GUI process.
-    #[arg(long)]
-    wait_pid: Option<u32>,
-}
-
 fn run() -> anyhow::Result<()> {
     env_bootstrap::bootstrap();
 
@@ -780,11 +763,6 @@ fn run() -> anyhow::Result<()> {
         SubCommand::Cli(cli) => cli::run_cli(&opts, cli),
         SubCommand::Record(cmd) => cmd.run(init_config(&opts)?),
         SubCommand::Replay(cmd) => cmd.run(),
-        SubCommand::GuiRestart(cmd) => {
-            let what = wtinator::gui_restart::run(cmd.wait_pid)?;
-            println!("bethterm gui-restart: {what}");
-            Ok(())
-        }
         SubCommand::ShellCompletion { shell } => {
             use clap::CommandFactory;
             let mut cmd = Opt::command();
@@ -796,62 +774,12 @@ fn run() -> anyhow::Result<()> {
 }
 
 fn delegate_to_gui(saver: UmaskSaver) -> anyhow::Result<()> {
-    use std::process::Command;
-
-    // Restore the original umask
+    // Beth Studio (patch 0198): there is no native terminal window any more.
+    // The terminals are shown by bethterm-web (Beth Studio); `bethterm cli`
+    // talks to the host directly.
     drop(saver);
-
-    // BethTerm (patch 0089): the GUI binary is bethterm-gui. Fall back to
-    // the upstream wezterm-gui name so a mixed install still launches.
-    let dir = std::env::current_exe()?
-        .parent()
-        .ok_or_else(|| anyhow!("exe has no parent dir!?"))?
-        .to_path_buf();
-    let exe_name = if cfg!(windows) {
-        "bethterm-gui.exe"
-    } else {
-        "bethterm-gui"
-    };
-    let legacy_name = if cfg!(windows) {
-        "wezterm-gui.exe"
-    } else {
-        "wezterm-gui"
-    };
-    let exe = {
-        let primary = dir.join(exe_name);
-        if primary.exists() {
-            primary
-        } else {
-            dir.join(legacy_name)
-        }
-    };
-
-    let mut cmd = Command::new(exe);
-    if cfg!(windows) {
-        cmd.arg("--attach-parent-console");
-    }
-
-    cmd.args(std::env::args_os().skip(1));
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        // Clean up random fds, except when we're running in an AppImage.
-        // AppImage relies on child processes keeping alive an fd that
-        // references the mount point and if we close it as part of execing
-        // the gui binary, the appimage gets unmounted before we can exec.
-        if std::env::var_os("APPIMAGE").is_none() {
-            portable_pty::unix::close_random_fds();
-        }
-        let res = cmd.exec();
-        return Err(anyhow::anyhow!("failed to exec {cmd:?}: {res:?}"));
-    }
-
-    #[cfg(windows)]
-    {
-        let mut child = cmd.spawn()?;
-        let status = child.wait()?;
-        let code = status.code().unwrap_or(1);
-        std::process::exit(code);
-    }
+    anyhow::bail!(
+        "esta versão não tem janela nativa: abra o Beth Studio (bethterm-web) \
+         ou use `bethterm cli` para falar com o host"
+    )
 }

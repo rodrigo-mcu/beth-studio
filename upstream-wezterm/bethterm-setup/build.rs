@@ -38,7 +38,7 @@ fn main() {
 fn write_build_stamp(dist: &Path) {
     let out = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("build_stamp.txt");
     let mut newest = None;
-    for name in ["bethterm-gui.exe", "bethterm-host.exe", "bethterm.exe"] {
+    for name in ["bethterm-web.exe", "bethterm-host.exe", "bethterm.exe"] {
         let path = dist.join(name);
         let Ok(meta) = std::fs::metadata(&path) else {
             continue;
@@ -58,7 +58,7 @@ fn write_build_stamp(dist: &Path) {
 }
 
 fn pack_dist(dist: &Path, dest: &Path) -> anyhow::Result<usize> {
-    for name in ["bethterm.exe", "bethterm-gui.exe", "bethterm-host.exe"] {
+    for name in ["bethterm.exe", "bethterm-web.exe", "bethterm-host.exe"] {
         anyhow::ensure!(
             dist.join(name).is_file(),
             "missing {} in {}",
@@ -70,16 +70,11 @@ fn pack_dist(dist: &Path, dest: &Path) -> anyhow::Result<usize> {
     let mut files: Vec<(String, PathBuf)> = Vec::new();
     for rel in [
         "bethterm.exe",
-        "bethterm-gui.exe",
         "bethterm-host.exe",
         "bethterm-web.exe",
         "bethterm-tool.exe",
-        "wtinator-config.exe",
         "OpenConsole.exe",
         "conpty.dll",
-        "libEGL.dll",
-        "libGLESv2.dll",
-        "mesa/opengl32.dll",
     ] {
         let src = dist.join(rel);
         if src.is_file() {

@@ -1,13 +1,7 @@
 @echo off
-rem BethTerm debug launcher. Starts this checkout's bethterm.exe,
-rem never the system-installed WezTerm.
+rem Beth Studio debug launcher: verbose host log, this checkout only.
 setlocal
 set WEZTERM_LOG=debug
 set BETHTERM_ACTIVE=1
-set WTINATOR_ACTIVE=1
-cd /d "%~dp0upstream-wezterm\target\debug"
-if exist "%CD%\bethterm.exe" (
-  start "" "%CD%\bethterm.exe" start --always-new-process
-) else (
-  start "" "%CD%\wezterm.exe" start --always-new-process
-)
+cd /d "%~dp0bethterm-web"
+start "" "%CD%\bethterm-web.exe"

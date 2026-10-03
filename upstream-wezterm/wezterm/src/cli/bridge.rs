@@ -451,7 +451,7 @@ impl Bridge {
                             last_screen.clear();
                         }
                         Ok(Request::Shells) => {
-                            let shells: Vec<ShellInfo> = wtinator::context_menu::default_shells()
+                            let shells: Vec<ShellInfo> = wtinator::shells::default_shells()
                                 .into_iter()
                                 .map(|s| ShellInfo {
                                     id: s.id,
@@ -1063,7 +1063,7 @@ async fn spawn_shell(
     cwd: Option<String>,
     distro: Option<String>,
 ) -> anyhow::Result<codec::SpawnResponse> {
-    let shell = wtinator::context_menu::default_shells()
+    let shell = wtinator::shells::default_shells()
         .into_iter()
         .find(|s| s.id == shell_id)
         .ok_or_else(|| anyhow::anyhow!("unknown shell id {shell_id:?}"))?;

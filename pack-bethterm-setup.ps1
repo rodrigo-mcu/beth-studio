@@ -18,10 +18,10 @@ if ([string]::IsNullOrWhiteSpace($Dist)) {
 $env:PATH = 'C:\Strawberry\perl\bin;C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.29.30133\bin\HostX64\x64;' + $env:PATH
 $env:BETHTERM_DIST = (Resolve-Path -LiteralPath $Dist).Path
 
-foreach ($name in @('bethterm.exe', 'bethterm-gui.exe', 'bethterm-host.exe')) {
+foreach ($name in @('bethterm.exe', 'bethterm-host.exe')) {
     $p = Join-Path $env:BETHTERM_DIST $name
     if (-not (Test-Path -LiteralPath $p)) {
-        throw "Missing $p. Build wezterm + wezterm-gui + wezterm-mux-server first."
+        throw "Missing $p. Build wezterm + wezterm-mux-server first."
     }
 }
 
