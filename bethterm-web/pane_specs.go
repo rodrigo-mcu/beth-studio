@@ -5,7 +5,9 @@ package main
 // voltar vazio, o Studio recria os terminais a partir dela (restore.go).
 
 import (
+	"bytes"
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -181,13 +183,24 @@ func saveSpecs(path string, f specsFile) error {
 	return nil
 }
 
+// stripBOM tira o BOM UTF-8: o Bloco de Notas e o Windows PowerShell 5.1 o gravam, e o
+// encoding/json o recusa ("invalid character 'ï'").
+func stripBOM(b []byte) []byte { return bytes.TrimPrefix(b, []byte{0xEF, 0xBB, 0xBF}) }
+
+var lastSpecsErr string
+
 func loadSpecs(path string) (specsFile, bool) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return specsFile{}, false
 	}
 	var f specsFile
-	if json.Unmarshal(b, &f) != nil {
+	if err := json.Unmarshal(stripBOM(b), &f); err != nil {
+		// avisa uma vez por erro (a lista chega a cada 2 s)
+		if msg := err.Error(); msg != lastSpecsErr {
+			lastSpecsErr = msg
+			log.Printf("restore: %s ilegível (%v); a receita dos terminais será ignorada até ser regravada", path, err)
+		}
 		return specsFile{}, false
 	}
 	return f, true

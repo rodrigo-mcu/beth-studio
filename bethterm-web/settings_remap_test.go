@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -135,5 +137,21 @@ func TestReconcileFrozenKeepsLayoutAndAppearance(t *testing.T) {
 	st.reconcile([]byte(`{"ev":"list","panes":[]}`))
 	if len(st.s.Layout.Tabs) == 2 {
 		t.Fatal("descongelado, o reconcile volta ao comportamento normal")
+	}
+}
+
+func TestSettingsLoadToleratesUTF8BOM(t *testing.T) {
+	dir := t.TempDir()
+	body := append([]byte{0xEF, 0xBB, 0xBF}, []byte(`{"version":2,"layout":{"v":2,"active":"a","tabs":[{"id":"a","name":"x","root":null}]}}`)...)
+	if err := os.WriteFile(filepath.Join(dir, webSettingsFile), body, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	st := &settingsStore{}
+	st.load(dir)
+	if st.s.Layout == nil || len(st.s.Layout.Tabs) != 1 {
+		t.Fatalf("web-settings.json com BOM deveria ser lido (e não descartado como corrompido): %+v", st.s.Layout)
+	}
+	if matches, _ := filepath.Glob(filepath.Join(dir, "*.corrupt-*")); len(matches) != 0 {
+		t.Fatalf("o arquivo não deveria ter sido movido como corrompido: %v", matches)
 	}
 }

@@ -172,3 +172,15 @@ func TestLoadSpecsCorruptedOrMissing(t *testing.T) {
 		t.Fatal("arquivo corrompido deveria dar false")
 	}
 }
+
+func TestLoadSpecsToleratesUTF8BOM(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "pane-specs.json")
+	body := append([]byte{0xEF, 0xBB, 0xBF}, []byte(`{"version":1,"host_id":"1@1","saved_at":"2026-10-03T12:00:00Z","specs":[{"pane_id":4,"kind":"cmd","order":0}]}`)...)
+	if err := os.WriteFile(path, body, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	f, ok := loadSpecs(path)
+	if !ok || f.HostID != "1@1" || len(f.Specs) != 1 || f.Specs[0].PaneID != 4 {
+		t.Fatalf("receita com BOM deveria ser lida: %+v ok=%v", f, ok)
+	}
+}

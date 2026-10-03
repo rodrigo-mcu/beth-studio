@@ -271,3 +271,14 @@ func TestSpawnErrorWithRequestIsRecognizedByTheHub(t *testing.T) {
 		t.Fatalf("request id lido = %q em %q", got, msg)
 	}
 }
+
+func TestLoadWSLDistroCfgToleratesUTF8BOM(t *testing.T) {
+	dir := t.TempDir()
+	body := append([]byte{0xEF, 0xBB, 0xBF}, []byte(`{"Debian":{"init":"true","user":"root"}}`)...)
+	if err := os.WriteFile(filepath.Join(dir, "wsl-distros.json"), body, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if c := loadWSLDistroCfg(dir)["debian"]; c.Init != "true" {
+		t.Fatalf("wsl-distros.json com BOM deveria ser lido: %+v", c)
+	}
+}

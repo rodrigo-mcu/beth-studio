@@ -159,7 +159,7 @@ func (st *settingsStore) load(dir string) {
 		return
 	}
 	var s webSettings
-	if err := json.Unmarshal(b, &s); err != nil {
+	if err := json.Unmarshal(stripBOM(b), &s); err != nil {
 		bad := fmt.Sprintf("%s.corrupt-%s", p, time.Now().Format("20060102-150405"))
 		_ = os.Rename(p, bad)
 		log.Printf("settings: %s inválido (%v); guardado como %s, começando vazio", p, err, bad)
@@ -195,7 +195,7 @@ func (st *settingsStore) reloadLocked() {
 		return
 	}
 	var s webSettings
-	if json.Unmarshal(b, &s) != nil {
+	if json.Unmarshal(stripBOM(b), &s) != nil {
 		return
 	}
 	if s.Panes == nil {

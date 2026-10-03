@@ -60,6 +60,7 @@ const listTwo = `{"ev":"list","panes":[{"pane_id":1},{"pane_id":2}]}`
 func newTestCoordinator(h *coordHarness) *restoreCoordinator {
 	c := newRestoreCoordinator(h.deps())
 	c.saveDelay, c.emptySaveDelay, c.minRewrite = 0, 0, 0 // nos testes a gravação é imediata
+	c.retryDelay, c.maxRetries = 2*time.Millisecond, 5
 	return c
 }
 
@@ -182,5 +183,77 @@ func TestCoordinatorFinishedAllowsSavingAgain(t *testing.T) {
 	c.waitIdle()
 	if len(h.saved) != 1 || h.saved[0].HostID != "300@3" {
 		t.Fatalf("depois de terminar, a receita deve ser regravada para o host novo: %+v", h.saved)
+	}
+}
+
+func TestCoordinatorHostIdentityArrivesLate(t *testing.T) {
+	h := newCoordHarness()
+	h.host = "" // o host.pid ainda não existe
+	h.setFile("100@1", 1, paneSpec{PaneID: 1, ShellID: "cmd", Kind: "cmd"})
+	c := newTestCoordinator(h)
+	c.retryDelay = 50 * time.Millisecond // dá tempo de olhar o estado intermediário
+	c.onList([]byte(listEmpty))
+	h.mu.Lock()
+	if len(h.frozen) != 1 || !h.frozen[0] {
+		h.mu.Unlock()
+		t.Fatalf("sem identidade e com receita aproveitável o reconcile deve ficar congelado: %v", h.frozen)
+	}
+	h.host = "200@2" // a identidade aparece
+	h.mu.Unlock()
+	c.waitIdle()
+	if len(h.started) != 1 {
+		t.Fatalf("depois que a identidade apareceu deveria restaurar (iniciou %d vezes)", len(h.started))
+	}
+	if len(h.saved) != 0 {
+		t.Fatal("não pode sobrescrever a receita")
+	}
+}
+
+func TestCoordinatorHostIdentityNeverArrivesUnfreezes(t *testing.T) {
+	h := newCoordHarness()
+	h.host = ""
+	h.setFile("100@1", 1, paneSpec{PaneID: 1, ShellID: "cmd", Kind: "cmd"})
+	c := newTestCoordinator(h)
+	c.onList([]byte(listEmpty))
+	c.waitIdle()
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if len(h.started) != 0 {
+		t.Fatal("sem identidade nunca decide restaurar")
+	}
+	if len(h.frozen) != 2 || !h.frozen[0] || h.frozen[1] {
+		t.Fatalf("esgotadas as tentativas o reconcile deve ser liberado: %v", h.frozen)
+	}
+}
+
+func TestCoordinatorLateIdentityButNothingToRestoreUnfreezes(t *testing.T) {
+	h := newCoordHarness()
+	h.host = ""
+	h.setFile("200@2", 1, paneSpec{PaneID: 1, ShellID: "cmd", Kind: "cmd"}) // receita do mesmo host que vai aparecer
+	c := newTestCoordinator(h)
+	c.retryDelay = 50 * time.Millisecond
+	c.onList([]byte(listEmpty))
+	h.mu.Lock()
+	h.host = "200@2"
+	h.mu.Unlock()
+	c.waitIdle()
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if len(h.started) != 0 {
+		t.Fatal("mesmo host: não restaura")
+	}
+	if len(h.frozen) != 2 || !h.frozen[0] || h.frozen[1] {
+		t.Fatalf("descongela quando não há o que restaurar: %v", h.frozen)
+	}
+}
+
+func TestCoordinatorNoFreezeWithoutUsableSpecsWhileIdentityUnknown(t *testing.T) {
+	h := newCoordHarness()
+	h.host = ""
+	c := newTestCoordinator(h) // sem receita
+	c.onList([]byte(listEmpty))
+	c.waitIdle()
+	if len(h.frozen) != 0 {
+		t.Fatalf("sem receita não há por que congelar o reconcile: %v", h.frozen)
 	}
 }

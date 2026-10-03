@@ -10,6 +10,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -39,19 +40,27 @@ type restoreCoordinator struct {
 	// tempos; os testes zeram
 	saveDelay      time.Duration // lista com terminais
 	emptySaveDelay time.Duration // lista vazia: espera para não gravar um vazio passageiro
-	minRewrite     time.Duration // mesma estrutura: no máximo uma gravação por esse tempo
+	minRewrite     time.Duration // mesma estrutura: no maximo uma gravacao por esse tempo
+	// A identidade do host (host.pid) pode demorar a existir depois que o host sobe, e a ponte
+	// so' emite outra lista quando algo muda (uma lista vazia continua igual): reavalia sozinho.
+	retryDelay time.Duration
+	maxRetries int
 
-	mu       sync.Mutex
-	running  bool
-	timer    *time.Timer
-	pend     pendingSave
-	lastKey  string
-	lastSave time.Time
-	wg       sync.WaitGroup
+	mu         sync.Mutex
+	lastNote   string // ultima decisao registrada no log (nao repete a cada lista)
+	retries    int    // reavaliacoes feitas esperando a identidade do host
+	pendFrozen bool   // o reconcile foi congelado so' esperando a identidade do host
+	running    bool
+	timer      *time.Timer
+	pend       pendingSave
+	lastKey    string
+	lastSave   time.Time
+	wg         sync.WaitGroup
 }
 
 func newRestoreCoordinator(d coordDeps) *restoreCoordinator {
-	return &restoreCoordinator{d: d, saveDelay: 2 * time.Second, emptySaveDelay: 15 * time.Second, minRewrite: 60 * time.Second}
+	return &restoreCoordinator{d: d, saveDelay: 2 * time.Second, emptySaveDelay: 15 * time.Second, minRewrite: 60 * time.Second,
+		retryDelay: time.Second, maxRetries: 30}
 }
 
 func countPanes(list []byte) int {
@@ -91,7 +100,28 @@ func (c *restoreCoordinator) onList(list []byte) {
 	panes := countPanes(list)
 	host := c.d.hostID()
 	file, have := c.d.loadSpecs()
-	if have && shouldRestore(file, host, panes, c.d.now()) {
+	restore := have && shouldRestore(file, host, panes, c.d.now())
+	c.note(panes, host, file, have, restore)
+	if host == "" {
+		// Sem a identidade do host nao da' para decidir. Se ha uma receita aproveitavel e o host
+		// esta vazio, o reconcile NAO pode rodar (apagaria o layout): congela e reavalia.
+		if have && panes == 0 && len(file.Specs) > 0 && recentSpecs(file, c.d.now()) {
+			c.mu.Lock()
+			first := !c.pendFrozen
+			c.pendFrozen = true
+			c.mu.Unlock()
+			if first {
+				c.d.freeze(true)
+			}
+		}
+		c.retryLater(list)
+		return
+	}
+	c.mu.Lock()
+	wasPending := c.pendFrozen
+	c.retries = 0
+	c.mu.Unlock()
+	if restore {
 		c.mu.Lock()
 		if c.running {
 			c.mu.Unlock()
@@ -103,6 +133,9 @@ func (c *restoreCoordinator) onList(list []byte) {
 			c.timer = nil
 		}
 		c.mu.Unlock()
+		c.mu.Lock()
+		c.pendFrozen = false // o job de restauracao passa a ser o dono do congelamento
+		c.mu.Unlock()
 		c.d.freeze(true)
 		c.wg.Add(1)
 		go func() {
@@ -111,10 +144,60 @@ func (c *restoreCoordinator) onList(list []byte) {
 		}()
 		return
 	}
-	if host == "" {
-		return // sem a identidade do host não dá para gravar nem decidir
+	if wasPending { // era so' espera pela identidade: nada a restaurar, libera o reconcile
+		c.mu.Lock()
+		c.pendFrozen = false
+		c.mu.Unlock()
+		c.d.freeze(false)
 	}
 	c.scheduleSave(list, host, panes)
+}
+
+// recentSpecs: a receita ainda vale (menos de 7 dias).
+func recentSpecs(f specsFile, now time.Time) bool {
+	t, err := time.Parse(time.RFC3339, f.SavedAt)
+	return err == nil && now.Sub(t) <= specsMaxAge
+}
+
+// retryLater reavalia a mesma lista daqui a pouco (a identidade do host ainda nao existe).
+// Esgotadas as tentativas, libera o reconcile para o Studio nao ficar congelado.
+func (c *restoreCoordinator) retryLater(list []byte) {
+	c.mu.Lock()
+	c.retries++
+	n := c.retries
+	pend := c.pendFrozen
+	c.mu.Unlock()
+	if n > c.maxRetries {
+		if pend {
+			c.mu.Lock()
+			c.pendFrozen = false
+			c.mu.Unlock()
+			c.d.freeze(false)
+		}
+		return
+	}
+	cp := append([]byte(nil), list...)
+	c.wg.Add(1)
+	time.AfterFunc(c.retryDelay, func() {
+		defer c.wg.Done()
+		c.onList(cp)
+	})
+}
+
+// note registra no log a decisao, so' quando algo muda: e' o que explica "por que nao restaurou?".
+func (c *restoreCoordinator) note(panes int, host string, f specsFile, have, restore bool) {
+	if panes != 0 && !restore {
+		return // caso comum (host com terminais): sem barulho
+	}
+	n := fmt.Sprintf("restore: lista com %d terminais; host atual %q; receita %s (host %q, %d terminais, salva %s); restaurar=%v",
+		panes, host, map[bool]string{true: "lida", false: "ausente ou ilegivel"}[have], f.HostID, len(f.Specs), f.SavedAt, restore)
+	c.mu.Lock()
+	same := n == c.lastNote
+	c.lastNote = n
+	c.mu.Unlock()
+	if !same {
+		log.Print(n)
+	}
 }
 
 func (c *restoreCoordinator) scheduleSave(list []byte, host string, panes int) {

@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,7 +44,8 @@ func loadWSLDistroCfg(dir string) map[string]wslDistroCfg {
 		return out
 	}
 	var raw map[string]wslDistroCfg
-	if json.Unmarshal(b, &raw) != nil {
+	if err := json.Unmarshal(stripBOM(b), &raw); err != nil {
+		log.Printf("wsl: wsl-distros.json ilegível (%v); ignorado", err)
 		return out
 	}
 	for k, v := range raw {
