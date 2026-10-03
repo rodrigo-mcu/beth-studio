@@ -1,185 +1,108 @@
 # Beth Studio
 
-**Beth Studio** is a mouse-first terminal for Windows. **Beth Studio** is a second
-interface for the same terminals. Together they are one product, named for
-Elizabeth.
+**Beth Studio** é um terminal para Windows pensado para o mouse. Seus terminais, agentes de IA e sessões WSL ficam num processo que não morre quando você fecha uma janela, e a interface (abas, divisões, arquivos, banco de dados, SSH, voz) roda por cima dele.
 
-- **Beth Studio** — the terminal engine (a WezTerm fork): the persistent host and the `bethstudio` CLI with its bridge. It has no window of its own any more; Beth Studio is the interface.
-- **`bethstudio-host.exe`** — a persistent process that owns every terminal. Close any window and your shells, agents, and WSL sessions keep running.
-- **Beth Studio** — a Go + React app in WebView2: its own tabs and splits, search, files and notes, a database panel, SSH / serial / SFTP, voice dictation, a task manager, detached terminal windows, a tray icon, and access from a browser or a phone. It supervises the host and restores your terminals after a crash.
+Mais do que um terminal, o Beth Studio é um estúdio de trabalho: o terminal, um editor, um cliente de banco de dados, SSH/serial/SFTP e acesso pelo navegador ou pelo celular, tudo no mesmo programa.
 
-## Based on WezTerm
+> **Idioma.** A interface do Beth Studio e esta documentação estão em português do Brasil. A versão em inglês vem depois.
 
-Beth Studio **started from [WezTerm](https://github.com/wezterm/wezterm)** (Wez Furlong and contributors, MIT). That is the foundation, not an optional credit.
+## Por que existe
 
-WezTerm already has tabs, splits, a multiplexer, SSH, GPU rendering, ligatures, image protocols, and `wezterm.lua`. What it does **not** do as a default is treat the mouse as a first-class way to use the terminal on Windows. The stock UX is keyboard- and Lua-first: new tabs, splits, themes, and fonts are things you bind or configure, not things you click.
+- **Terminais que sobrevivem.** Um host persistente (`bethstudio-host.exe`) é o dono de todos os terminais. Fechar o Studio, travar a interface ou reiniciá-la não mata os shells, os agentes nem as sessões WSL.
+- **Mouse primeiro.** Nova aba, divisão, tema, fonte, destacar em janela: tudo se faz clicando, sem arquivo de configuração e sem atalho para decorar.
+- **Recupera sozinho.** Se o próprio host cair, o Studio sobe outro e recria os terminais nas mesmas abas e pastas.
+- **Uma interface só.** O Studio (Go + React em WebView2) é a única interface. A janela nativa que existia antes foi removida.
 
-Beth Studio keeps that engine and adds a Windows workflow you can use without a config file. The WezTerm tree is vendored in [`upstream-wezterm/`](upstream-wezterm/). BethStudio-specific code is the delta on top. Every edit to an existing WezTerm file is listed in [`upstream-wezterm/PATCHES.md`](upstream-wezterm/PATCHES.md).
+## O que dá para fazer
 
-This is an **independent** fork. It is not affiliated with or endorsed by Wez Furlong or the WezTerm project. Attribution lives in [`NOTICE.md`](NOTICE.md) and the origin policy in [`docs/ORIGIN.md`](docs/ORIGIN.md). How the project got here: [`docs/HISTORY.md`](docs/HISTORY.md). Which WezTerm commit it started from, the exact diff, and the policy for upstream changes: [`docs/UPSTREAM.md`](docs/UPSTREAM.md).
+| Área | O que tem | Detalhes |
+| --- | --- | --- |
+| Terminais | Abas, divisões, busca, vistas por layout, host, tipo ou pasta | [Terminais e abas](wiki/Terminais-e-abas.md) |
+| Janelas | Destacar um terminal em janela própria (inclusive em outro monitor) e arrastar de volta | [Terminal destacado](wiki/Terminal-destacado.md) |
+| Aparência | Temas (Gogh, VS Code), fontes, tema e fonte por terminal | [Temas e fontes](wiki/Temas-e-fontes.md) |
+| Arquivos | Editor de texto e Markdown, notas, prévia, colar arquivo do Explorer | [Arquivos, notas e área de transferência](wiki/Arquivos-notas-e-area-de-transferencia.md) |
+| Resiliência | Host persistente, supervisão, restauração após queda | [Host persistente e restauração](wiki/Host-persistente-e-restauracao.md) |
+| WSL | Início inteligente: espera a distro e a pasta montada | [WSL](wiki/WSL.md) |
+| Bandeja | Ícone próprio, menu do sistema, "Encerrar tudo" com confirmação | [Bandeja e supervisão](wiki/Bandeja-e-supervisao.md) |
+| Conexões | SSH, portas seriais e janela SFTP | [SSH, serial e SFTP](wiki/SSH-serial-e-SFTP.md) |
+| Agentes e voz | Aviso de agente esperando, ditado por voz com correção opcional | [Agentes e voz](wiki/Agentes-e-voz.md) |
+| Banco de dados | PostgreSQL, MySQL/MariaDB, SQL Server e SQLite | [Banco de dados](wiki/Banco-de-dados.md) |
+| Remoto | Studio no navegador e página própria para o celular | [Celular e acesso remoto](wiki/Celular-e-acesso-remoto.md) |
+| Sistema | Gerenciador de tarefas com CPU, memória, GPU, disco e por terminal | [Monitor do sistema](wiki/Monitor-do-sistema.md) |
 
-> **Language.** The Beth Studio interface and several of its documents
-> (`bethstudio-web/`, some files under `docs/`) are in Brazilian Portuguese.
-> The rest of the documentation is in English.
+A lista completa e atualizada está em [`FEATURES.md`](FEATURES.md). O manual passo a passo está na [wiki](wiki/Home.md).
 
----
+## Como as peças se encaixam
 
-## Features
+```
+ Studio (bethstudio-web.exe)           Go + React/xterm.js em WebView2
+        │  HTTP + WebSocket (só em 127.0.0.1, com token)
+        ▼
+ Ponte (bethstudio.exe cli bridge)     linhas JSON; o terminal chega como "snapshot"
+        │
+        ▼
+ Host (bethstudio-host.exe)            dono dos terminais (PTYs); sobrevive ao Studio
+        │
+        ▼
+ Shells: PowerShell, cmd, WSL, Git Bash, SSH, serial…
+```
 
-The full list is [`FEATURES.md`](FEATURES.md). A short tour:
+Detalhes em [Arquitetura](wiki/Arquitetura.md).
 
-### The persistent host
+## Instalação
 
-- `bethstudio-host.exe` owns the terminals. Beth Studio attaches to it through `bethstudio cli bridge`, so closing the Studio never kills a terminal.
-- Inherited from WezTerm, unchanged: the multiplexer, SSH domains, and the terminal emulation core.
-- `host-life.log` records every start, stop, and who asked for it.
+1. Baixe o `BethStudio-Setup.exe`.
+2. Execute, escolha a pasta (a sugestão é `C:\Users\Public\BethStudio`) e clique em **Instalar**.
+3. Abra pelo atalho ou pelo botão **Abrir** do instalador.
 
-### Beth Studio
+O instalador é portátil: sem registro do Windows e sem pastas escondidas. Atualizar com o host rodando não derruba seus terminais. Requisitos e detalhes em [Instalação](wiki/Instalacao.md).
 
-- Its own tabs and splits, drag-and-drop, per-terminal theme and font, search by title, folder, tab, or screen text; views by your layout, by host window, by type, or by folder.
-- **Detached terminals**: send a terminal or SSH session to its own window (it can go to another monitor) and drop it back onto the tab bar. Closing that window does not stop the terminal.
-- Text and Markdown editor, notes, file preview, and a folder browser.
-- Database panel (PostgreSQL, MySQL / MariaDB, SQL Server, SQLite): browse, query, edit cells and rows, saved queries and history.
-- SSH hosts, serial ports, and an SFTP window.
-- Voice dictation into the focused terminal, with a technical vocabulary.
-- Task manager with per-terminal and WSL memory.
-- Tray icon with a system menu; supervises the host and restores terminals after a crash.
-- The whole Studio in a browser, and a phone web app (see [Remote access](#remote-access)).
-
----
-
-## Build from source (Windows)
-
-### Beth Studio and the host (Rust)
-
-Requirements:
-
-- **Rust nightly** (`rustup toolchain install nightly`). Upstream uses `edition = 2024`.
-- **Strawberry Perl** and the **MSVC** toolchain on `PATH` (Perl is needed to build `openssl-sys`).
+## Compilar do código
 
 ```powershell
-git clone <this-repo>
-cd beth-studio\upstream-wezterm
-
-# Perl + MSVC must be on PATH (adjust the MSVC version to yours):
-$env:PATH = 'C:\Strawberry\perl\bin;' + $env:PATH
-
+# host e CLI (Rust nightly, MSVC e Strawberry Perl no PATH)
+cd upstream-wezterm
 cargo +nightly build --release -p wezterm -p wezterm-mux-server
+
+# Studio (Go 1.24+, Node.js com pnpm)
+cd ..\bethstudio-web
+.\build.ps1
+
+# instalador
+cd ..
+.\pack-bethstudio-setup.cmd
 ```
 
-That produces `bethstudio.exe` (CLI and bridge) and `bethstudio-host.exe`
-(persistent PTY process). The Cargo packages are still named `wezterm` /
-`wezterm-mux-server`.
+Passo a passo, testes e dicas em [Compilar do código](wiki/Compilar-do-codigo.md).
 
-From the repository root, `run-bethstudio.cmd` starts this checkout's
-`bethstudio-web.exe` (Beth Studio). It does not use a system-installed WezTerm.
+## Segurança e privacidade
 
-### Beth Studio (Go + React)
+O Studio escuta só em `127.0.0.1`, numa porta aleatória, e exige um token em toda requisição. Nada sai do seu computador a menos que você ligue o acesso remoto (que usa um relé que você mesmo hospeda) ou use recursos que chamam provedores de IA. O que sai e quando está em [Segurança e privacidade](wiki/Seguranca-e-privacidade.md). Para reportar uma vulnerabilidade, veja [`SECURITY.md`](SECURITY.md).
 
-Requirements: **Go 1.24+**, **Node.js** with **pnpm**, and the Microsoft Edge
-**WebView2 Runtime** (already on current Windows 10 and 11).
+## Base no WezTerm
 
-```powershell
-cd bethstudio-web
-.\build.ps1          # builds the React frontend, then bethstudio-web.exe and bethstudio-tool.exe
-```
+O Beth Studio **nasceu do [WezTerm](https://github.com/wezterm/wezterm)** (Wez Furlong e colaboradores, licença MIT). O host, a ponte e o núcleo de emulação de terminal vêm de lá. O código-fonte do WezTerm usado fica em [`upstream-wezterm/`](upstream-wezterm/), com a base congelada num commit conhecido; cada alteração em arquivo existente está registrada em [`upstream-wezterm/PATCHES.md`](upstream-wezterm/PATCHES.md).
 
-`bethstudio-web.exe` talks to the host through `bethstudio.exe cli bridge`, so keep
-it next to `bethstudio.exe`, or pass `--bethstudio <path>`. Run it directly (or
-from a shortcut); it starts and supervises the host and puts its icon in the tray. More in [`bethstudio-web/README.md`](bethstudio-web/README.md).
+É um projeto **independente**: não é afiliado nem endossado por Wez Furlong ou pelo projeto WezTerm. Veja [Relação com o WezTerm](wiki/Relacao-com-o-WezTerm.md), [`docs/UPSTREAM.md`](docs/UPSTREAM.md) e [`NOTICE.md`](NOTICE.md).
 
-### Installer / updater (native Win32 + embedded zstd)
+## Como o projeto chegou aqui
 
-The setup UI is a native Windows window (no WebView). Each `BethStudio-Setup.exe`
-embeds the zstd payload in the same executable (single file). Build the Rust
-binaries and Beth Studio first, then:
+A linha do tempo está em [`docs/HISTORY.md`](docs/HISTORY.md).
 
-```cmd
-pack-bethstudio-setup.cmd
-```
+## Contribuir
 
-That produces `dist\BethStudio-Setup.exe` with `bethstudio.exe`,
-`bethstudio-host.exe`, `bethstudio-web.exe`, `bethstudio-tool.exe`, ConPTY
-(`OpenConsole.exe`, `conpty.dll`), and
-licenses packed inside.
+Veja [`CONTRIBUTING.md`](CONTRIBUTING.md) e [`docs/HACKING.md`](docs/HACKING.md). Se o defeito também existe no WezTerm original, envie para o [projeto dele](https://github.com/wezterm/wezterm). Host, ponte, sessão e o Studio são daqui.
 
-The installer suggests the machine's Public folder (typically `C:\Users\Public\BethStudio`). It is a portable install: no registry, no hidden folders; everything lives in that directory. It can update an existing copy and can create Desktop/Start Menu shortcuts. Updating while the host is running stages the new host binary and applies it on the next host start; it never stops your terminals unless you ask.
+## Licença
 
----
+**MIT**, a mesma do WezTerm. Veja [`LICENSE.md`](LICENSE.md). O Beth Studio é um trabalho derivado do WezTerm, © Wez Furlong e colaboradores; os avisos originais foram mantidos. O código novo é © os colaboradores do Beth Studio, também sob MIT.
 
-## Configuration
+## Agradecimentos
 
-Beth Studio reads your existing **`wezterm.lua`** / **`.wezterm.lua`** unchanged. BethStudio-specific options currently live under a `wtinator = { ... }` table (the historical crate name). Most features are mouse-driven and need no config.
+- **[Wez Furlong](https://github.com/wezterm)** e os colaboradores do WezTerm, a base de tudo.
+- **[Terminator](https://gnome-terminator.org/)**, cuja grade de divisões inspirou a camada de mouse.
+- **[Gogh](https://github.com/Gogh-Co/Gogh)**, o catálogo comunitário de temas.
+- **[VS Code](https://github.com/microsoft/vscode)**, pelas convenções de tema e fonte.
+- **Elizabeth**, que dá o nome.
 
-Runtime data (session, downloaded themes, favorites, default theme, Beth Studio settings) lives in:
-
-| OS | Path |
-| --- | --- |
-| Windows | `%APPDATA%\bethstudio\` |
-| macOS / Linux | `~/.config/bethstudio/` |
-
-See [`docs/CONFIG.md`](docs/CONFIG.md) for the option reference.
-
----
-
-## Remote access
-
-Beth Studio listens only on `127.0.0.1`, on a random port, and requires a random
-token on every request.
-
-Opening the Studio from another browser or from a phone is optional and needs a
-small relay that **you** run on your own Linux server:
-[`bethstudio-web/cmd/bethstudio-proxy`](bethstudio-web/cmd/bethstudio-proxy). The
-phone page is a separate build (`bethstudio-web/frontend/phone.html`). Nothing
-leaves your machine unless you set this up. Design notes:
-[`docs/superpowers/specs/2026-09-27-celular-remoto-design.md`](docs/superpowers/specs/2026-09-27-celular-remoto-design.md).
-
-[`bethstudio-mobile/`](bethstudio-mobile/) is an early Expo skeleton and is not the
-phone path that ships.
-
----
-
-## How the tree is laid out
-
-| Path | What it is |
-| --- | --- |
-| `upstream-wezterm/` | The vendored WezTerm tree plus the Beth Studio delta. |
-| `upstream-wezterm/wtinator/` | The Beth Studio delta crate. Almost all new Rust code lives here. |
-| `upstream-wezterm/PATCHES.md` | Index of every edit to *existing* upstream files. |
-| `bethstudio-web/` | Beth Studio: Go backend, React frontend, SSH/serial helper, phone proxy. |
-| `bethstudio-mobile/` | Early Expo skeleton (not the shipped phone path). |
-| `docs/` | Architecture, configuration, history, specs, and plans. |
-
-Existing upstream files are changed only as documented patches. The crate name `wtinator` is historical and kept so the patch series stays bisectable.
-
----
-
-## License
-
-**MIT** — the same license as upstream WezTerm. See [`LICENSE.md`](LICENSE.md).
-
-Beth Studio is a derivative work of [WezTerm](https://github.com/wezterm/wezterm), © Wez Furlong and contributors. Upstream copyright notices are preserved. New code is © the Beth Studio contributors, also under MIT.
-
-Bundled fonts remain under their original OFL terms (see `upstream-wezterm/LICENSE.md`).
-
----
-
-## Contributing
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`docs/HACKING.md`](docs/HACKING.md).
-
-Please **do not** file WezTerm-core bugs here when they also exist upstream — send those to [wezterm/wezterm](https://github.com/wezterm/wezterm). BethStudio-specific host, session, and bridge code, and Beth Studio belong here.
-
-Security reports: see [`SECURITY.md`](SECURITY.md).
-
----
-
-## Acknowledgements
-
-- **[Wez Furlong](https://github.com/wezterm)** and the WezTerm contributors — the foundation this is built on.
-- **[Terminator](https://gnome-terminator.org/)** — the split-grid UX that inspired the mouse-first layer.
-- **[Gogh](https://github.com/Gogh-Co/Gogh)** — the community theme catalog.
-- **[VS Code](https://github.com/microsoft/vscode)** — theme palette and font-settings conventions.
-- **Elizabeth** — the name.
-
-This project has been developed with the help of AI coding agents. The engineering log of every change lives in [`upstream-wezterm/PATCHES.md`](upstream-wezterm/PATCHES.md).
+Este projeto foi desenvolvido com a ajuda de agentes de programação com IA. O registro de engenharia de cada mudança está em [`upstream-wezterm/PATCHES.md`](upstream-wezterm/PATCHES.md).

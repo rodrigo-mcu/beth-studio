@@ -89,9 +89,10 @@ and users can add their own entries in `%APPDATA%\bethstudio\shells.json`
 
 ## 3. Themes
 
-- 🟢 **Theme downloader** — one click fetches the **Gogh community catalog**
-  (~365 themes: Dracula, Nord, Tokyo Night, One Dark, Catppuccin, …), slugifies
-  and caches them under `%APPDATA%\bethstudio\themes\` (patch 0038).
+- 🟢 **Theme catalog from disk** — the Studio lists the built-in themes plus every
+  `.json` theme saved under `%APPDATA%\bethstudio\themes\` (Gogh format) and VS Code
+  themes. It does **not** download them: the one-click Gogh downloader (patch 0038)
+  belonged to the removed native app, so the folder has to be filled by hand.
 - 🟢 **Favourites persist on disk** as theme presets in
   `%APPDATA%\bethstudio\theme-favorites.json`, shared with Beth Studio.
 - 🟢 **Default theme for all terminals** — saved to
