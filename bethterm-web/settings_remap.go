@@ -9,6 +9,18 @@ import (
 	"time"
 )
 
+// liveHas: todos estes ids ja' aparecem na ultima lista do host?
+func (st *settingsStore) liveHas(ids []int) bool {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	for _, id := range ids {
+		if _, ok := st.live[id]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
 // setFrozen liga/desliga o congelamento do reconcile: durante a restauração
 // o host está vazio ou cheio pela metade, e o reconcile normal marcaria tudo
 // como encerrado e fecharia as abas.

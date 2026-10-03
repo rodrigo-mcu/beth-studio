@@ -25,6 +25,9 @@ type hub struct {
 	term *termRegistry
 	// supervisor do host (supervisor.go); nil nos modos --db, --sftp e --term
 	sup *supervisor
+	// restauracao de terminais depois de uma queda (restore*.go); nil sem supervisor
+	restore *restoreCoordinator
+	wslGate wslReady
 
 	mu       sync.Mutex
 	clients  map[*client]struct{}
@@ -41,6 +44,9 @@ type hub struct {
 	shells []byte
 	// hostMsg: ultimo {"ev":"host",...} do supervisor, para quem conecta depois
 	hostMsg []byte
+	// restoreMsg: ultimo {"ev":"restore",...}; spawnWait: request_id -> espera pelo `spawned`
+	restoreMsg []byte
+	spawnWait  map[string]chan spawnResult
 	// rawList: ultima lista da ponte SEM os tipos (para reclassificar
 	// quando pane-commands.json muda). spawnReq: request_id -> shell_id.
 	rawList  []byte
@@ -109,10 +115,14 @@ func (h *hub) add() *client {
 	}
 	shells := h.shells
 	hostMsg := h.hostMsg
+	restoreMsg := h.restoreMsg
 	h.mu.Unlock()
 	c.enqueue(st)
 	if hostMsg != nil {
 		c.enqueue(hostMsg)
+	}
+	if restoreMsg != nil {
+		c.enqueue(restoreMsg)
 	}
 	if list != nil {
 		c.enqueue(list)
@@ -261,6 +271,10 @@ func (h *hub) fromBridge(line []byte) (ev bridgeEvent) {
 	if ev.Ev == "list" {
 		// Tipo de cada terminal (panekind.go) vai junto na lista.
 		msg = enrichList(line, guiCommands.get(dataDir()), settings.spawnedMap())
+		// antes do reconcile: se o host e' novo e vazio, congela o reconcile e restaura
+		if h.restore != nil {
+			h.restore.onList(msg)
+		}
 	}
 	if ev.Ev == "spawned" {
 		var sp struct {
@@ -276,6 +290,7 @@ func (h *hub) fromBridge(line []byte) (ev bridgeEvent) {
 				settings.recordSpawn(sp.PaneID, sh)
 				defer h.refreshKinds(true)
 			}
+			h.notifySpawn(sp.RequestID, spawnResult{PaneID: sp.PaneID})
 		}
 	}
 	if ev.Ev == "scrollback" {
@@ -297,6 +312,12 @@ func (h *hub) fromBridge(line []byte) (ev bridgeEvent) {
 			}
 		}
 		return ev // nao espalha megabytes de historico para todos os clients
+	}
+	if ev.Ev == "error" && strings.HasPrefix(ev.Message, "spawn") {
+		// "spawn <shell> (request r1): erro": quem espera pelo spawn recebe o motivo
+		if rid := spawnErrRequestID(ev.Message); rid != "" && h.notifySpawn(rid, spawnResult{Err: ev.Message}) {
+			return ev
+		}
 	}
 	if ev.Ev == "error" && strings.Contains(strings.ToLower(ev.Message), "scrollback pane") {
 		// "scrollback pane N (request r1): ..." — entrega ao waiter
