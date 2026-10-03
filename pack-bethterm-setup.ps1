@@ -34,6 +34,12 @@ foreach ($name in @('bethterm-web.exe', 'bethterm-tool.exe')) {
     Copy-Item -LiteralPath $src -Destination (Join-Path $env:BETHTERM_DIST $name) -Force
 }
 
+# The host needs the bundled ConPTY next to it (the old GUI build used to copy these).
+foreach ($name in @('OpenConsole.exe', 'conpty.dll')) {
+    $src = Join-Path $Root "upstream-wezterm\assets\windows\conhost\$name"
+    Copy-Item -LiteralPath $src -Destination (Join-Path $env:BETHTERM_DIST $name) -Force
+}
+
 Set-Location (Join-Path $Root 'upstream-wezterm')
 cargo +nightly build --release -p bethterm-setup
 if ($LASTEXITCODE -ne 0) { throw 'cargo build -p bethterm-setup failed' }
