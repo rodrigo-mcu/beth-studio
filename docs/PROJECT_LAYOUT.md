@@ -23,10 +23,13 @@ The reason for the rule is the strategy in [`ARCHITECTURE.md §"Strategy: vendor
 Operational files at the repository root:
 
 - `AGENTS.md` is the local runbook for future agents.
-- `run-bethterm-release.cmd` and `run-bethterm-debug.cmd` are the
-  supported Windows launchers for manual testing. They start
-  `wezterm.exe start --always-new-process` from this checkout.
+- `run-bethterm.cmd` (same as `run-bethterm-release.cmd`) and
+  `run-bethterm-debug.cmd` are the supported Windows launchers for manual
+  testing. They start `bethterm-web.exe` (Beth Studio) from this checkout;
+  build it first with `powershell -File bethterm-webuild.ps1`.
   The `run-wezterminator-*.cmd` names are compatibility wrappers.
+- `bethterm-web/` is Beth Studio (Go + React); `pack-bethterm-setup.ps1`
+  builds the installer.
 
 ```
 bethterm/
@@ -94,7 +97,7 @@ bethterm/
   which calls `wtinator::install()` and then proceeds as a stock wezterm.
   The placeholder `wezterminator/src/main.rs` exists for test purposes
   (running `cargo run -p wezterminator` exercises the install hook
-  without launching the full GUI).
+  without starting the host).
 
 ## What lives in `docs/` vs `README.md`
 
@@ -139,7 +142,6 @@ smaller crates:
 upstream-wezterm/wtinator/
 ├── Cargo.toml                  # workspace
 ├── wtinator-core/              # the small stuff
-├── wtinator-gui/               # Skia widgets
 ├── wtinator-ssh/               # SSH-related
 └── wtinator-sftp/              # SFTP (v0.7)
 ```

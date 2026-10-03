@@ -1,5 +1,7 @@
 # Architecture
 
+> **Status (Phase B).** The native window (`wezterm-gui`, Skia, `wtinator-config`) was removed from the tree. The `wezterm-gui` touch points were dropped from the sections below; what remains is kept as design notes. See [`HISTORY.md`](HISTORY.md).
+
 This document maps the upstream wezterm codebase so a new contributor (or another agent) can find the right file to change without re-discovering the layout.
 
 > **Related docs**
@@ -12,6 +14,24 @@ This document maps the upstream wezterm codebase so a new contributor (or anothe
 > - All paths are relative to the repo root.
 > - `upstream-wezterm/` is a shallow git clone of wezterm at a pinned commit. We add our delta **on top of** that, not by editing files in `upstream-wezterm/` directly. See "Strategy" below.
 > - Line numbers are approximate and will drift; treat them as a starting point, not a contract.
+
+---
+
+## Runtime architecture today
+
+Three programs, one set of terminals:
+
+```
+bethterm-web.exe (Beth Studio, Go + React in WebView2)
+    ├─ supervises ─────────────► bethterm-host.exe   (package wezterm-mux-server; owns every PTY)
+    └─ JSON lines over stdio ──► bethterm.exe cli bridge (package wezterm) ── mux ──► bethterm-host.exe
+```
+
+- **`bethterm-host.exe`** owns the PTYs. It outlives every window, so shells, agents, and WSL sessions survive a Studio restart. Nothing but the user (tray **Encerrar tudo**, after a confirmation) stops it.
+- **`bethterm.exe`** is the CLI plus `cli bridge`, the only way the Studio talks to the host. The subcommands that used to delegate to the native window (`gui-restart`, `start`, `ssh`, `serial`, `connect`) now fail with a message asking you to use Beth Studio.
+- **`bethterm-web.exe`** (Beth Studio) serves the React UI in WebView2, starts the host when none runs, restarts it after a crash, restores the terminals, and owns the tray icon. A phone web app and an optional Linux relay (`bethstudio-proxy`) reach it remotely.
+- The installer (`bethterm-setup`) packs `bethterm.exe`, `bethterm-host.exe`, `bethterm-web.exe`, `bethterm-tool.exe`, `OpenConsole.exe`, and `conpty.dll`.
+- The `wtinator` delta crate keeps only host-side modules: `agent_wait`, `config_lua`, `default_theme`, `echo_latency`, `groups`, `host`, `notify`, `notify_ipc`, `pane_cmd`, `session`, `shells` (`default_shells`), `taskbar_icon`, `theme_download`, `vscode_theme`, and `window_geom`.
 
 ---
 
@@ -47,8 +67,7 @@ Wezterm is a Cargo workspace with ~50 crates. The ones that matter for BethTerm 
 | Crate | What it does | Public API worth knowing |
 | --- | --- | --- |
 | `mux` | The multiplexer. Tabs, panes, domains (local / SSH / WSL), workspaces, RPC. | `Mux`, `Tab`, `Pane`, `Domain`, `Window`, `MuxNotification` |
-| `wezterm-gui` | The GUI frontend. Window, input, rendering, tab bar, scrollbar, selection. | `GuiIntegration`, `TermWindow`, `InputMap`, key-event dispatch |
-| `wezterm` | The CLI binary. `wezterm start`, `wezterm ssh`, `wezterm connect`, etc. | Mostly a thin wrapper; the binary uses `wezterm-gui` for the GUI |
+| `wezterm` | The CLI binary (`bethterm.exe`), including `cli bridge`. | Cargo package `wezterm` |
 | `config` | Loads and merges `wezterm.lua` with default config. | `Config`, `lua::load_config` |
 | `wezterm-font` | Font discovery, shaping, ligatures, fallback. | `FontConfiguration`, `LoadedFont` |
 | `wezterm-surface` | The terminal "screen" abstraction (cells, attributes, dirty regions). | `Surface`, `Cell` |
@@ -56,9 +75,8 @@ Wezterm is a Cargo workspace with ~50 crates. The ones that matter for BethTerm 
 | `wezterm-ssh` | The SSH domain implementation. | `SshDomain` |
 | `wezterm-mux-server` / `wezterm-mux-server-impl` | The standalone mux server (`wezterm-mux-server` binary) so clients can attach/detach. | `MuxServer` |
 | `wezterm-client` | The RPC client that talks to a mux server. | `Client` |
-| `term` | Pure-data terminal model (no GUI). | Used for `wezterm imgcat`, scripting, etc. |
+| `term` | Pure-data terminal model (no GUI). | Used by the host and scripting |
 | `color-types` | `RgbColor`, palette conversions. | `RgbColor`, `SrgbaTuple` |
-| `window` | Cross-platform window creation (winit/window abstraction). | `Window`, `WindowOps` |
 | `wezterm-input-types` | Key/modifier encoding. | `KeyCode`, `Modifiers` |
 | `wezterm-cell` | Cell types, attribute bits, hyperlinks. | `CellAttributes`, `Hyperlink` |
 | `lua-api-crates` | The Lua bindings generator and shared glue. | `wezterm.lua_*` modules |
@@ -80,7 +98,6 @@ This is the most important section. When you (or the next agent) start implement
 | File | Why we care | Approx. lines |
 | --- | --- | --- |
 | `upstream-wezterm/mux/src/pane.rs` | `Pane::send_paste`, `Pane::send_key`, `Pane::input` are the entry points for any input into a pane. We need to **fan out** from these to the broadcast group. | `send_paste`, `send_key` near the bottom of the file |
-| `upstream-wezterm/wezterm-gui/src/inputmap.rs` | The `InputMap` is what dispatches a key event to a Lua handler, to a built-in command, or to a `Pane::send_key` call. We may want to intercept **before** `InputMap` resolves, so the broadcast filter can rewrite the target set. | `InputMap::key_down`, `perform_key_assignment` |
 | `upstream-wezterm/mux/src/tab.rs` | A `Tab` is a collection of `Pane`s plus a layout. We can add a `broadcast_group_id: Option<String>` to a `Tab`, or store the group membership in a sidecar registry. | Tab struct, `Tab::panes` |
 | `upstream-wezterm/mux/src/lib.rs` | The `Mux` is the global registry. We can add a sidecar `BroadcastRegistry` here, or a `Mux::broadcast_group(group_id) -> Vec<PaneId>`. | `Mux` struct, `with_mux` |
 
@@ -102,7 +119,6 @@ This is the most important section. When you (or the next agent) start implement
 | `upstream-wezterm/mux/src/lib.rs` | The `Mux` has workspaces. We can model tab groups as a superset of workspaces, or as a parallel concept. | `Mux::workspaces`, `Workspace` struct |
 | `upstream-wezterm/mux/src/tab.rs` | Each `Tab` should know which group it belongs to. Add `group_id: Option<String>`. | Tab struct |
 | `upstream-wezterm/mux/src/termwiztermtab.rs` | The `TermWizTerminalTab` wraps a `Tab` for use in the GUI. May need a parallel `group_name` accessor. | Near the top of the file |
-| `upstream-wezterm/wezterm-gui/src/tabbar.rs` | The tab bar UI should show group separators or group colors. | `TabBar::paint`, tab label drawing |
 
 **Architectural choice:** groups live on the tab or in a sidecar?
 
@@ -140,6 +156,8 @@ The theme importer is a pure-Rust module that takes a `serde_json::Value` of a V
 
 ### Smart clipboard
 
+> Design note: the GUI selection and `paste` key-assignment touch points no longer exist; paste now goes through the Studio and the bridge.
+
 **Goal:** detect what the user is doing (typing a password, in a REPL, in a heredoc, etc.) and pick the right paste behavior.
 
 **Touch points:**
@@ -147,8 +165,6 @@ The theme importer is a pure-Rust module that takes a `serde_json::Value` of a V
 | File | Why we care | Approx. lines |
 | --- | --- | --- |
 | `upstream-wezterm/mux/src/pane.rs` | `Pane::send_paste` is the single chokepoint for paste. | `send_paste` |
-| `upstream-wezterm/wezterm-gui/src/selection.rs` | The `Selection` is what gets copied. | `Selection::to_string` and friends |
-| `upstream-wezterm/wezterm-gui/src/inputmap.rs` | The `paste` action handler. | `KeyAssignment::Paste` |
 
 We can implement a `wtinator::ClipboardPipeline` that wraps `Pane::send_paste` and adjusts the string before forwarding.
 
@@ -156,30 +172,24 @@ We can implement a `wtinator::ClipboardPipeline` that wraps `Pane::send_paste` a
 
 ## Event flow cheat sheet
 
-When you press a key in the wezterm window:
+When you type in a Beth Studio terminal:
 
 ```
-[winit window event]
-    → window::WindowEvent::KeyDown
-    → wezterm-gui/src/frontend.rs   (translates to KeyEvent)
-    → wezterm-gui/src/inputmap.rs   (InputMap::key_down)
-        → if Lua key binding:       executes Lua, may return "Handled"
-        → else:                     looks up the KeyAssignment, runs it
-            → KeyAssignment::Paste  → wezterm-gui/src/selection.rs
-            → KeyAssignment::ActivateTab / SplitHorizontal / etc.
-            → KeyAssignment::SendString / SendKey (writes to Pane)
-    → mux::Pane::input              (consumes bytes, runs through escape parser)
-    → wezterm-surface               (re-renders dirty cells)
-    → wezterm-gui/src/quad.rs       (uploads quads to GPU)
+[xterm.js key event in WebView2]
+    → bethterm-web.exe          (WebSocket → Go)
+    → bethterm cli bridge       (JSON line: send / paste)
+    → mux client → bethterm-host.exe
+    → mux::Pane::input          (writes to the PTY; output goes through the escape parser)
+    → wezterm-surface           (screen state)
+    → bridge screen frames      → Go → WebSocket → xterm.js
 ```
 
-For WezTerminator:
+For the delta features:
 
-- **Broadcast input** intercepts between **InputMap** and **Pane::input** (or, simpler, replaces the call site that picks a `Pane` to write to).
+- **Broadcast input** intercepts at **Pane::send_paste / send_key** inside the host.
 - **Tab groups** intercept at the **`Mux::activate_workspace` / `Mux::activate_tab`** level.
-- **VS Code settings sync** runs at **config load time**, before the GUI starts.
-- **VS Code theme import** runs at **config load time** for theme references, or on-demand for "Import this theme" menu items.
-- **Smart clipboard** intercepts at the **paste** key assignment.
+- **VS Code settings sync** runs at **config load time**, before the host starts.
+- **VS Code theme import** runs at **config load time** for theme references.
 
 ---
 
@@ -198,7 +208,6 @@ resolver = "2"
 [workspace.dependencies]
 # We mirror the relevant wezterm deps so we can pin versions consistently.
 wezterm-mux = { path = "upstream-wezterm/mux" }
-wezterm-gui = { path = "upstream-wezterm/wezterm-gui" }
 wezterm-config = { path = "upstream-wezterm/config" }
 wezterm-font = { path = "upstream-wezterm/wezterm-font" }
 wezterm-input-types = { path = "upstream-wezterm/wezterm-input-types" }
@@ -234,6 +243,6 @@ The first compile will be **slow** because we're building most of wezterm. Subse
 
 **Option A (simpler, for v0.1.x):** re-export wezterm's `main` and register our delta via a `wezterm::plugin`-style hook.
 
-**Option B (cleaner, for v0.2.0+):** copy `wezterm/src/main.rs` into `wezterminator/src/main.rs`, change the binary name and add `wtinator::install(...)` calls before the GUI starts.
+**Option B (cleaner, for v0.2.0+):** copy `wezterm/src/main.rs` into `wezterminator/src/main.rs`, change the binary name and add `wtinator::install(...)` calls before the CLI starts.
 
 We start with **Option A**, graduate to **B** when we need finer control.

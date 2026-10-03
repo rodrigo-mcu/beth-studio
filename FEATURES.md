@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-02.
+Last updated: 2026-10-03.
 
 ---
 
@@ -40,24 +40,22 @@ Rodrigo; the AI models did the design and implementation under his direction.
 
 ## What Beth Studio is
 
-**Beth Studio** is the product. It is more than a terminal: a native window,
-this studio, and a phone page for talking to agents. It is a **Windows‑focused
+**Beth Studio** is the product. It is more than a terminal: the Studio and a
+phone page for talking to agents, on top of a persistent host. The native
+window that used to exist was removed in Phase B (see
+[`docs/HISTORY.md`](docs/HISTORY.md)). It is a **Windows‑focused
 distribution of [wezterm](https://wezterm.org)** built as a thin **delta** on
 top of a vendored upstream snapshot:
 
 - **`upstream-wezterm/`** — a vendored, mostly read‑only copy of wezterm. It
-  keeps wezterm's GPU renderer, font stack (FreeType + HarfBuzz, ligatures,
-  fallback chains), true‑color, scrollback, and multiplexer.
-- **`wtinator`** — the BethTerm delta crate: native Win32 menus, themes,
-  clipboard/media, tab groups, headers, session persistence, etc. Wired into
-  the upstream binary through a single `wtinator::install()` hook (patch 0003).
-- **`wtinator-config`** — a standalone companion app (a `tao` window hosting a
-  `wry`/WebView2 control that loads a React + TypeScript single‑file bundle)
-  that talks to the running terminal over a named pipe.
-- **Binaries**: `bethterm-gui.exe` (native window, Skia), `bethterm.exe`
-  (CLI), `bethterm-host.exe` (every PTY), and `bethterm-web.exe`
-  (**Beth Studio**, Go + React in WebView2). The Cargo package names are
-  still `wezterm-gui`, `wezterm`, and `wezterm-mux-server`.
+  keeps wezterm's terminal core and multiplexer.
+- **`wtinator`** — the BethTerm delta crate: host helpers, themes, groups,
+  session persistence, notifications, etc. Wired into the upstream binary
+  through a single `wtinator::install()` hook (patch 0003).
+- **Binaries**: `bethterm.exe` (CLI and `cli bridge`), `bethterm-host.exe`
+  (every PTY), and `bethterm-web.exe` (**Beth Studio**, Go + React in
+  WebView2, supervises the host). The Cargo package names are still
+  `wezterm` and `wezterm-mux-server`.
 
 Build & run conventions live in `AGENTS.md` and `upstream-wezterm/PATCHES.md`;
 the short version is at the end of this document.
@@ -66,287 +64,75 @@ Status legend: 🟢 shipped · ⚪ planned.
 
 ---
 
-## 1. Native right‑click menus & mouse UX
+## 1. Removed in Phase B (native window)
 
-🟢 The whole menu system is a **native Win32 popup (HMENU)** shown with
-`TrackPopupMenuEx`, themed by the OS and always on top — chosen after the
-upstream Skia overlay failed to appear in some Windows sessions.
-
-- **Right‑click on a pane / the `+` button / the tab‑bar terminal icon** opens
-  the BethTerm menu (patches 0005 → **0009** migration, 0006, 0007, 0008).
-- **Windows stability fixes** so the menu reliably opens and never panics the
-  GUI: open on button‑**up**, defer `TrackPopupMenuEx` to the UI thread, guard
-  reentrant `WM_PAINT`/`WM_MOUSELEAVE`, obtain the HWND via `GetForegroundWindow`
-  (patches 0010, 0011).
-- **Split → shell submenu**: "Split right/down" cascade lists the available
-  shells; the chosen shell spawns into the split (patch 0012).
-- **Clipboard entries**: Copy selection, Paste, **Select all** (new
-  `KeyAssignment::SelectAll`), **Save scrollback as…** (native `GetSaveFileNameW`
-  dialog) (patches 0013, 0014, 0015).
-- **Menu icons**: 16×16 monochrome icons drawn at runtime with GDI primitives,
-  auto‑coloured for light/dark via `COLOR_MENUTEXT` (patch 0018).
-- **Right‑click respects the clicked pane**, not just the active one (patch 0033).
-- **Menu cleanup**: "Configure this terminal…" moved to the top; redundant
-  submenus removed; submenu icons added (patch 0045).
-- **Smarter hyperlinks** — a bare click only selects/copies (it no longer opens
-  a link or hijacks double-click word-select over a URL); **Ctrl+click** opens.
-  The hover underline tracks the pane **under the mouse**, not the focused split,
-  and the hand cursor shows only while Ctrl is held (patch 0058).
+The native window (`bethterm-gui.exe`, crate `wezterm-gui`) and its companion
+Settings app (`wtinator-config`) were removed in Phase B. Everything that only
+existed there is gone: the native right‑click menus and their shell, clipboard
+and hyperlink behavior, per‑pane font size / family / bold / italic, the
+smooth cursor, tab groups and per‑terminal headers with native rename and
+close dialogs, drag‑and‑drop tab reordering and VS‑style docking, the custom
+title bar and window controls, the window‑level tray (**Janela nativa**,
+**Painel**, **Esconder tudo**, **Reiniciar a janela nativa**, **Desenho**
+GPU/CPU), image paste and screenshots, Ctrl+C / Ctrl+V and zoom keybindings,
+VS Code font auto‑config, and the config app's theme browser. The subcommands
+`bethterm gui-restart`, `start`, `ssh`, `serial`, and `connect` now fail with
+a message asking you to use Beth Studio. See `docs/HISTORY.md`.
 
 ## 2. Shells
 
 🟢 Quick‑launch entries for **cmd.exe, PowerShell 5.1, PowerShell 7+, WSL
-(default + named distros), Git Bash**, surfaced in the native picker. Optional
+(default + named distros), Git Bash**, surfaced in Beth Studio's new‑terminal menu. Optional
 **MobaXterm local bash** entry appears when its local path exists (patch 0026),
 and users can add their own entries in `%APPDATA%\bethterm\shells.json`
-(patch 0183). Split‑menu wID ranges were generalized so the
-shell count is not hard‑coded.
+(patch 0183).
 
 ## 3. Themes
 
-- 🟢 **Built‑in schemes** (VSCode Light, VSCode Dark, Windows Terminal Dark) and
-  a runtime `TermWindow::set_color_scheme` that also recolours the active pane's
-  terminal content, not just the chrome (patch 0016 + 0016.3).
-- 🟢 **Theme submenu** + "Open themes folder…" (patch 0017).
-- 🟢 **Dark‑theme cursor fix** — `cursor_bg = cursor` so the block is visible on
-  dark schemes (patch 0027).
 - 🟢 **Theme downloader** — one click fetches the **Gogh community catalog**
   (~365 themes: Dracula, Nord, Tokyo Night, One Dark, Catppuccin, …), slugifies
   and caches them under `%APPDATA%\bethterm\themes\` (patch 0038).
-- 🟢 **Theme browser** in the config app — name search, **Light / Dark /
-  Favorites / All** filters, ★ favorites, and progressive (lazy) rendering so
-  hundreds of themes don't render at once (patch 0046).
-- 🟢 **Favourites persist on disk** as theme+font **presets** — stored in
-  `%APPDATA%\bethterm\theme-favorites.json` over IPC instead of the
-  WebView's `localStorage` (which a `null` origin wiped each spawn) (patch 0060).
-  ★ captures the terminal's current **font** (size / family / bold-italic) with
-  the theme, applying a favourite restores both, and a ↻ button refreshes a
-  favourite's saved font (patch 0062).
-- 🟢 **Default theme for all terminals** — Settings **Usar em todos** saves the
-  theme to `%APPDATA%\bethterm\default-theme.json`, recolours every open pane,
-  and stamps new tabs/windows that have no per-pane theme. Splits still inherit
-  the source pane (patch 0110).
-- ⚪ **Per‑group default theme** — "new tab in group X uses theme Y" (patch 0041,
-  planned).
+- 🟢 **Favourites persist on disk** as theme presets in
+  `%APPDATA%\bethterm\theme-favorites.json`, shared with Beth Studio.
+- 🟢 **Default theme for all terminals** — saved to
+  `%APPDATA%\bethterm\default-theme.json` and applied to new terminals that
+  have no theme of their own (patch 0110).
 
-## 4. Per‑terminal appearance — the flagship
+## 4. Session & persistent host
 
-🟢 **Each pane (terminal) can have its own theme, font size, font family, bold,
-and italic — independent of its split siblings.** Set from a right‑click →
-**"Configure this terminal…"** window, or via keys for size.
-
-- **Per‑pane font size** — the split tree stays in the window's uniform base
-  cell, but a pane at scale `s` gets `cols/s × rows/s` cells in the same pixel
-  area, reflowed at every leaf (patch 0039).
-- **Per‑terminal config window** — pick a theme + an exact font size for **one**
-  pane over the named‑pipe IPC (patch 0040).
-- **Per‑pane font family** — swap the typeface via an in‑memory config clone
-  (`with_font_family` + `change_scaling`, never the file‑reading
-  `overridden_config`), with a GUI‑derived `family_ratio` driving a two‑factor
-  reflow and `ensure_pane_geometry` self‑healing the grid after restore / split
-  / resize; degenerate (icon/non‑monospace) faces fall back safely (patch 0043).
-- **Per‑pane bold / italic** — B / I toggles; FreeType synthesizes them when the
-  face lacks the variant (patch 0047).
-- **Correctness fixes that make the above actually work** (these were subtle):
-  - 🟢 **No font leaks across panes** — the window‑level shape cache now keys on
-    the font identity (`font_id`), so one pane's glyphs can't bleed into another
-    (the "random word in the wrong typeface" bug) (patch 0051).
-  - 🟢 **Family/bold/italic reach the glyphs** — the override now swaps
-    `self.config` too, so `match_style` returns the override style instead of
-    only changing the cell metrics (patch 0052).
-  - 🟢 **Cursor stays put** in bold/italic panes — the cursor‑glide guard covers
-    the full styled set (patch 0053).
-- 🟢 **Splits inherit the look of the pane they grew from** — theme + font
-  (size/family/bold/italic) (patch 0054).
-
-## 5. Cursor
-
-- 🟢 **macOS‑style smooth fade‑blink** cursor as the default (patch 0042).
-- 🟢 **Cursor glide / smear** animation as the cursor moves (patch 0044), with a
-  reverse‑video block that always follows the cell's colours so it's visible on
-  any theme, plus a contrast guard.
-
-## 6. Tabs, groups & naming
-
-- 🟢 **Tab groups** — a `group_name` on each tab, a live group listing, and a
-  right‑click **"Move pane to…"** that moves a pane into a (new) tab in the
-  target group, removing the source tab if it empties (patch 0028).
-- 🟢 **Per‑terminal header** — an always‑visible "Tab #N · group · title" bar per
-  pane, with a native Win32 **rename dialog** (patches 0030, 0030.5;
-  theme‑aware in 0036.1; polished in 0050).
-- 🟢 **Per‑tab user title** — a sticky name that overrides the OSC 0/2 title so
-  vim/claude/tmux can't clobber it; its own "Rename tab…" entry (patch 0031).
-- 🟢 **Per‑tab close X** with a native Win32 `MessageBoxW` confirmation (and
-  silent close for empty/idle tabs) (patch 0032 + 0032.1/0032.2 for pane/window).
-- 🟢 **Tab alert when a pane is waiting** — the tab shows an attention dot when a
-  pane needs you. **No hook needed**: set Claude Code's
-  `preferredNotifChannel: "terminal_bell"` and it rings the bell when waiting;
-  wezterminator turns that into a **blinking red ●** on the tab that clears when
-  you focus it (patch 0063, works for any bell). A yellow ● driven by a
-  `claude_status=waiting` OSC user var is also supported for a hook-based setup
-  (patch 0061).
-
-## 7. Session save & restore
-
-- 🟢 **Save & restore** the open tabs, panes, splits, groups, titles, per‑pane
-  headers, themes, and fonts to `%APPDATA%\bethterm\session.json`
-  (auto‑save every 30 s + on close; atomic writes) (patches 0029, 0029.1/0029.2;
-  per‑pane font/theme fields added through 0043/0047).
-- 🟢 **Restore can't hang the window** on a now‑unreachable network/WSL cwd — a
-  300 ms timeout probe drops dead cwds (patch 0049).
-- 🟢 **No auto‑typed `cd`** on the first terminal — every restored tab now spawns
-  fresh in its saved directory instead of the old reuse‑and‑type‑`cd` hack
-  (patch 0055).
 - 🟢 **Persistent PTY host** — shells live in `bethterm-host.exe`. Closing or
-  updating the GUI does not kill agents. Reopening attaches to the same
-  panes; `session.json` does not respawn them (patch 0121).
+  updating Beth Studio does not kill agents. Reopening attaches to the same
+  panes (patch 0121). The Studio also recreates terminals after a host crash
+  (see section 7).
+- 🟢 **Session file** — `%APPDATA%\bethterm\session.json` is written
+  atomically in the background with a 2 s timeout, and restore drops
+  unreachable network/WSL working directories after a 300 ms probe
+  (patches 0029, 0049).
 
-## 8. Drag & drop / docking
-
-- 🟢 **Reorder tabs** by dragging them in the tab strip; **move a pane** to
-  another tab by dragging its header onto a tab (patch 0035, made live by
-  0036.1).
-- 🟢 **VS‑style pane docking** — drag a pane by its header; a cursor "puck"
-  follows, hovering a tab spring‑loads it, hovering a pane shows Left/Right/Up/
-  Down/Center drop zones, and releasing docks (split) or swaps (Center) (patch
-  0037). Includes the active‑pane **focus border** when a tab has >1 pane.
-
-## 9. Title bar & window controls
-
-🟢 **Custom integrated title bar** — the tabs and window controls (Hide /
-Maximize / Close) are drawn as a single block via the upstream fancy‑tab‑bar
-renderer; borderless `WS_POPUP` with manual `WM_NCHITTEST` resize zones, DWM
-border suppressed; the app‑rendered Close always confirms first (patch 0020,
-by Codex).
-- 🟢 **Close goes to the clock-area tray** — the title-bar X hides the window
-  instead of killing PTYs (patch 0105). Hidden windows are stacked on one
-  icon; right-click picks which window to restore (patch 0106). Hide is
-  aborted if the tray icon cannot be created (patch 0107). The icon
-  reappears if Explorer restarts or the shell drops it (patch 0126).
-  While the window is hidden or minimized, GPU frames are skipped
-  (patch 0116). The process stays up so the tray icon remains.
-  Confirming **Fechar esta janela** closes only that GUI window.
-  The host, the shells, and Beth Studio stay (patch 0193).
-- 🟢 **Janela nativa** — tray submenu that groups everything about the native
-  terminal windows (patch 0196). Beth Studio is the first tray entry; the
-  submenu holds **Usar a janela nativa** (the on/off check), **Painel**,
-  **Novas janelas como**, **Desenho**, **Esconder tudo** / **Mostrar todas**
-  and **Reiniciar a janela nativa**. Those items are greyed while the
-  native window is off. The check turns the native terminal
-  windows on or off (patches 0192, 0195, 0196). Off is saved in `%APPDATA%\bethterm\native-gui`
-  and the interface restarts without creating a terminal window, so
-  the renderer does not start. The icon next to the clock stays.
-  The host, the shells, Beth Studio, and Sistema keep running.
-  **Novo terminal** still opens a shell on the host (Beth Studio
-  lists it) and does not open a drawing window. **Painel** is
-  unavailable while the window is off. Turning it back on restarts
-  the interface and the windows return (patch 0192).
-- 🟢 **Installer shortcuts reuse the running GUI** — a second click focuses
-  the existing process instead of spawning another GPU process. The WGL
-  probe window is hidden and destroyed so it does not appear on the
-  taskbar (patches 0108–0109). Daily launch is `run-bethterm.cmd`
-  (release GUI, no args, patch 0115). Only the debug launcher uses
-  `--always-new-process`.
-- 🟢 **Sair leaves the host running** — tray **Sair da bandeja** exits the GUI only.
-  Shells and agents stay in `bethterm-host.exe` until that process is
-  stopped (patch 0121).
-- 🟢 **Encerrar host** — tray **Encerrar tudo** confirms, then stops the host and
-  the GUI. Theme/font/header on host panes survive a GUI reconnect
-  (patch 0122). A setup while the host is live writes
-  `bethterm-host.exe.new` and swaps it on the next host start.
-- 🟢 **Painel** — fixed-width left list of every live terminal by
-  name. Click a row to switch that terminal onto the right. The
-  tab strip is hidden while the Painel is open. Optional: tray
-  **Novas janelas como** picks **Abas** or **Painel** for new
-  windows (saved in `%APPDATA%\bethterm\ui-mode.json`). Does not
-  split and does not type into the pane (patch 0124).
-- 🟢 **Esconder tudo** — tray entry hides every visible window the
-  same way the title-bar X does. Shells stay (patch 0150).
-- 🟢 **Reiniciar a janela nativa** — tray entry restarts only
-  `bethterm-gui.exe`. Saved positions come back without panicking
-  (patches 0147, 0149, 0195, 0196).
-- 🟢 **Desenho GPU ou CPU** — tray **Desenho** (in **Janela nativa**) picks the graphics
-  card (default) or Mesa on the CPU. Switching restarts the GUI
-  only. Choice is `%APPDATA%\bethterm\render-mode` (patch 0155).
-- 🟢 **Cor do ícone** — right-click sets that window's taskbar icon
-  color. Stored next to the window name (patch 0151).
-- 🟢 **Abrir pelo menu maximiza** — a tray-list click, or **Abrir
-  todas**, shows the window maximized (patch 0156).
-- 🟢 **Agente esperando nos ícones** — the tab-bar wait signal also
-  puts a red dot on that window's taskbar icon, on the tray icon
-  while any window is waiting, and a `●` on its tray-menu row.
-  Bell, OSC 9, OSC 777, OSC 99, and `*_status=waiting` all count
-  (patches 0152–0153). A stuck menu (error 1446) is dismissed
-  instead of blocking later clicks (patch 0154).
-
-## 10. Clipboard & media
-
-- 🟢 **Image paste** — `Ctrl+V` / right‑click on a clipboard image saves it as
-  PNG under `…\wezterminator\clipboard-images\` and pastes a Markdown
-  `![image](path)` link (patch 0022, hardened in 0025 for DIB formats/orientation).
-  In a **WSL2** pane the pasted path is rewritten `C:\…` → `/mnt/c/…` so the
-  Linux side can open the file (patch 0059).
-- 🟢 **Screenshot** submenu — "Save as JPEG…" (native Save‑As) and "Copy to
-  clipboard", capturing the window via `PrintWindow(PW_RENDERFULLCONTENT)`
-  (patch 0025).
-- 🟢 **Save scrollback as…** — native Save‑As dialog writing the focused pane's
-  scrollback (patch 0015).
-
-## 11. Keybindings & input
-
-- 🟢 **Alt+Enter sends LF** (not CR) for AI agent CLIs (Claude Code, Gemini,
-  Aider) that use LF to commit a newline (patch 0019).
-- 🟢 **Ctrl+C / Ctrl+V / Ctrl+Insert** work on Windows/Linux (upstream only
-  bound `SUPER`) (patch 0021), and **Ctrl+C falls through to the shell** (sends
-  ETX to abort) when there is no selection (patch 0027.1).
-- 🟢 **Ctrl + = / − / 0 zoom just the focused terminal**; whole‑window zoom moved
-  to `Super + …` (patch 0048).
-
-## 12. Editor / appearance auto‑config
-
-- 🟢 **VSCode font** — reads `editor.fontFamily` + `editor.fontSize` from VS Code
-  / Insiders / VSCodium / Cursor `settings.json` and matches it out of the box
-  (patch 0023).
-- 🟢 **Auto cursor contrast** — picks a white‑or‑black cursor foreground from the
-  background luminance, with a mid‑grey dead‑band to avoid churn (patch 0024).
-
-## 13. `wtinator-config` companion app
-
-🟢 A standalone **React + TypeScript app in a WebView2 control** (`tao` + `wry`,
-single‑file Vite bundle), talking to the running terminal over a per‑pid named
-pipe (`\\.\pipe\wtinator-config-<pid>`). It hosts the theme browser/downloader
-and the per‑terminal theme + font configuration. The IPC contract
-(`list_tabs`, `set_theme`, `set_pane_theme`, `set_pane_font_size`,
-`set_pane_font_family`, `set_pane_font_style`, `list_fonts`, `download_themes`,
-`set_default_theme`,
-…) is served by a dedicated pipe thread that posts applies to the GUI main
-thread (patches 0034, 0036, 0038, 0040, 0043, 0046, 0047, 0110).
-
-## 14. Windows stability (no more freezes)
+## 5. Windows stability
 
 🟢 Patch **0113** hardens the Windows host so a busy pane or a slow disk
-cannot freeze the GUI:
+cannot freeze it:
 
 - `ClosePseudoConsole` runs on a helper thread **after** the ConPTY pipes
   drop (Microsoft's documented order). The hanging `INHERIT_CURSOR` flag
   is off.
-- Session auto-save writes AppData in the background with a 2 s timeout.
 - Sistema disk sampling times out at 250 ms and reuses the last sample.
 - Shipped `conpty.dll` + `OpenConsole.exe` are the Microsoft 1.24 pair
   (`1.24.2604.02001`).
-- 🟢 **Fluid UI** (patches 0114–0115) — `run-bethterm.cmd` starts the
-  release GUI with no args and no debug log; Constant caret blink;
-  cursor glide off unless `BETHTERM_CURSOR_GLIDE=1`.
+- 🟢 **Encerrar host** — tray **Encerrar tudo** confirms, then stops the
+  host (patch 0122). A setup while the host is live writes
+  `bethterm-host.exe.new` and swaps it on the next host start.
 
-## 15. Build / integration foundation
+## 6. Build / integration foundation
 
 🟢 Workspace wiring so the vendored upstream is the workspace root, a chrono
 `clock` feature fix, and the `wtinator::install()` hook in the upstream binary's
 `main()` (patches 0001–0004, by Codex).
 
-## 16. Beth Studio
+## 7. Beth Studio
 
-🟢 A second window for the same terminals (`bethterm-web.exe`, tray label
+🟢 The interface for the terminals (`bethterm-web.exe`, tray label
 **Beth Studio**, patches 0171–0173, 0186). It talks to `bethterm cli bridge`
 and supervises the host (starts it, restarts it after a crash, never stops
 it without a confirmed **Encerrar tudo**). Closing a Studio tab does
@@ -359,8 +145,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   hides it to the tray. The tray menu has **Beth Studio**, **Novo terminal**,
   **Sistema**, **Sair da bandeja** (terminals keep running) and **Encerrar
   tudo** (asks first, then closes every terminal). The icon gets an amber dot
-  while an agent waits for you. With an old `bethterm-gui.exe` running, the
-  Studio leaves the host and the tray to it.
+  while an agent waits for you.
 - 🟢 **Terminals come back after a host crash** (2026-10-03). The Studio keeps a recipe
   for every live terminal in `%APPDATA%\bethterm\pane-specs.json` (shell, folder, WSL
   distro, saved SSH host or serial port). When the host comes back **empty and as a
@@ -384,13 +169,13 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   panel, so the tab bar is left to the tabs. With the side panel collapsed
   they go back to the tab bar (2026-10-02).
 - 🟢 **Destacar em janela**: a terminal or SSH session can leave the tabs
-  and become its own native window (button in the terminal header, or
+  and become its own window (button in the terminal header, or
   **Destacar em janela** in the terminal menu). The window can go to another
   monitor. Drag its title bar over a pane, tab or "+" of the Studio to put it
   back, or click **Encaixar**. Closing the window does not stop the terminal:
   it keeps running and goes back to the terminal list (PC only, not in the
   remote Studio or the phone) (2026-10-02).
-- 🟢 Opening shows progress instead of a blank window: the native window
+- 🟢 Opening shows progress instead of a blank window: the Studio window
   says "Abrindo Beth Studio…", then a spinner with the current step
   (connecting, terminal list, "Abrindo os terminais desta aba (2 de 6)").
   After 10 s it offers **Tentar de novo** / **Mostrar assim mesmo**. Each
@@ -469,8 +254,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   on the Studio window.
 - 🟢 Fit the pane to the Studio window when it is alone in its host tab
   (patch 0178). A split that exists only in Beth Studio keeps that
-  column's size: the native window does not stretch the pane back to
-  the full window, so the text in the column stays intact (patch 0194).
+  column's size, so the text in the column stays intact (patch 0194).
   **Separar no BethTerm** pulls a pane out of a host split
   (patch 0182). Scrollback stays put while a program redraws (patch 0187).
 - 🟢 Shared themes and fonts. The Studio theme is pushed to the pane so
@@ -558,14 +342,12 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 - 🟢 When a process exits, the leaf shows **terminal encerrado** and can
   be removed.
 
-## 17. SSH, serial, and SFTP
+## 8. SSH, serial, and SFTP
 
 - 🟢 Saved SSH hosts and serial ports. Password and key passphrase in
   DPAPI. The terminal title is `user@host:port` (patch 0184, 0188).
-- 🟢 SSH and serial opened from Studio land in workspace `beth-studio`,
-  so the native window does not open a tab for them. Studio still shows
-  the terminal. Local shells (PowerShell, WSL, cmd) still appear in the
-  native window (patch 0190).
+- 🟢 SSH and serial opened from Studio land in workspace `beth-studio`
+  (patch 0190).
 - 🟢 SFTP in its own taskbar window (folder icon on an SSH terminal, or
   `bethterm-web.exe --sftp`): Local | Remote panes and an upload/download
   queue (patch 0188).
@@ -573,7 +355,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   is opened on this PC and forwarded through the SSH session already
   open (agent login).
 
-## 18. Database
+## 9. Database
 
 🟢 Its own taskbar window, title **Banco de dados**. The Studio toolbar
 button opens it or focuses it. The palette button opens the same theme
@@ -643,14 +425,13 @@ panel to close it. Hover previews and does not save.
   connections and for one connection. Stored in `db-queries.json` with an
   empty `connId`.
 
-## 19. BethTerm Mobile
+## 10. BethTerm Mobile
 
 ⚪ Android/iOS skeleton (Expo). Connection list, terminal list, and an
 xterm screen. Remote access from the phone is not wired on the PC yet.
 
-## 20. Not in the product
+## 11. Not in the product
 
-- ⚪ A switch to turn the native GUI off and keep only Beth Studio.
 - ⚪ Redis, MongoDB, and Oracle.
 - ⚪ SSH tunnels for database connections.
 - ⚪ ER diagram, BI, scheduling, and a Backups folder.
@@ -659,29 +440,23 @@ xterm screen. Remote access from the phone is not wired on the PC yet.
 - ⚪ X11, RDP, or VNC inside BethTerm.
 - ⚪ Cloud sync of hosts.
 - ⚪ Linux and macOS builds.
-- ⚪ Per-group default theme (patch 0041).
 
 ---
 
 ## Build & run
 
 ```sh
-# From upstream-wezterm/. Strawberry Perl MUST be on PATH (openssl-sys), and the
-# GUI must be closed (the .exe is locked while running).
+# From upstream-wezterm/. Strawberry Perl MUST be on PATH (openssl-sys).
 export PATH="/c/Strawberry/perl/bin:$PATH"
-cargo +nightly build --release -p wezterm-gui -p wtinator-config
+cargo +nightly build --release -p wezterm -p wezterm-mux-server
 
-# Frontend (only when the config app's UI changed):
-cd wtinator-config/frontend && npm run build   # → dist/index.html
+# Then, from the repository root (PowerShell):
+#   powershell -File bethterm-web\build.ps1   # Beth Studio
+#   pack-bethterm-setup.ps1                   # installer
 ```
 
-Launch for manual testing with the root launchers (never plain `wezterm` from
-PATH, which may resolve to an installed copy):
-
-```
-run-wezterminator-release.cmd
-run-wezterminator-debug.cmd
-```
+Daily launch: `run-bethterm.cmd` (starts `bethterm-web.exe`). Never use plain
+`wezterm` from PATH, which may resolve to an installed copy.
 
 Toolchain: **Rust nightly 2026‑06‑05**, **Strawberry Perl 5.36**, **MSVC
 nmake**, **VS 2022 Build Tools**. Details in `upstream-wezterm/PATCHES.md`.
@@ -691,19 +466,18 @@ nmake**, **VS 2022 Build Tools**. Details in `upstream-wezterm/PATCHES.md`.
 | Path | What |
 | --- | --- |
 | `upstream-wezterm/` | Vendored wezterm (read‑only except documented patches). |
-| `upstream-wezterm/wtinator/` | The BethTerm delta crate (menus, themes, groups, headers, session, IPC). |
-| `upstream-wezterm/wtinator-config/` | The React + WebView2 companion app. |
+| `upstream-wezterm/wtinator/` | The BethTerm delta crate (host helpers, themes, groups, session, notifications). |
 | `upstream-wezterm/PATCHES.md` | The authoritative log of every upstream change. |
 | `upstream-wezterm/patches/NNNN-*.md` | Per‑patch design notes. |
 | `bethterm-web/` | Beth Studio (Go + React, WebView2). |
 | `bethterm-mobile/` | Phone app skeleton. |
 | `docs/FEATURES.md` | The original design spec (includes planned/future ideas). |
 | `docs/ARCHITECTURE.md`, `docs/PROJECT_LAYOUT.md` | How the pieces fit together. |
-| `%APPDATA%\bethterm\` | Runtime data: `session.json`, downloaded `themes\`, `clipboard-images\`. |
+| `%APPDATA%\bethterm\` | Runtime data: `session.json`, downloaded `themes\`, Studio settings. |
 
 ## Full patch index
 
 The complete, authoritative list (with diffs and revert steps) is the table in
 [`upstream-wezterm/PATCHES.md`](upstream-wezterm/PATCHES.md) — patches **0001
-through 0190** at the time of writing. This catalog groups those patches by
+through 0198** at the time of writing. This catalog groups those patches by
 feature; the table is the source of truth for exactly what changed in each file.

@@ -212,6 +212,7 @@ zero-padded sequence number assigned in order of application.
 | 0195 | `wtinator/src/tray.rs`, `wtinator/src/context_menu.rs`, `wtinator/src/gui_restart.rs` | Tray labels name the native windows | **Interface gráfica** is now **Janelas de terminal nativas** and **Reiniciar interface** is **Reiniciar janelas nativas**, so they are not confused with Beth Studio. Behavior unchanged. See `upstream-wezterm/patches/0195-tray-native-window-labels.md`. |
 | 0196 | `wtinator/src/tray.rs`, `wtinator/src/context_menu.rs`, `wtinator/src/gui_restart.rs` | Tray menu: Beth Studio first, native window in one submenu | Beth Studio is the first (bold) entry. Everything that only concerns the native window (on/off switch, **Painel**, **Novas janelas como**, **Desenho**, hide/show, restart) moved into the **Janela nativa** submenu and is greyed when the native window is off. Exits renamed **Sair da bandeja** and **Encerrar tudo**. Behavior unchanged. See `upstream-wezterm/patches/0196-tray-menu-native-submenu.md`. |
 | 0197 | `wezterm/src/cli/bridge.rs`, `wezterm-client/src/client.rs` | Bridge: WSL com `-d` e `--cd`; o CLI respeita `BETHTERM_HOST_ID` | A op `spawn` aceita `distro` e, para shells `wsl.exe`, uma pasta Linux vira `--cd <pasta>` em vez de diretório do Windows (que o host descartava, abrindo o terminal no lugar errado). O CLI passa a usar `hosts\<id>.sock` quando `BETHTERM_HOST_ID` está definido, para testes isolados. See `upstream-wezterm/patches/0197-bridge-wsl-cd.md`. |
+| 0198 | `Cargo.toml`, `wtinator/src/lib.rs`, `wtinator/src/shells.rs`, `wezterm/src/main.rs`, `wezterm/src/cli/bridge.rs`, `bethterm-setup/*` | Remove the native window (wezterm-gui) | Beth Studio is the only interface. `wezterm-gui`, `window`, fonts, toast, `wtinator-config`, the vendored C deps and their assets leave the tree; `wtinator` keeps only what the host and bridge use (`default_shells` moved to `shells.rs`); `gui-restart` is gone and `start`/`ssh`/`serial`/`connect` point to Beth Studio; the installer ships `bethterm-web.exe`. See `upstream-wezterm/patches/0198-remove-native-window.md`. |
 
 ## Applying patches from a fresh upstream clone
 
@@ -264,7 +265,6 @@ sources `vcvars64.bat` first.
 
 Recorded by: Codex gpt-5.5 on 2026-06-06.
 
-Daily Windows launch is `run-bethterm.cmd` (release `bethterm-gui.exe`, no
-arguments). That reuses the running GPU process. Use
+Daily Windows launch is `run-bethterm.cmd` (Beth Studio, `bethterm-web.exe`). Use
 `run-bethterm-debug.cmd` only when you need traces. Do not run plain
 `wezterm` from PATH: it may resolve to `C:\Program Files\WezTerm`.

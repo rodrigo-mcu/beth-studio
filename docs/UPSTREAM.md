@@ -18,39 +18,34 @@ The same data is in [`upstream-wezterm/UPSTREAM_BASE`](../upstream-wezterm/UPSTR
 
 ## What this repository contains
 
-The whole WezTerm tree is **vendored** in [`upstream-wezterm/`](../upstream-wezterm/),
-including the C libraries it builds (freetype2, libpng, zlib, harfbuzz) as plain
-files. **You do not need the upstream repository to build or run BethTerm.**
+The part of the WezTerm tree that BethTerm builds is **vendored** in [`upstream-wezterm/`](../upstream-wezterm/)
+as plain files: the terminal core, the mux, the host (`wezterm-mux-server`) and the CLI.
+The native window and everything only it needed (GUI, fonts, window system, vendored
+C libraries) were removed (patch 0198). **You do not need the upstream repository to build or run BethTerm.**
 There is no submodule and no nested `.git`.
 
-What differs from the base is recorded three ways:
+What differs from the base is recorded four ways:
 
 | File | What it holds |
 | --- | --- |
-| [`upstream-wezterm/UPSTREAM_DIFF.patch`](../upstream-wezterm/UPSTREAM_DIFF.patch) | The exact diff, against the base, of the **50 existing WezTerm files** that were changed (about 10,000 lines). It applies cleanly to the base. |
-| [`upstream-wezterm/UPSTREAM_ADDED.txt`](../upstream-wezterm/UPSTREAM_ADDED.txt) | The **83 files that do not exist upstream** (mostly `wtinator/`, `wtinator-config/`, `bethterm-setup/`). They never conflict with upstream. |
+| [`upstream-wezterm/UPSTREAM_DIFF.patch`](../upstream-wezterm/UPSTREAM_DIFF.patch) | The exact diff, against the base, of the **27 existing WezTerm files** that are still changed (about 2,900 lines). It applies cleanly to the base. |
+| [`upstream-wezterm/UPSTREAM_ADDED.txt`](../upstream-wezterm/UPSTREAM_ADDED.txt) | The **25 files that do not exist upstream** (mostly `wtinator/` and `bethterm-setup/`). They never conflict with upstream. |
+| [`upstream-wezterm/UPSTREAM_REMOVED.txt`](../upstream-wezterm/UPSTREAM_REMOVED.txt) | The **611 base files that were removed** with the native window (patch 0198). They are still in the base commit. |
 | [`upstream-wezterm/PATCHES.md`](../upstream-wezterm/PATCHES.md) | The reason for every change, one numbered note per patch in [`upstream-wezterm/patches/`](../upstream-wezterm/patches/). |
 
 Left out of the diff on purpose: `Cargo.lock` (dependency churn), the binary
 files under `assets/` (icons, the bundled `OpenConsole.exe` and `conpty.dll`),
 and the local build setting `.cargo/config.toml`.
 
-Two things from the base are **not** in this tree: the macOS `*.dylib` files
-(unused on Windows) and upstream's own `.cargo/config.toml` (MinGW linker
-settings, unused with MSVC). Everything needed to build on Windows is here,
-including the ANGLE and Mesa DLLs under `upstream-wezterm/assets/windows/`.
-
-Most of the change is concentrated in a few files:
-`wezterm-gui/src/termwindow/mod.rs`, `mouseevent.rs`, `render/pane.rs`,
-`mux/src/tab.rs`, `mux/src/localpane.rs`, `window/src/os/windows/window.rs`, and
-`wezterm-gui/src/main.rs`.
+Most of what is still changed is in `mux/src/tab.rs`, `mux/src/localpane.rs`,
+`wezterm-client/src/` and `wezterm/src/main.rs`.
 
 ## Policy: the base is frozen
 
 BethTerm does **not** track WezTerm. The vendored tree stays at the base commit
 above. We port a fix from upstream by hand only when it matters (security, or a
-bug that affects BethTerm). Reasons: the delta is large in a handful of GUI
-files, and the main interface (Beth Studio) does not depend on them.
+bug that affects BethTerm). Reasons: the delta touches the mux and client in several places,
+and the main interface (Beth Studio) does not depend on upstream's GUI.
 
 To port one upstream fix:
 
@@ -72,7 +67,7 @@ git add -A && git commit -m "BethTerm delta"
 git rebase origin/main        # resolve conflicts, mostly in the files named above
 ```
 
-Expect real conflicts in the GUI files. That is the cost the freeze avoids.
+Expect real conflicts in the mux and client files. That is the cost the freeze avoids.
 
 ## Files that came from this process
 

@@ -132,7 +132,7 @@ separate UI for the same terminals.
   opening screen lists the terminals being assembled, a 28 px tab bar.
 - The installer now packages Beth Studio.
 
-### 2026-10-03 — Tray menu, a clean tree, and the Studio takes over the host (0194–0196)
+### 2026-10-03 — Tray menu, a clean tree, and the Studio takes over the host (0194–0198)
 
 - **Beth Studio now supervises the host** (phase A of the plan to retire the
   native window): it starts `bethterm-host.exe`, restarts it after a crash
@@ -144,6 +144,12 @@ separate UI for the same terminals.
   (`pane-specs.json`), a restore that recreates terminals in the same tabs and
   folders, and a WSL gate that waits for the distro, runs an optional init command
   once per boot, and waits for the folder (patch 0197: `--cd` and `-d`).
+- **Phase B: the native window is gone (0198).** `wezterm-gui` and everything only
+  it needed (window system, fonts, toast, the settings app, vendored C libraries,
+  ANGLE/Mesa) left the tree. The host and the bridge are what remain of WezTerm,
+  plus `wtinator` trimmed to what they use. The installer ships `bethterm-web.exe`;
+  `start`/`ssh`/`serial`/`connect` now point to Beth Studio. 611 base files were
+  removed (`UPSTREAM_REMOVED.txt`); 27 are still modified.
 - Tray menu regrouped: Beth Studio first, everything about the native window
   in one submenu, and clearer exit labels (0196).
 - Test fixtures made neutral (no real hosts, addresses or personal paths),

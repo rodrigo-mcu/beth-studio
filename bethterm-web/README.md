@@ -1,11 +1,11 @@
 # Beth Studio
 
 Beth Studio é a interface (Go + React, WebView2) para os terminais do
-BethTerm: organização, aparência e funções próprias — independentes da
-GUI clássica (WezTerm).
+BethTerm: organização, aparência e funções próprias. Desde a Fase B é a
+única interface (a janela nativa do WezTerm foi removida; ver
+`docs/HISTORY.md`).
 
-Abre pelo menu da bandeja do BethTerm ("Beth Studio", patches 0173 /
-0186 do `upstream-wezterm`) ou diretamente:
+Abre pelo atalho do instalador, por `run-bethterm.cmd` ou diretamente:
 
 ```powershell
 .\bethterm-web.exe
@@ -26,7 +26,7 @@ navegador (WebView2)  <-- WebSocket -->  bethterm-web.exe (Go)  <-- stdin/stdout
   um cliente do mux do BethTerm que fala JSON-lines por stdin/stdout:
   lista painéis, observa telas, envia teclas/colagens, cria, redimensiona,
   separa e encerra terminais — sempre conectado direto ao **host**, nunca
-  à GUI (sobrevive a um `gui-restart`). Protocolo completo em
+  ao Studio (o bridge pode ser reiniciado sem afetar os terminais). Protocolo completo em
   `upstream-wezterm/patches/0171-cli-bridge.md` e nas patches seguintes
   (0172–0182).
 - Todas as chamadas de rede saem do **Go**; o navegador nunca fala
@@ -47,8 +47,7 @@ navegador (WebView2)  <-- WebSocket -->  bethterm-web.exe (Go)  <-- stdin/stdout
   se não existe, inicia; se cai, reinicia no máximo 3 vezes em 10 minutos e
   depois mostra "Host indisponível" com **Tentar de novo**. Nunca encerra o
   host por conta própria: só **Encerrar tudo** na bandeja, depois de uma
-  confirmação que diz quantos terminais serão fechados. Se a GUI antiga
-  (`bethterm-gui.exe`) estiver rodando, não supervisiona nem cria bandeja.
+  confirmação que diz quantos terminais serão fechados.
 - Depois de uma queda, o Studio recria os terminais (supervisor + restore.go): a receita de cada
   terminal fica em `%APPDATA%\bethterm\pane-specs.json`; só restaura quando o host é **outro processo**,
   está vazio e a receita tem menos de 7 dias. Terminais WSL esperam a distro, o comando de
@@ -73,10 +72,9 @@ navegador (WebView2)  <-- WebSocket -->  bethterm-web.exe (Go)  <-- stdin/stdout
 
 - **Terminais**: xterm.js por painel, tamanho do host respeitado por
   padrão, com opção de "Ajustar à janela" (redimensiona o pane no host
-  quando ele está sozinho em sua aba do BethTerm; patch 0178). Um
-  terminal aberto ao lado no Studio é uma aba própria no host, e a
-  janela nativa não estica esse painel de volta para a largura dela
-  (patch 0194). "Separar no BethTerm" tira um pane de um split de
+  quando ele está sozinho em sua aba do host; patch 0178). Um
+  terminal aberto ao lado no Studio é uma aba própria no host e mantém a
+  largura da coluna (patch 0194). "Separar no BethTerm" tira um pane de um split de
   verdade (patch 0182). **Reparar visualização** reconstrói só o
   xterm.js local a partir da última tela e pede uma nova fotografia ao
   bridge; não envia `reset` e pode ser usado com Claude Code em
@@ -107,8 +105,7 @@ navegador (WebView2)  <-- WebSocket -->  bethterm-web.exe (Go)  <-- stdin/stdout
   Bash/Agentes, por distro).
 - **Busca**: por título, pasta, aba, janela/aba do host, id, e
   (opcional) pelo conteúdo visível da tela.
-- **Aparência**: temas VS Code/Gogh/embutidos (mesma fonte de dados da
-  GUI, favoritos compartilhados via `theme-favorites.json`), fontes do
+- **Aparência**: temas VS Code/Gogh/embutidos (favoritos compartilhados via `theme-favorites.json`), fontes do
   sistema, tema de interface derivado do tema dos terminais ou fixo
   (Escuro = VS Code Dark Modern, Claro, Azul-marinho). O xterm.js usa
   `minimumContrastRatio: 3`: cor quase igual ao fundo é escurecida ou
@@ -206,8 +203,7 @@ navegador (WebView2)  <-- WebSocket -->  bethterm-web.exe (Go)  <-- stdin/stdout
   download, e "Procurar…" / "Abrir arquivo" usam o navegador de pastas da
   página (`FolderBrowser.tsx`, sobre `/api/local-fs/list`, que também lista
   as distros WSL). O remoto nunca muda o tamanho dos terminais no host.
-  Registro em `%LOCALAPPDATA%ethterm-web
-emote-access.log`.
+  Registro em `%LOCALAPPDATA%\bethterm-web\remote-access.log`.
   O `bethstudio-proxy` usa o último `X-Forwarded-For` (ou `X-Real-IP`)
   quando o pedido vem do proxy HTTPS local: no nginx,
   `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`.
@@ -219,14 +215,18 @@ emote-access.log`.
 ## Build
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File build.ps1            # frontend (Vite) + bethterm-web.exe
+powershell -ExecutionPolicy Bypass -File build.ps1            # frontend (Vite) + bethterm-web.exe e bethterm-tool.exe
 powershell -ExecutionPolicy Bypass -File build.ps1 -SkipFrontend
 ```
 
 Roda em prioridade `BelowNormal` e com metade dos núcleos
 (`GOMAXPROCS`), para não travar a máquina do usuário durante o build.
-Requer `bethterm.exe` (das patches 0171+) em `../upstream-wezterm/target/release`
-ou via `--bethterm`/`BETHTERM_EXE`.
+Requer `bethterm.exe` (das patches 0171+, build com
+`cargo +nightly build --release -p wezterm -p wezterm-mux-server`) em
+`../upstream-wezterm/target/release` ou via `--bethterm`/`BETHTERM_EXE`.
+O instalador (`pack-bethterm-setup.ps1`, na raiz) empacota `bethterm.exe`,
+`bethterm-host.exe`, `bethterm-web.exe`, `bethterm-tool.exe`,
+`OpenConsole.exe` e `conpty.dll`.
 
 ## Arquivos de dados (`%APPDATA%\bethterm\`)
 
@@ -239,7 +239,7 @@ ou via `--bethterm`/`BETHTERM_EXE`.
 | `ai-usage.jsonl` | log de custo de cada chamada de transcrição/correção |
 | `model-prices.json` | cache de 24h dos preços de modelos |
 | `bridge-latency.log` | medidor de latência de eco por painel (patch 0177) |
-| (lidos, não escritos) `theme-favorites.json`, `pane-commands.json`, `default-theme.json` | compartilhados com a GUI |
+| (lidos, não escritos) `theme-favorites.json`, `pane-commands.json`, `default-theme.json` | compartilhados com o host e o `bethterm` CLI |
 
 Log do processo: `%LOCALAPPDATA%\bethterm-web\bethterm-web.log`.
 

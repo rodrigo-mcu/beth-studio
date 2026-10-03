@@ -37,7 +37,7 @@ We follow the [Contributor Covenant](CODE_OF_CONDUCT.md) 2.1. Be kind. Disagreem
 ## Coding rules
 
 - Existing files under `upstream-wezterm/` that are not our crates may be changed **only** as a documented patch: add a row to `upstream-wezterm/PATCHES.md` and a matching `upstream-wezterm/patches/NNNN-*.md`.
-- New BethTerm code belongs in `upstream-wezterm/wtinator/` (or `wtinator-config/`) whenever possible.
+- New BethTerm code belongs in `upstream-wezterm/wtinator/` whenever possible; Beth Studio code lives in `bethterm-web/`.
 - The crate is still named `wtinator` on purpose. Do not mass-rename it in a drive-by PR.
 - `cargo fmt` before every commit.
 - No `unwrap()` outside `#[cfg(test)]` in `wtinator/`.
@@ -50,10 +50,10 @@ From `upstream-wezterm/`:
 ```powershell
 $env:PATH = 'C:\Strawberry\perl\bin;' + $env:PATH
 cargo +nightly test -p wtinator
-cargo +nightly check -p wezterm-gui
+cargo +nightly check -p wezterm -p wezterm-mux-server
 ```
 
-Manual Windows tests must use `run-bethterm-release.cmd` or `run-bethterm-debug.cmd` so a system WezTerm does not absorb the run.
+Manual Windows tests must use `run-bethterm.cmd` (or `run-bethterm-debug.cmd`), which start `bethterm-web.exe` from this checkout, so a system WezTerm does not absorb the run. Build the Studio first with `powershell -File bethterm-webuild.ps1`.
 
 ## License of contributions
 
