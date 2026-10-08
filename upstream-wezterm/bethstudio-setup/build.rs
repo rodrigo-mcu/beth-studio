@@ -75,6 +75,8 @@ fn pack_dist(dist: &Path, dest: &Path) -> anyhow::Result<usize> {
         "bethstudio-tool.exe",
         "OpenConsole.exe",
         "conpty.dll",
+        // texto das licenças das dependências (tools/collect-licenses.py)
+        "THIRD-PARTY-LICENSES.txt",
     ] {
         let src = dist.join(rel);
         if src.is_file() {
@@ -90,6 +92,10 @@ fn pack_dist(dist: &Path, dest: &Path) -> anyhow::Result<usize> {
         if src.is_file() {
             files.push((name.to_string(), src));
         }
+    }
+    let notices = repo.join("docs").join("THIRD-PARTY-NOTICES.md");
+    if notices.is_file() {
+        files.push(("THIRD-PARTY-NOTICES.md".to_string(), notices));
     }
     anyhow::ensure!(!files.is_empty(), "no files to pack");
 

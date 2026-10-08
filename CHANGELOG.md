@@ -1,12 +1,15 @@
 # Changelog
 
-All notable changes to BethTerm are documented in this file.
+All notable changes to Beth Studio are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
+- The Beth Studio screen can be updated on its own (`bethstudio-web/deploy-ui.ps1`, **Configurações > Sobre > Recarregar interface**), without restarting the Studio or the host. A package that needs a newer Studio is ignored.
+- `release.ps1`, `RELEASING.md` and a GitHub Actions workflow produce the installer, a portable zip, a UI-only zip and `SHA256SUMS.txt`, with the third-party license texts included.
+- `bethstudio-web/` and `bethstudio-mobile/` are now BSD-3-Clause; the rest stays MIT. `SUPPORT.md` says what is supported.
 - Tray **Esconder tudo** hides every visible window. Shells stay in the host (patch 0150).
 - Right-click **Cor do ícone** colors that window's taskbar button. The swatch is stored with the window name (patch 0151).
 - An agent waiting for you (bell, OSC 9, OSC 777, OSC 99, or a `*_status=waiting` user var) marks the window icon, the tray icon, and that window's tray-menu row (patches 0152–0153).
@@ -16,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The notification-area menu offers **Sistema** (second entry): it opens a separate **BethTerm — Sistema** window with CPU/RAM/disk usage bars refreshed every second (patch 0112).
 
 ### Fixed
+- The voice panel no longer closes (and loses what you said) when you click outside it while recording, transcribing, correcting or reviewing; only its buttons and Esc close it.
 - The terminal list follows the PowerShell prompt after `cd`. Windows PowerShell leaves the process directory at the folder where it started, so the list kept showing that startup folder (patch 0191). A title that is only the path of `powershell.exe` is no longer shown as the terminal name in Beth Studio.
 - Restoring saved window positions on a GUI restart no longer panics the new interface (patch 0149).
 - A stuck native menu (Windows error 1446) is cancelled before the next menu opens (patch 0154).

@@ -49,6 +49,15 @@ A lista completa e atualizada está em [`FEATURES.md`](FEATURES.md). O manual pa
 
 Detalhes em [Arquitetura](wiki/Arquitetura.md).
 
+## Baixar
+
+Na página **[Releases](../../releases/latest)** do repositório, baixe:
+
+- **`BethStudio-Setup.exe`**: instalador de um arquivo só (recomendado).
+- **`BethStudio-<versão>-windows-x64.zip`**: versão portátil; descompacte e abra `bethstudio-web.exe`.
+
+Confira o arquivo com `SHA256SUMS.txt`. Requer Windows 10 ou 11. Ajuda e limites do projeto: [`SUPPORT.md`](SUPPORT.md). Para gerar um release você mesmo: [`RELEASING.md`](RELEASING.md).
+
 ## Instalação
 
 1. Baixe o `BethStudio-Setup.exe`.

@@ -53,3 +53,34 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
       - name: cargo test -p wtinator --lib
         run: cargo test -p wtinator --lib
+
+  studio:
+    name: Studio (Go + React) tests
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: bethstudio-web/go.mod
+          cache-dependency-path: bethstudio-web/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: corepack enable
+      - name: Frontend tests and build
+        working-directory: bethstudio-web/frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+          pnpm build
+      - name: Copy the build next to the Go embed
+        shell: pwsh
+        run: |
+          Get-ChildItem bethstudio-web/webui/dist -Force | Where-Object { $_.Name -ne '.gitkeep' } | Remove-Item -Recurse -Force
+          Copy-Item -Recurse -Force bethstudio-web/frontend/dist/* bethstudio-web/webui/dist
+      - name: Go vet and tests
+        working-directory: bethstudio-web
+        run: |
+          go vet -unsafeptr=false ./...
+          go test -count=1 ./...

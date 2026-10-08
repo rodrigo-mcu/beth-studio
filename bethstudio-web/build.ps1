@@ -8,7 +8,8 @@
 #   2. copia frontend\dist\*        -> webui\dist
 #   3. go build com //go:embed dist -> bethstudio-web.exe
 param(
-    [switch]$SkipFrontend
+    [switch]$SkipFrontend,
+    [string]$Version = ''   # carimba a versão no exe (ex. 0.2.0); vazio = a do código
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,6 +21,8 @@ try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
 $half = [Math]::Max(1, [int]([Environment]::ProcessorCount / 2))
 if (-not $env:GOMAXPROCS) { $env:GOMAXPROCS = "$half" }
 $goP = [Math]::Min(8, $half)
+$verFlag = ''
+if ($Version) { $verFlag = " -X main.appVersion=$Version" }
 
 function Invoke-Checked([string]$what, [scriptblock]$cmd) {
     & $cmd
@@ -65,11 +68,11 @@ try {
         Invoke-Checked 'makesample' { powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\makesample.ps1') }
     }
     Invoke-Checked 'go vet' { go vet -p $goP -unsafeptr=false ./... }
-    Invoke-Checked 'go build' { go build -p $goP -trimpath -ldflags "-H windowsgui -s -w -X main.buildTime=$(Get-Date -Format s)" -o bethstudio-web.exe . }
+    Invoke-Checked 'go build' { go build -p $goP -trimpath -ldflags "-H windowsgui -s -w -X main.buildTime=$(Get-Date -Format s)$verFlag" -o bethstudio-web.exe . }
     # bethstudio-tool.exe: o mesmo pacote como programa de CONSOLE (sem
     # -H windowsgui), para os terminais de ferramenta (--ssh / --serial) que o
     # host cria; vai na mesma pasta do bethstudio.exe.
-    Invoke-Checked 'go build (tool)' { go build -p $goP -trimpath -ldflags "-s -w -X main.buildTime=$(Get-Date -Format s)" -o bethstudio-tool.exe . }
+    Invoke-Checked 'go build (tool)' { go build -p $goP -trimpath -ldflags "-s -w -X main.buildTime=$(Get-Date -Format s)$verFlag" -o bethstudio-tool.exe . }
 } finally {
     Pop-Location
 }

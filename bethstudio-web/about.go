@@ -15,7 +15,8 @@ import (
 	"time"
 )
 
-const appVersion = "0.1.0"
+// appVersion: o release.ps1 carimba a versão (build.ps1 -Version, ldflags -X main.appVersion=...).
+var appVersion = "0.1.0"
 
 // appTitle: nome visivel (janela, avisos). O exe continua bethstudio-web.exe;
 // o menu da bandeja chama isto de "Beth Studio" (patch 0186).

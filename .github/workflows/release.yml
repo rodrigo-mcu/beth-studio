@@ -1,0 +1,64 @@
+# Gera os arquivos de um release quando uma tag vX.Y.Z é enviada.
+#
+#   git tag -a v0.2.0 -m "Beth Studio 0.2.0" && git push origin v0.2.0
+#
+# O release nasce como RASCUNHO (draft): revise as notas e os arquivos no GitHub
+# e clique em "Publish release". Passo a passo e conferências: RELEASING.md.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: bethstudio-web/go.mod
+          cache-dependency-path: bethstudio-web/go.sum
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: upstream-wezterm
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Build release files
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          ./release.ps1 -Version $version
+
+      - name: Draft GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Beth Studio ${{ github.ref_name }}
+          body_path: dist/release/RELEASE_NOTES.md
+          files: |
+            dist/release/BethStudio-Setup.exe
+            dist/release/BethStudio-*-windows-x64.zip
+            dist/release/BethStudio-ui-*.zip
+            dist/release/SHA256SUMS.txt

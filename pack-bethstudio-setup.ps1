@@ -97,7 +97,7 @@ try {
     $fs.Close()
 }
 
-Write-Host ("Setup (GUI nativa + zstd embutido): {0:N0} bytes" -f $setup.Length)
+Write-Host ("Setup (zstd embutido): {0:N0} bytes" -f $setup.Length)
 Write-Host ("  stub:    {0:N0} bytes" -f $stubLen)
 Write-Host ("  payload: {0:N0} bytes" -f $pkgLen)
 Write-Host "Single file: copy only BethStudio-Setup.exe."
