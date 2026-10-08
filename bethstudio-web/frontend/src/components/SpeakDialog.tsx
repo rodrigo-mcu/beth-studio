@@ -426,7 +426,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
   const llmName = snap?.settings.llm_enabled ? snap?.providers.find((p) => p.id === snap.settings.llm_provider)?.name : undefined;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 pt-[8vh]" onMouseDown={phase === "recording" ? undefined : cancel}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 pt-[8vh]">
       <div
         className="flex max-h-[84vh] w-[min(640px,94vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}

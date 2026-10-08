@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"bethstudio-web/phonelink"
-	"bethstudio-web/webui"
 )
 
 func phoneOpAllowed(op string) bool {
@@ -43,13 +42,14 @@ func phoneVoiceView() map[string]any {
 // phoneStatic: o app do celular (frontend/dist/phone, build própria). É
 // público porque não tem dado nenhum: os terminais e a voz só vêm por /api e
 // /ws, que pedem a senha. Nada do Studio do PC é servido neste domínio.
-var phoneStatic = func() http.Handler {
-	sub, err := fs.Sub(webui.Dist, "dist/phone")
+var phoneStatic http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	sub, err := fs.Sub(currentUI().FS, "phone")
 	if err != nil {
-		panic(err)
+		http.Error(w, "app do celular indisponível", http.StatusInternalServerError)
+		return
 	}
-	return http.FileServer(http.FS(sub))
-}()
+	http.FileServer(http.FS(sub)).ServeHTTP(w, r)
+})
 
 func phonePublicFile(p string) bool {
 	switch p {

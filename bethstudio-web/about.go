@@ -72,6 +72,7 @@ func aboutFiles() []aboutFile {
 
 func (s *server) serveAbout(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
+		ui := currentUI()
 		exe, _ := os.Executable()
 		bexe := ""
 		bmod := ""
@@ -86,7 +87,7 @@ func (s *server) serveAbout(w http.ResponseWriter, r *http.Request) {
 			webMod = st.ModTime().Format(time.RFC3339)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
-			"version": appVersion, "build_time": buildTime, "exe": exe, "exe_time": webMod, "go": runtime.Version(),
+			"version": appVersion, "api_level": apiLevel, "ui_version": ui.Version, "ui_override": ui.Override, "ui_note": ui.Reason, "build_time": buildTime, "exe": exe, "exe_time": webMod, "go": runtime.Version(),
 			"bridge_exe": bexe, "bridge_time": bmod, "data_dir": dataDir(), "read_only": s.hub.readOnly, "files": aboutFiles(),
 		})
 		return

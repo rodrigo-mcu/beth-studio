@@ -7,7 +7,7 @@ Beth Studio is based on [Wez's Terminal Emulator (WezTerm)](https://github.com/w
 ## MIT License
 
 Copyright (c) 2018-Present Wez Furlong
-Copyright (c) 2026-Present Beth Studio contributors
+Copyright (c) 2026-Present Rodrigo <rodrigo@mcu.com.br> and Beth Studio contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

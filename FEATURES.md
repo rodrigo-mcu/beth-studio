@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-03.
+Last updated: 2026-10-08.
 
 ---
 
@@ -63,6 +63,9 @@ the short version is at the end of this document.
 Status legend: 🟢 shipped · ⚪ planned.
 
 ---
+
+- 🟢 **Interface atualizável sem reiniciar** — the Beth Studio screen can be replaced on its own: `bethstudio-web\deploy-ui.ps1` installs a new interface package under `%APPDATA%\bethstudio\ui\current`, and **Configurações > Sobre > Recarregar interface** (or F5) applies it. The Studio process, the host and the terminals are not restarted. The previous package is kept for `-Rollback`. A package that needs a newer Studio, or a broken one, is ignored and the interface built into the executable is used.
+- 🟢 **Painel de voz não fecha por clique fora** — while recording, transcribing, correcting or reviewing text, a click outside the voice panel no longer cancels it; only the buttons or Esc do.
 
 ## 1. Removed in Phase B (native window)
 

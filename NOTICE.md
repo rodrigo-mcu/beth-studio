@@ -17,4 +17,9 @@ Beth Studio is an independent project. It is not affiliated with, endorsed by,
 or maintained by Wez Furlong or the WezTerm project.
 
 Copyright (c) 2018-Present Wez Furlong
-Copyright (c) 2026-Present Beth Studio contributors
+Copyright (c) 2026-Present Rodrigo <rodrigo@mcu.com.br> and Beth Studio contributors
+
+Parts of this repository that contain no WezTerm code are licensed
+separately under BSD-3-Clause: `bethstudio-web/` and `bethstudio-mobile/` (see
+the `LICENSE` file in each folder). Everything else, including every file
+derived from WezTerm, stays under MIT as above.

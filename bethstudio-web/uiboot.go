@@ -21,7 +21,6 @@ import (
 	"sort"
 	"strings"
 
-	"bethstudio-web/webui"
 )
 
 type UICSS struct {
@@ -89,7 +88,7 @@ func bootStyle(u *UICSS) string {
 
 // serveIndex entrega o index.html com o <style> de boot no <head>.
 func (s *server) serveIndex(w http.ResponseWriter) {
-	b, err := fs.ReadFile(webui.Dist, "dist/index.html")
+	b, err := fs.ReadFile(currentUI().FS, "index.html")
 	if err != nil {
 		http.Error(w, "index.html ausente", http.StatusInternalServerError)
 		return

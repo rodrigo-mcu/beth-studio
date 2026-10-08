@@ -228,6 +228,16 @@ O instalador (`pack-bethstudio-setup.ps1`, na raiz) empacota `bethstudio.exe`,
 `bethstudio-host.exe`, `bethstudio-web.exe`, `bethstudio-tool.exe`,
 `OpenConsole.exe` e `conpty.dll`.
 
+### Atualizar só a interface (sem reiniciar Studio nem host)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy-ui.ps1             # compila a UI e instala
+powershell -ExecutionPolicy Bypass -File deploy-ui.ps1 -Rollback   # volta a anterior
+powershell -ExecutionPolicy Bypass -File deploy-ui.ps1 -Publish    # + branch git "release" e tag ui-<versão>
+```
+
+O Studio serve a interface de `%APPDATA%\bethstudio\ui\current` quando ela existe, tem `ui.json` válido e `requires_api` <= `apiLevel` (`uiroot.go`); senão usa a embutida. Para aplicar: **Configurações > Sobre > Recarregar interface**. Mudou a API ou o WebSocket de um jeito que quebra UIs antigas (ou a UI passou a depender de algo novo)? Suba `apiLevel`. Plano completo: `../docs/superpowers/specs/2026-10-08-atualizacao-por-camadas-design.md`.
+
 ## Arquivos de dados (`%APPDATA%\bethstudio\`)
 
 | Arquivo | Conteúdo |

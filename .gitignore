@@ -72,3 +72,19 @@ STATUS.md
 docs/2026-06-07-codex-titlebar-window-controls.md
 .playwright-mcp/
 bethstudio-web/bethstudio-proxy-linux
+
+# Secrets and local agent settings (never commit)
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+secrets.dat
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Local logs and scratch
+*.log
+*.tmp
+nul

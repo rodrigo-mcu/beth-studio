@@ -284,6 +284,10 @@ function SidebarSection({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Pa
 
 interface About {
   version: string;
+  api_level?: number;
+  ui_version?: string;
+  ui_override?: boolean;
+  ui_note?: string;
   build_time: string;
   exe: string;
   exe_time: string;
@@ -314,6 +318,19 @@ function AboutSection({ conn, onMessage }: { conn: Connection; onMessage: (m: st
           <span className="text-text-1">
             {a.version} · build {fmt(a.build_time || a.exe_time)} · {a.go}
             {a.read_only && " · somente leitura"}
+          </span>
+          <span className="text-text-2">Interface</span>
+          <span className="text-text-1">
+            {a.ui_override ? `pacote ${a.ui_version}` : "embutida no executável"}
+            {a.api_level != null && <span className="text-text-3"> · API {a.api_level}</span>}
+            {a.ui_note && <span className="text-text-3"> · pacote ignorado: {a.ui_note}</span>}
+            <button
+              className="ml-3 rounded bg-bg-hover px-2 py-0.5 text-text-1 hover:bg-border"
+              title="Recarrega a interface (aplica um pacote novo, sem reiniciar o Studio nem o host)"
+              onClick={() => window.location.reload()}
+            >
+              Recarregar interface
+            </button>
           </span>
           <span className="text-text-2">Executável</span>
           <span className="break-all font-mono text-[11px] text-text-1">{a.exe}</span>

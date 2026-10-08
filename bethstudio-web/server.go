@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -17,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"bethstudio-web/webui"
 )
 
 const (
@@ -36,10 +34,6 @@ type server struct {
 }
 
 func newServer(token string, port int, devOrigin string, h *hub) http.Handler {
-	dist, err := fs.Sub(webui.Dist, "dist")
-	if err != nil {
-		panic(err)
-	}
 	s := &server{
 		token:      token,
 		port:       port,
@@ -47,7 +41,9 @@ func newServer(token string, port int, devOrigin string, h *hub) http.Handler {
 		devOrigin:  strings.TrimRight(strings.TrimSpace(devOrigin), "/"),
 		cookieName: fmt.Sprintf("bethstudio_web_%d", port),
 		hub:        h,
-		static:     http.FileServer(http.FS(dist)),
+		static: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.FileServer(http.FS(currentUI().FS)).ServeHTTP(w, r)
+		}),
 	}
 	return s
 }
