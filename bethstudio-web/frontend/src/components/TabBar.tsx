@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type DragEvent as RDragEv
 import {
   ChevronLeft,
   ChevronRight,
+  LayoutGrid,
   MoreHorizontal,
   RotateCcw,
   PanelLeftClose,
@@ -33,6 +34,8 @@ interface Props {
   onDropPane: (pane: number, tabId: string | null) => void;
   /** abre a paleta "ir para terminal" */
   onSearch: () => void;
+  /** popup com todos os terminais em grade (prints, nome, caminho), inclusive os sem aba */
+  onGrid?: () => void;
   /** Gerenciador de tarefas (memoria, CPU, GPU, disco, terminais, WSL) */
   onTaskManager?: () => void;
   /** painel Banco de dados */
@@ -72,6 +75,7 @@ export function TabBar({
   onMoveTab,
   onDropPane,
   onSearch,
+  onGrid,
   onTaskManager,
   onDatabase,
   onTools,
@@ -132,7 +136,7 @@ export function TabBar({
   const acts: StudioAction[] = hideActions ? [] : buildStudioActions({ onSearch, onGeneral, onTaskManager, onDatabase, onTools, onOpenFile, onNewFile, onSpeak });
   // o que fica fixo: icone, recolher, minimo das abas, "Nova aba", area de arraste, LED, botoes da janela
   const newTabLabel = false; // acoes sempre so' icone (produto para devs)
-  const reserved = (frameless ? 30 + 138 : 0) + 32 + 170 + (newTabLabel ? labelWidth("Nova aba") : ICON_W) + 56 + 20 + 16;
+  const reserved = (frameless ? 30 + 138 : 0) + 32 + 170 + (newTabLabel ? labelWidth("Nova aba") : ICON_W) + (onGrid ? 34 : 0) + 56 + 20 + 16;
   const plan = planBarActions(barW - reserved, acts);
   const actById = new Map(acts.map((a) => [a.id, a]));
 
@@ -294,6 +298,16 @@ export function TabBar({
         <Plus size={16} />
         {newTabLabel && "Nova aba"}
       </button>
+      {onGrid && (
+        <button
+          className="flex h-6 w-8 shrink-0 items-center justify-center self-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1"
+          aria-label="Todos os terminais"
+          title="Todos os terminais: grade com print, nome e pasta de cada um, com busca (inclui os de abas fechadas)"
+          onClick={onGrid}
+        >
+          <LayoutGrid size={15} />
+        </button>
+      )}
       <div
         className="h-full min-w-[48px] flex-1"
         onMouseDown={startDrag}

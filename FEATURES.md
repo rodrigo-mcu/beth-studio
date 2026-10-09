@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-08.
+Last updated: 2026-10-09.
 
 ---
 
@@ -348,6 +348,13 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   correct text and answer in the database assistant.
 - 🟢 When a process exits, the leaf shows **terminal encerrado** and can
   be removed.
+- 🟢 **Todos os terminais** (grid button next to **+** in the tab bar): a popup
+  grid with one card per terminal, showing a text print of the screen (last
+  lines), name, type, folder path and tab. Includes terminals in closed tabs,
+  loose ones and ended ones. Search by name, folder, type, tab or `#id` (and
+  optionally the screen text); filters Todos / Em abas / Sem aba / Encerrados.
+  Click opens the terminal (a closed tab is reopened, a loose terminal gets a
+  new tab); Enter opens the first match (2026-10-09).
 
 ## 8. SSH, serial, and SFTP
 

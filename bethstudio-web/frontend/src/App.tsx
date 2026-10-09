@@ -18,6 +18,7 @@ import { restoreBanner } from "@/lib/restoreBanner";
 import { GoneLeaf, SplitView } from "@/components/SplitView";
 import { PaneMenu, type PaneMenuActions } from "@/components/PaneMenu";
 import { SearchPalette } from "@/components/SearchPalette";
+import { TerminalGrid } from "@/components/TerminalGrid";
 import type { ResultActions } from "@/components/SearchResults";
 import { useSearch } from "@/lib/useSearch";
 import { SettingsDialog, type SettingsSection } from "@/components/SettingsDialog";
@@ -193,6 +194,7 @@ export function App() {
     zone?: SplitZone;
   } | null>(null);
   const [palette, setPalette] = useState(false);
+  const [termGrid, setTermGrid] = useState(false);
   const [taskManager, setTaskManager] = useState(false);
   const openDatabase = () => {
     if (isRemote()) {
@@ -785,6 +787,7 @@ export function App() {
               onMoveTab={(id, to) => commit(L.moveTab(layout, id, to))}
               onDropPane={act.dropOnTab}
               onSearch={() => setPalette(true)}
+              onGrid={() => setTermGrid(true)}
               onGeneral={() => openSettings("aparencia")}
               onTaskManager={() => setTaskManager(true)}
               onDatabase={openDatabase}
@@ -1020,6 +1023,28 @@ export function App() {
         <div className="pointer-events-none fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded bg-bg-card px-3 py-1.5 text-text-1 shadow-lg ring-1 ring-border">
           {notice}
         </div>
+      )}
+      {termGrid && layout && act && (
+        <TerminalGrid
+          conn={conn}
+          panes={snap.panes ?? []}
+          layout={layout}
+          onClose={() => setTermGrid(false)}
+          onOpen={(c) => {
+            setTermGrid(false);
+            if (c.state === "gone") {
+              if (c.tabId) commit(L.setActive(layout, c.tabId));
+              return;
+            }
+            act.open(c.pane);
+            setFlash((f) => ({ pane: c.pane, n: (f?.n ?? 0) + 1 }));
+          }}
+          onOpenBeside={(c) => {
+            setTermGrid(false);
+            act.openBeside(c.pane);
+            setFlash((f) => ({ pane: c.pane, n: (f?.n ?? 0) + 1 }));
+          }}
+        />
       )}
       {palette && resultActions && (
         <SearchPalette s={searchState} panes={snap.panes ?? []} where={where} actions={resultActions} onClose={() => setPalette(false)} />

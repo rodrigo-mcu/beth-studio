@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Todos os terminais**: a grid button next to **+** opens a searchable popup with a screen print, name, type, folder and tab of every terminal, including those in closed tabs.
 - The Beth Studio screen can be updated on its own (`bethstudio-web/deploy-ui.ps1`, **Configurações > Sobre > Recarregar interface**), without restarting the Studio or the host. A package that needs a newer Studio is ignored.
 - `release.ps1`, `RELEASING.md` and a GitHub Actions workflow produce the installer, a portable zip, a UI-only zip and `SHA256SUMS.txt`, with the third-party license texts included.
 - `bethstudio-web/` and `bethstudio-mobile/` are now BSD-3-Clause; the rest stays MIT. `SUPPORT.md` says what is supported.
