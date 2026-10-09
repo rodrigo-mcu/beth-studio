@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { LogOut, MoreVertical, RefreshCw, Search, X } from "lucide-react";
+import { LayoutGrid, List, LogOut, MoreVertical, RefreshCw, Search, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { AgentState } from "@/lib/agents";
 import type { PaneInfo } from "@/lib/types";
@@ -8,11 +8,22 @@ import { orderPhonePanes } from "@/lib/phoneScreen";
 import { Mark } from "./Mark";
 import { logout } from "./session";
 import { ThemePicker } from "./theme";
+import { PaneGrid } from "./PaneGrid";
 import { byRecent, filterPanes, kindChips, kindText, KIND_LABELS, waitedFor, type KindFilter, type Recent } from "./text";
 
 // Busca e filtro sobrevivem a abrir um terminal e voltar.
 let keptQuery = "";
 let keptKind: KindFilter = "all";
+
+const VIEW_KEY = "bethphone.view";
+type View = "list" | "grid";
+function loadView(): View {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
+  } catch {
+    return "list";
+  }
+}
 
 interface Props {
   conn: Connection;
@@ -32,6 +43,15 @@ interface Props {
 
 export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, banner, canLogout, onOpen, onLogout }: Props) {
   const [menu, setMenu] = useState(false);
+  const [view, setViewState] = useState<View>(loadView);
+  const setView = (v: View) => {
+    setViewState(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      /* sem storage */
+    }
+  };
   const [now, setNow] = useState(() => Date.now());
   const [query, setQueryState] = useState(keptQuery);
   const [kind, setKindState] = useState<KindFilter>(keptKind);
@@ -88,6 +108,15 @@ export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, b
             {online ? "Ligado ao PC" : "Sem ligação com o PC"}
           </div>
         </div>
+        <button
+          type="button"
+          className="p-icon-btn"
+          aria-label={view === "grid" ? "Ver como lista" : "Ver todos os terminais em grade"}
+          aria-pressed={view === "grid"}
+          onClick={() => setView(view === "grid" ? "list" : "grid")}
+        >
+          {view === "grid" ? <List size={20} /> : <LayoutGrid size={20} />}
+        </button>
         <button type="button" className="p-icon-btn" aria-label="Atualizar a lista" onClick={() => conn.refreshList()}>
           <RefreshCw size={20} />
         </button>
@@ -170,13 +199,16 @@ export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, b
             Abra um terminal no Beth Studio do PC e ele aparece aqui.
           </div>
         )}
-        {waiting.length > 0 && (
+        {view === "grid" && list && list.length > 0 && (
+          <PaneGrid conn={conn} panes={[...waiting, ...rest]} agents={agents} nameOf={label} now={now} onOpen={onOpen} />
+        )}
+        {view === "list" && waiting.length > 0 && (
           <>
             <div className="p-group p-group--wait">{waiting.length === 1 ? "Esperando você" : `${waiting.length} esperando você`}</div>
             {waiting.map(row)}
           </>
         )}
-        {rest.length > 0 && (
+        {view === "list" && rest.length > 0 && (
           <>
             {waiting.length > 0 && <div className="p-group">Outros terminais</div>}
             {rest.map(row)}

@@ -183,3 +183,32 @@ func TestPhoneGateOrigin(t *testing.T) {
 		}
 	}
 }
+
+func TestPhoneGridEndpointsNeedLogin(t *testing.T) {
+	tok := withPhoneSession(t)
+	srv := &server{hub: newHub(false)}
+	for _, c := range []struct{ method, path, body string }{
+		{http.MethodGet, "/api/phone/layout", ""},
+		{http.MethodPost, "/api/phone/content", `{"pane_ids":[]}`},
+	} {
+		mk := func(cookie bool) *http.Request {
+			r := httptest.NewRequest(c.method, c.path, strings.NewReader(c.body))
+			r.Header.Set("Content-Type", "application/json")
+			r.Header.Set("Origin", "https://"+testDomain)
+			if cookie {
+				r.AddCookie(&http.Cookie{Name: phoneCookie, Value: tok})
+			}
+			return r
+		}
+		rec := httptest.NewRecorder()
+		srv.servePhonePublic(rec, mk(false))
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("%s sem senha: %d", c.path, rec.Code)
+		}
+		rec = httptest.NewRecorder()
+		srv.servePhonePublic(rec, mk(true))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s com senha: %d %s", c.path, rec.Code, rec.Body.String())
+		}
+	}
+}

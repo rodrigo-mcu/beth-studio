@@ -355,6 +355,11 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   optionally the screen text); filters Todos / Em abas / Sem aba / Encerrados.
   Click opens the terminal (a closed tab is reopened, a loose terminal gets a
   new tab); Enter opens the first match (2026-10-09).
+- 🟢 **Phone web app: grid view** (button in the list header, remembered on the
+  phone). Same cards as the Studio popup: screen print, name, folder, type and
+  tab (or "Aba fechada"), with the existing search and type chips on top. Needs
+  the Studio build with `/api/phone/layout` and `/api/phone/content`; with an
+  older Studio the cards show without print and tab (2026-10-09).
 
 ## 8. SSH, serial, and SFTP
 

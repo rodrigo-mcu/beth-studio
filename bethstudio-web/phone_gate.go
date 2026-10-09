@@ -163,6 +163,18 @@ func (s *server) servePhoneAuthed(w http.ResponseWriter, r *http.Request) {
 			names = map[string]string{}
 		}
 		writeJSON(w, http.StatusOK, names)
+	case r.URL.Path == "/api/phone/layout":
+		// Abas do Studio (e as fechadas) para a grade "Todos os terminais" mostrar
+		// em que aba cada terminal está. Só ids, nomes de aba e pastas.
+		l := settings.snapshot().Layout
+		if l == nil {
+			l = &WebLayout{Tabs: []LayoutTab{}}
+		}
+		writeJSON(w, http.StatusOK, l)
+	case r.URL.Path == "/api/phone/content":
+		// Últimas linhas das telas (o "print" da grade). O celular já pode ver a
+		// tela de qualquer terminal pelo WebSocket; isto só junta tudo num pedido.
+		s.serveContent(w, r)
 	case r.URL.Path == "/api/phone/image":
 		s.servePhoneImage(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/voice"):
