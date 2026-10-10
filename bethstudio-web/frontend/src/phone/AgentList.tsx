@@ -145,7 +145,7 @@ export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, b
         </>
       )}
       {banner}
-      {all && all.length > 0 && (
+      {all && all.length > 0 && view === "list" && (
         <div className="p-find">
           <label className="p-search">
             <Search size={18} aria-hidden="true" />
@@ -185,7 +185,7 @@ export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, b
             Se demorar, o Beth Studio no PC pode estar fechado.
           </div>
         )}
-        {list && list.length === 0 && filtering && (
+        {view === "list" && list && list.length === 0 && filtering && (
           <div className="p-empty">
             <strong>Nenhum terminal com esse filtro</strong>
             <button type="button" className="p-link" onClick={() => { setQuery(""); setKind("all"); }}>
@@ -193,15 +193,13 @@ export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, b
             </button>
           </div>
         )}
-        {list && list.length === 0 && !filtering && (
+        {view === "list" && list && list.length === 0 && !filtering && (
           <div className="p-empty">
             <strong>Nenhum terminal aberto</strong>
             Abra um terminal no Beth Studio do PC e ele aparece aqui.
           </div>
         )}
-        {view === "grid" && list && list.length > 0 && (
-          <PaneGrid conn={conn} panes={[...waiting, ...rest]} agents={agents} nameOf={label} now={now} onOpen={onOpen} />
-        )}
+        {view === "grid" && all && <PaneGrid conn={conn} panes={all} agents={agents} nameOf={label} now={now} onOpen={onOpen} />}
         {view === "list" && waiting.length > 0 && (
           <>
             <div className="p-group p-group--wait">{waiting.length === 1 ? "Esperando você" : `${waiting.length} esperando você`}</div>

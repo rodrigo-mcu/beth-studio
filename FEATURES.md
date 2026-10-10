@@ -357,9 +357,12 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   new tab); Enter opens the first match (2026-10-09).
 - 🟢 **Phone web app: grid view** (button in the list header, remembered on the
   phone). Same cards as the Studio popup: screen print, name, folder, type and
-  tab (or "Aba fechada"), with the existing search and type chips on top. Needs
-  the Studio build with `/api/phone/layout` and `/api/phone/content`; with an
-  older Studio the cards show without print and tab (2026-10-09).
+  tab (or "Aba fechada"), with the same search as the desktop popup (name,
+  folder, type, tab or #number; optional "search the screen too"), the
+  Todos / Em abas / Sem aba / Encerrados filters with counts, and the `#id` on
+  each card. Needs the Studio build with `/api/phone/layout` and
+  `/api/phone/content`; with an older Studio the cards show without print and
+  tab (2026-10-10).
 
 ## 8. SSH, serial, and SFTP
 

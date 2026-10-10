@@ -1170,3 +1170,23 @@ button:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.p-card--gone {
+  opacity: 0.55;
+}
+
+.p-card__name small {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--faint);
+}
+
+.p-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
