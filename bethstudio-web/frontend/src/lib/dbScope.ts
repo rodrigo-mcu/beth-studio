@@ -1,7 +1,7 @@
 /**
- * PostgreSQL e SQL Server sempre listam os bancos que o usuário pode acessar;
- * o banco inicial da conexão só vem destacado e é o fallback se a listagem falhar.
+ * PostgreSQL e SQL Server listam os bancos que o usuário pode acessar, exceto
+ * quando a conexão tem "Banco inicial": aí abre só esse banco.
  */
-export function showsAllDatabases(hasDatabaseLevel: boolean): boolean {
-  return hasDatabaseLevel;
+export function showsAllDatabases(hasDatabaseLevel: boolean, pinnedDatabase?: string): boolean {
+  return hasDatabaseLevel && !pinnedDatabase?.trim();
 }

@@ -99,11 +99,11 @@ export function DbSchemaTree({
   const hasDbLevel = (c: DbConnView) => !!catalog.drivers.find((d) => d.id === c.driver)?.has_database_level;
 
   const rootLoader = (c: DbConnView) => async (): Promise<Node> => {
-    // PostgreSQL/SQL Server listam os bancos que o usuário pode acessar (o
-    // inicial vem em destaque). Se a listagem falhar ou vier vazia, abre só o
-    // banco inicial.
+    // PostgreSQL/SQL Server sem banco inicial listam os bancos que o usuário
+    // pode acessar; com banco inicial preenchido, abre só ele. Se a listagem
+    // falhar ou vier vazia, abre só o banco inicial.
     const pinned = c.database?.trim() || undefined;
-    if (showsAllDatabases(hasDbLevel(c))) {
+    if (showsAllDatabases(hasDbLevel(c), pinned)) {
       try {
         const r = await dbApi.databases(conn, c.id);
         if (r.databases.length > 0) return { kind: "databases", list: r.databases, current: r.current };

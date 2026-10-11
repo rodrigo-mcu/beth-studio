@@ -389,6 +389,8 @@ panel to close it. Hover previews and does not save.
   `db-connections.json`. Passwords in DPAPI. Optional read-only.
 - 🟢 Tree: connection → database → schema → Tables, Views, Materialized
   Views (PostgreSQL), Functions, Queries.
+  PostgreSQL and SQL Server list every reachable database, unless the
+  connection has an **Banco inicial**: then only that one opens (2026-10-10).
 - 🟢 SQL editor with autocomplete, saved queries (`db-queries.json`), and
   export.
 - 🟢 Database assistant: a model chosen under Settings → Banco de dados,

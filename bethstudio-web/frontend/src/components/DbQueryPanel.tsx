@@ -126,7 +126,7 @@ export function DbQueryPanel({
   useEffect(() => titleRef.current?.(connName ?? "Consulta"), [connName]);
 
   const pinnedDb = c?.database?.trim() ?? "";
-  const listAllDbs = showsAllDatabases(!!info?.has_database_level);
+  const listAllDbs = showsAllDatabases(!!info?.has_database_level, pinnedDb);
   useEffect(() => {
     setDatabases([]);
     if (!c || !info?.has_database_level) return;

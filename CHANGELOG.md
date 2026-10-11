@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- PostgreSQL and SQL Server connections with an **Banco inicial** filled in open only that database (tree and query panel) instead of listing every database the user can reach.
+
 ### Added
 - Phone web app: grid view of all terminals (screen print, name, folder, type, tab), toggled from the list header. The grid has the desktop's search (name, folder, type, tab, #id, optional screen text) and the Em abas / Sem aba / Encerrados filters.
 - **Todos os terminais**: a grid button next to **+** opens a searchable popup with a screen print, name, type, folder and tab of every terminal, including those in closed tabs.
