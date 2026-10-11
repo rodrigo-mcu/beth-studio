@@ -246,6 +246,9 @@ func (s *server) dbTest(w http.ResponseWriter, r *http.Request, body []byte) {
 		ID         string        `json:"id"`
 		Connection *DBConnConfig `json:"connection"`
 		Password   *string       `json:"password"`
+		// ListDatabases: em vez de só testar, devolve os bancos acessíveis
+		// (botão "Selecionar" do campo Banco inicial).
+		ListDatabases bool `json:"list_databases"`
 	}
 	if err := json.Unmarshal(body, &req); err != nil {
 		dbFail(w, http.StatusBadRequest, errors.New("requisição inválida"))
@@ -286,6 +289,10 @@ func (s *server) dbTest(w http.ResponseWriter, r *http.Request, body []byte) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), dbConnectTimeout+5*time.Second)
 	defer cancel()
+	if req.ListDatabases {
+		dbTestListDatabases(ctx, w, cfg, pw)
+		return
+	}
 	t0 := time.Now()
 	db, err := dbOpenPool(ctx, cfg, pw, "")
 	if err != nil {
@@ -304,6 +311,43 @@ func (s *server) dbTest(w http.ResponseWriter, r *http.Request, body []byte) {
 		version = version[:300]
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "version": strings.TrimSpace(version), "elapsed_ms": ms})
+}
+
+// dbTestListDatabases lists the databases cfg can reach, for the connection
+// form. The configured database may be empty or wrong at that point, so
+// PostgreSQL first connects through "postgres" and then through cfg.Database.
+func dbTestListDatabases(ctx context.Context, w http.ResponseWriter, cfg DBConnConfig, pw string) {
+	if cfg.Driver != dbPostgres && cfg.Driver != dbSQLServer {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "este tipo de banco não tem lista de bancos"})
+		return
+	}
+	tries := []string{""}
+	if cfg.Driver == dbPostgres {
+		tries = []string{"postgres"}
+		if cfg.Database != "" && cfg.Database != "postgres" {
+			tries = append(tries, cfg.Database)
+		}
+	}
+	var lastErr error
+	for _, name := range tries {
+		db, err := dbOpenPool(ctx, cfg, pw, name)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		list, _, e := dbListDatabases(ctx, cfg.Driver, db)
+		db.Close()
+		if e != nil {
+			lastErr = e
+			continue
+		}
+		if list == nil {
+			list = []string{}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "databases": list})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": dbFriendlyError(ctx, dbScrubErr(lastErr, pw), false, 0)})
 }
 
 // dbTarget resolves the connection, password and pool of a request.

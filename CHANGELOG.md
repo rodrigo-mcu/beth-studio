@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- Database connection form: a **Selecionar** button next to **Banco inicial** connects with the form's data and lists the databases to pick from (PostgreSQL and SQL Server).
+
 ### Fixed
 - PostgreSQL and SQL Server connections with an **Banco inicial** filled in open only that database (tree and query panel) instead of listing every database the user can reach.
 

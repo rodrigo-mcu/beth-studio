@@ -198,6 +198,8 @@ export interface DbTestResponse {
   elapsed_ms?: number;
   error?: string;
   message?: string;
+  /** só com list_databases */
+  databases?: string[];
 }
 
 export const dbApi = {
@@ -209,7 +211,7 @@ export const dbApi = {
       clear_password: clearPassword,
     }),
   remove: (c: DbApiClient, id: string) => c.api<{ ok: boolean }>("/api/db/connections/delete", { id }),
-  test: (c: DbApiClient, body: { id?: string; connection?: Partial<DbConnConfig>; password?: string }) =>
+  test: (c: DbApiClient, body: { id?: string; connection?: Partial<DbConnConfig>; password?: string; list_databases?: boolean }) =>
     c.api<DbTestResponse>("/api/db/test", body),
   databases: (c: DbApiClient, id: string) => c.api<{ databases: string[]; current: string }>("/api/db/databases", { id }),
   schemas: (c: DbApiClient, id: string, database?: string, system = false) =>

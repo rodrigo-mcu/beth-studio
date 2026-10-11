@@ -391,6 +391,8 @@ panel to close it. Hover previews and does not save.
   Views (PostgreSQL), Functions, Queries.
   PostgreSQL and SQL Server list every reachable database, unless the
   connection has an **Banco inicial**: then only that one opens (2026-10-10).
+  The connection form has a **Selecionar** button next to **Banco inicial**
+  that lists the reachable databases to pick from (2026-10-10).
 - 🟢 SQL editor with autocomplete, saved queries (`db-queries.json`), and
   export.
 - 🟢 Database assistant: a model chosen under Settings → Banco de dados,

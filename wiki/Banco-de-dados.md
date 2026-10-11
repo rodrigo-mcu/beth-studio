@@ -32,7 +32,7 @@ Para mudar uma conexão, use **Editar conexão**. O botão **Excluir** pede conf
 
 1. A árvore mostra: conexão, banco, esquema (schema) e, dentro dele, as pastas **Tables**, **Views**, **Materialized Views** (só PostgreSQL), **Functions** (não existe em SQLite) e **Queries**.
 2. Em PostgreSQL e SQL Server, sem **Banco inicial** a árvore lista todos os bancos que o usuário pode acessar.
-3. Preencher **Banco inicial** faz a conexão abrir só aquele banco.
+3. Preencher **Banco inicial** faz a conexão abrir só aquele banco. Em PostgreSQL e SQL Server, o botão **Selecionar** ao lado do campo conecta com os dados do formulário e mostra a lista de bancos para você escolher.
 4. Clique numa tabela para abrir uma aba. A pasta **Queries** lista as consultas salvas.
 
 ### Ver e filtrar os dados de uma tabela

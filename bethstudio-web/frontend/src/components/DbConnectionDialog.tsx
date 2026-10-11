@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, LoaderCircle, Lock, Plug, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, LoaderCircle, Lock, Plug, Trash2, X } from "lucide-react";
 import { dbApi, type DbApiClient, type DbCatalog, type DbConnConfig, type DbConnView, type DbDriver } from "@/lib/dbApi";
 import { CONN_COLORS, formatMs, sslLabel } from "@/lib/dbFormat";
 import { cn } from "@/lib/utils";
@@ -48,6 +48,9 @@ export function DbConnectionDialog({
   const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [dbList, setDbList] = useState<string[] | null>(null);
+  const [listing, setListing] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => nameRef.current?.focus(), []);
 
@@ -88,6 +91,25 @@ export function DbConnectionDialog({
       setTest({ ok: false, text: e instanceof Error ? e.message : String(e) });
     } finally {
       setBusy("");
+    }
+  };
+
+  // "Selecionar": pergunta ao servidor quais bancos esses dados enxergam.
+  const pickDatabase = async () => {
+    if (dbList) {
+      setDbList(null);
+      return;
+    }
+    setListing(true);
+    setListError(null);
+    try {
+      const r = await dbApi.test(conn, { id: editing?.id, connection: payload(), ...(password ? { password } : {}), list_databases: true });
+      if (r.ok) setDbList(r.databases ?? []);
+      else setListError(r.error || "não foi possível listar os bancos");
+    } catch (e) {
+      setListError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setListing(false);
     }
   };
 
@@ -226,7 +248,50 @@ export function DbConnectionDialog({
                   <input className={inputCls} value={form.user ?? ""} autoComplete="off" onChange={(e) => set("user", e.target.value)} />
                 </Field>
                 <Field label="Banco inicial" hint="(se preenchido, abre só este banco)">
-                  <input className={inputCls} value={form.database ?? ""} onChange={(e) => set("database", e.target.value)} />
+                  <div className="flex gap-1.5">
+                    <input
+                      className={inputCls}
+                      value={form.database ?? ""}
+                      onChange={(e) => {
+                        set("database", e.target.value);
+                        setDbList(null);
+                      }}
+                    />
+                    {info?.has_database_level && (
+                      <button
+                        type="button"
+                        className="flex shrink-0 items-center gap-1 rounded border border-border bg-bg-hover px-2 text-[12px] text-text-1 hover:bg-border disabled:opacity-50"
+                        title="Conecta com os dados acima e lista os bancos para escolher"
+                        aria-expanded={!!dbList}
+                        disabled={listing || !!busy}
+                        onClick={() => void pickDatabase()}
+                      >
+                        {listing ? <LoaderCircle size={13} className="animate-spin" /> : <ChevronDown size={13} />}
+                        Selecionar
+                      </button>
+                    )}
+                  </div>
+                  {listError && <span className="text-[11px] text-status-err">{listError}</span>}
+                  {dbList && (
+                    <div className="max-h-[180px] overflow-auto rounded border border-border bg-bg-panel" role="listbox" aria-label="Bancos disponíveis">
+                      {dbList.length === 0 && <div className="px-2 py-1.5 text-text-3">Nenhum banco acessível</div>}
+                      {dbList.map((name) => (
+                        <button
+                          key={name}
+                          type="button"
+                          role="option"
+                          aria-selected={name === form.database}
+                          className={cn("block w-full truncate px-2 py-1 text-left text-[12px] text-text-1 hover:bg-bg-hover", name === form.database && "bg-accent-soft")}
+                          onClick={() => {
+                            set("database", name);
+                            setDbList(null);
+                          }}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
