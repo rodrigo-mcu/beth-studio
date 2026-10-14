@@ -69,7 +69,7 @@ func TestPhoneGateMe(t *testing.T) {
 func TestPhoneGateNoDesktopRoutes(t *testing.T) {
 	tok := withPhoneSession(t)
 	srv := &server{hub: newHub(false)}
-	for _, p := range []string{"/api/settings", "/api/ssh/hosts", "/api/local-file", "/api/voice/key", "/favicon.ico", "/bethstudio-32.png"} {
+	for _, p := range []string{"/api/settings", "/api/ssh/hosts", "/api/local-file", "/api/voice/key", "/api/update/check", "/favicon.ico", "/bethstudio-32.png"} {
 		rec := httptest.NewRecorder()
 		srv.servePhonePublic(rec, phoneReq(http.MethodGet, p, tok))
 		if rec.Code != http.StatusNotFound {

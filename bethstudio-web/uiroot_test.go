@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 func writeUIPkg(t *testing.T, dir, manifest, index string) {
@@ -26,11 +25,7 @@ func writeUIPkg(t *testing.T, dir, manifest, index string) {
 	}
 }
 
-func resetUICache() {
-	uiMu.Lock()
-	uiCacheKey, uiCacheAt = "", time.Time{}
-	uiMu.Unlock()
-}
+func resetUICache() { invalidateUICache() }
 
 func TestCurrentUIOverride(t *testing.T) {
 	t.Setenv("BETHSTUDIO_DATA_DIR", t.TempDir())
@@ -75,5 +70,15 @@ func TestCurrentUIFallbacks(t *testing.T) {
 				t.Fatalf("a embutida precisa servir index.html: %v", err)
 			}
 		})
+	}
+}
+
+func TestCurrentUIManifestBOM(t *testing.T) {
+	t.Setenv("BETHSTUDIO_DATA_DIR", t.TempDir())
+	writeUIPkg(t, uiOverrideDir(), "\uFEFF"+`{"version":"2026.10.14-1","requires_api":1}`, "<html>bom</html>")
+	resetUICache()
+	u := currentUI()
+	if !u.Override || u.Version != "2026.10.14-1" {
+		t.Fatalf("manifesto com BOM deveria valer: %+v", u)
 	}
 }
