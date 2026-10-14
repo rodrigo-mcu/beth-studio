@@ -84,11 +84,16 @@ jobs:
         run: |
           go vet -unsafeptr=false ./...
           go test -count=1 ./...
-      # TEMPORARIO: mostra o motivo da falha como anotacao (visivel sem login).
+      # TEMPORARIO: mostra a tela do teste que falha como anotacao (visivel sem login).
       - name: Diagnostico dos testes Go
         if: failure()
         working-directory: bethstudio-web
         shell: pwsh
         run: |
-          go vet -unsafeptr=false ./... 2>&1 | Select-Object -First 5 | ForEach-Object { Write-Host "::error::vet: $_" }
-          go test -count=1 ./... 2>&1 | Select-String -Pattern '^(--- FAIL|FAIL|panic)|_test\.go:\d+' | Select-Object -First 9 | ForEach-Object { Write-Host "::error::test: $($_.Line)" }
+          $o = go test -count=1 -run TestSSHHelperInConPTY . 2>&1 | Out-String
+          $i = $o.IndexOf('tela at')
+          if ($i -lt 0) { $i = 0 }
+          $t = $o.Substring($i)
+          if ($t.Length -gt 3500) { $t = $t.Substring(0, 3500) }
+          $t = $t -replace "`e\[[0-9;?]*[A-Za-z]", '' -replace "`r", '' -replace "`n", '%0A'
+          Write-Host "::error::tela=$t"
