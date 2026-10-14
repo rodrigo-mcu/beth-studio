@@ -84,3 +84,11 @@ jobs:
         run: |
           go vet -unsafeptr=false ./...
           go test -count=1 ./...
+      # TEMPORARIO: mostra o motivo da falha como anotacao (visivel sem login).
+      - name: Diagnostico dos testes Go
+        if: failure()
+        working-directory: bethstudio-web
+        shell: pwsh
+        run: |
+          go vet -unsafeptr=false ./... 2>&1 | Select-Object -First 5 | ForEach-Object { Write-Host "::error::vet: $_" }
+          go test -count=1 ./... 2>&1 | Select-String -Pattern '^(--- FAIL|FAIL|panic)|_test\.go:\d+' | Select-Object -First 9 | ForEach-Object { Write-Host "::error::test: $($_.Line)" }
