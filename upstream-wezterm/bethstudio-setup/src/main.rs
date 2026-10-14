@@ -663,7 +663,7 @@ fn extract_zstd_tar(
             ".{}.installing",
             out.file_name()
                 .and_then(|s| s.to_str())
-                .unwrap_or("ficheiro")
+                .unwrap_or("arquivo")
         );
         let file_name = path
             .file_name()
@@ -795,7 +795,7 @@ mod native_lnk {
             .creation_flags(CREATE_NO_WINDOW)
             .status()
             .context("atalho")?;
-        anyhow::ensure!(status.success(), "falhou a criar atalho {}", lnk.display());
+        anyhow::ensure!(status.success(), "falha ao criar atalho {}", lnk.display());
         Ok(())
     }
 }
@@ -854,8 +854,8 @@ mod ui {
     const CLIENT_H: i32 = 420;
     const SS_NOPREFIX: u32 = 128;
     const TRUST_TEXT: &str = "\
-Os ficheiros ficam só nesta pasta, visível no Explorador.\r\n\
-Não escreve no Registo e não usa AppData nem pastas ocultas.\r\n\
+Os arquivos ficam só nesta pasta, visível no Explorer.\r\n\
+Não escreve no Registro e não usa AppData nem pastas ocultas.\r\n\
 Para remover, apague a pasta (e os atalhos, se os criou).";
 
     static LAST_ERROR: Mutex<Option<String>> = Mutex::new(None);
@@ -1452,11 +1452,11 @@ Para remover, apague a pasta (e os atalhos, se os criou).";
                 };
                 Ok(format!(
                     "Beth Studio está em:\n{}\n\n\
-                     Instalação portátil: não foi escrito nada no Registo do Windows.\n\
-                     Os ficheiros do programa estão só nesta pasta (visível, não oculta).\n{}{}{}",
+                     Instalação portátil: não foi escrito nada no Registro do Windows.\n\
+                     Os arquivos do programa estão só nesta pasta (visível, não oculta).\n{}{}{}",
                     dest.display(),
                     if want_shortcut {
-                        "Atalhos criados no Ambiente de Trabalho e no Menu Iniciar."
+                        "Atalhos criados no Área de Trabalho e no Menu Iniciar."
                     } else {
                         "Sem atalhos."
                     },
@@ -1563,7 +1563,7 @@ Para remover, apague a pasta (e os atalhos, se os criou).";
                 }
                 let shortcut = child(
                     "BUTTON",
-                    "Criar atalhos no Ambiente de Trabalho e no Menu Iniciar",
+                    "Criar atalhos no Área de Trabalho e no Menu Iniciar",
                     BS_AUTOCHECKBOX as u32 | WS_TABSTOP,
                     20,
                     HEADER_H + 142,

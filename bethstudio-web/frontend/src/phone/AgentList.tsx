@@ -105,7 +105,7 @@ export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, b
           <div className="p-title">Beth Studio</div>
           <div className="p-sub">
             <span className={online ? "p-dot p-dot--ok" : "p-dot"} />
-            {online ? "Ligado ao PC" : "Sem ligação com o PC"}
+            {online ? "Conectado ao PC" : "Sem conexão com o PC"}
           </div>
         </div>
         <button

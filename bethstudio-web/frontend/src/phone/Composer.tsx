@@ -269,7 +269,7 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
     const m = [...ready, ...(body ? [body] : [])].join("\n");
     if (!m) return;
     if (!conn.paste(paneId, m)) {
-      setNote({ text: "Sem ligação com o PC. O texto continua aqui; envie quando voltar.", err: true });
+      setNote({ text: "Sem conexão com o PC. O texto continua aqui; envie quando voltar.", err: true });
       return;
     }
     window.setTimeout(() => conn.send(paneId, "\r"), 40);
@@ -283,7 +283,7 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
 
   const key = (data: string) => {
     if (readOnly) return;
-    if (!conn.send(paneId, data)) setNote({ text: "Sem ligação com o PC.", err: true });
+    if (!conn.send(paneId, data)) setNote({ text: "Sem conexão com o PC.", err: true });
   };
 
   const hasText = draft.text.trim().length > 0 || attachments.length > 0;
