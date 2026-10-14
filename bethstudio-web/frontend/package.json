@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@9.15.9",
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "type": "module",
   "description": "UI React do bethstudio-web (terminais do host Beth Studio). Embedado no Go via //go:embed.",
   "scripts": {

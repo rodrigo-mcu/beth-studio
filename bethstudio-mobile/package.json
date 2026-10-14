@@ -2,7 +2,7 @@
   "name": "bethstudio-mobile",
   "version": "0.1.0",
   "private": true,
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "main": "expo-router/entry",
   "description": "App Android/iOS para ver e usar os terminais do Beth Studio pelo protocolo WS do bethstudio-web.",
   "scripts": {

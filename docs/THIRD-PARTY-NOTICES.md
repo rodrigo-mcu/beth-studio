@@ -12,7 +12,7 @@ One dependency is LGPL-2.1 (libssh, see below) and two Go modules are MPL-2.0. N
 | Part | License |
 | --- | --- |
 | `upstream-wezterm/` (WezTerm and our patches, `wtinator`, `bethstudio-setup`) | MIT (Wez Furlong, and Rodrigo / Beth Studio contributors) |
-| `bethstudio-web/` (Beth Studio, phone page) and `bethstudio-mobile/` | BSD-3-Clause (Rodrigo) |
+| `bethstudio-web/` (Beth Studio, phone page) and `bethstudio-mobile/` | MIT (Rodrigo / Beth Studio contributors) |
 
 ## Bundled with the installer
 

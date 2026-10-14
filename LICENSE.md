@@ -1,18 +1,10 @@
 # Beth Studio License
 
-Beth Studio uses two licenses, depending on the folder. Both are permissive, and both require that the copyright notice and the license text stay with every copy.
-
-| Part | License | Where the text is |
-| --- | --- | --- |
-| `bethstudio-web/` (the Studio, the web interface and the phone page) | **BSD-3-Clause** | [`bethstudio-web/LICENSE`](bethstudio-web/LICENSE) |
-| `bethstudio-mobile/` | **BSD-3-Clause** | [`bethstudio-mobile/LICENSE`](bethstudio-mobile/LICENSE) |
-| Everything else, including the host and the CLI in `upstream-wezterm/` | **MIT** | this file, below |
-
-The host and the CLI are based on [Wez's Terminal Emulator (WezTerm)](https://github.com/wezterm/wezterm) and are a derivative work of that project, which is released under the **MIT License**. That code cannot be relicensed, so the MIT License below applies to it. The short attribution for redistributors is [`NOTICE.md`](NOTICE.md). The origin policy is [`docs/ORIGIN.md`](docs/ORIGIN.md).
+Beth Studio is based on [Wez's Terminal Emulator (WezTerm)](https://github.com/wezterm/wezterm) and is a derivative work of that project. Both are released under the **MIT License**. The short attribution for redistributors is [`NOTICE.md`](NOTICE.md). The origin policy is [`docs/ORIGIN.md`](docs/ORIGIN.md).
 
 ---
 
-## MIT License (applies to everything not listed as BSD-3-Clause above)
+## MIT License
 
 Copyright (c) 2018-Present Wez Furlong
 

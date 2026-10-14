@@ -114,9 +114,7 @@ Veja [`CONTRIBUTING.md`](CONTRIBUTING.md) e [`docs/HACKING.md`](docs/HACKING.md)
 
 ## Licença
 
-**MIT** para tudo que vem do WezTerm, a mesma licença dele. Veja [`LICENSE.md`](LICENSE.md). O Beth Studio é um trabalho derivado do WezTerm, © Wez Furlong e colaboradores; os avisos originais foram mantidos.
-
-**BSD-3-Clause** para o código que não vem do WezTerm: [`bethstudio-web/`](bethstudio-web/LICENSE) (o Studio e a página do celular) e [`bethstudio-mobile/`](bethstudio-mobile/LICENSE). Eles conversam com o host pelo processo `bethstudio cli bridge` e não contêm código do WezTerm. Quem redistribuir precisa manter o aviso de copyright e a licença; os ícones do aplicativo ficam de fora até a origem deles ser confirmada (veja o `LICENSE` de cada pasta). Autor: Rodrigo.
+**MIT** para todo o projeto, a mesma licença do WezTerm, de onde vem o host. Veja [`LICENSE.md`](LICENSE.md). O Beth Studio é um trabalho derivado do WezTerm, © Wez Furlong e colaboradores; os avisos originais foram mantidos. Quem redistribuir precisa manter o aviso de copyright e o texto da licença. As dependências de terceiros mantêm as licenças delas ([`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md)). Autor: Rodrigo.
 
 ## Agradecimentos
 

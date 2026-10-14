@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 - Docs: the README and the FAQ say that Linux and macOS ports are planned (no date, no commitment).
-- Docs: `LICENSE.md` now says which folders are BSD-3-Clause (`bethstudio-web/`, `bethstudio-mobile/`) and which are MIT.
+- Docs: the whole project is MIT; `LICENSE.md`, `NOTICE.md` and the README say so.
 - Docs: the README now opens with the problem it solves (terminals dying when the interface hangs) and highlights the persistent host, interface reload without stopping the hosts, daily use with about 35 terminals (the author's experience, not a benchmark), the built-in task manager, and image and file paste for agents.
 
 ### Added
@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Todos os terminais**: a grid button next to **+** opens a searchable popup with a screen print, name, type, folder and tab of every terminal, including those in closed tabs.
 - The Beth Studio screen can be updated on its own (`bethstudio-web/deploy-ui.ps1`, **Configurações > Sobre > Recarregar interface**), without restarting the Studio or the host. A package that needs a newer Studio is ignored.
 - `release.ps1`, `RELEASING.md` and a GitHub Actions workflow produce the installer, a portable zip, a UI-only zip and `SHA256SUMS.txt`, with the third-party license texts included.
-- `bethstudio-web/` and `bethstudio-mobile/` are now BSD-3-Clause; the rest stays MIT. `SUPPORT.md` says what is supported.
+- `SUPPORT.md` says what is supported.
 - Tray **Esconder tudo** hides every visible window. Shells stay in the host (patch 0150).
 - Right-click **Cor do ícone** colors that window's taskbar button. The swatch is stored with the window name (patch 0151).
 - An agent waiting for you (bell, OSC 9, OSC 777, OSC 99, or a `*_status=waiting` user var) marks the window icon, the tray icon, and that window's tray-menu row (patches 0152–0153).
