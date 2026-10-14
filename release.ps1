@@ -51,6 +51,11 @@ $out = Join-Path $Root 'dist\release'
 if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 New-Item -ItemType Directory -Force $out | Out-Null
 
+# A interface embutida (webui\dist) precisa existir antes dos testes do Go: alguns a leem.
+Step "Compilando o Studio (Go + React) versao $Version"
+Push-Location $web
+try { Run 'build.ps1' { powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Version $Version } } finally { Pop-Location }
+
 if (-not $SkipTests) {
     Step "Testes"
     Push-Location $web
@@ -72,10 +77,6 @@ if (-not $SkipHost) {
 foreach ($n in 'bethstudio.exe', 'bethstudio-host.exe') {
     if (-not (Test-Path (Join-Path $dist $n))) { throw "Falta $dist\$n (compile sem -SkipHost)." }
 }
-
-Step "Compilando o Studio (Go + React) versao $Version"
-Push-Location $web
-try { Run 'build.ps1' { powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Version $Version } } finally { Pop-Location }
 
 Step "Juntando as licencas das dependencias"
 $lic = Join-Path $out 'licenses'
