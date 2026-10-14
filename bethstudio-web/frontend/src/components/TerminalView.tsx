@@ -40,7 +40,7 @@ import { screenWrite } from "@/lib/screen";
 import { openExternal } from "@/lib/links";
 import type { PaneLinkCtx } from "@/lib/localFile";
 import { markScreen } from "@/lib/startup";
-import { lineFallbackLinks, routeTermLink, type CellLike } from "@/lib/termLinks";
+import { fallbackLinksTouching, linkHoverHint, routeTermLink, shouldActivateLink, suppressAppMouseDown, type CellLike, type LinkRow } from "@/lib/termLinks";
 import { reasonLabel, type AgentInfo } from "@/lib/agents";
 import { IMAGE_TYPES, filesFromTransfer, planUpload, uploadURL } from "@/lib/pasteMedia";
 import { PANE_MIME } from "@/lib/dnd";
@@ -459,63 +459,133 @@ export function TerminalView({
         // sem isso o xterm ignora alvos que nao sao http(s) (file://, caminho
         // do WSL...) — routeTermLink decide o que e' clicavel de verdade
         allowNonHttpProtocols: true,
-        activate: (_event, uri) => {
-          const r = routeTermLink(uri, paneCtxRef.current);
-          // o alvo cru do primeiro clique (e todos com ?diag=1) vai para o log
-          // do web: e' assim que se ve o que o programa manda de verdade
-          if (DIAG || !osc8Logged) {
-            osc8Logged = true;
-            const c = paneCtxRef.current;
-            void conn
-              .api("/api/log", {
-                msg: `link osc8: alvo=${JSON.stringify(uri)} kind=${c.paneKind ?? ""} wsl=${!!c.paneWsl} distro=${c.paneDistro ?? ""} -> ${r ? `${r.kind} ${r.kind === "http" ? r.url : r.path}` : "não clicável"}`,
-              })
-              .catch(() => undefined);
-          }
-          if (r?.kind === "http") void openExternal(conn, r.url);
-          else if (r?.kind === "file") onOpenFileRef.current?.(r.path);
-        },
+        activate: (event, uri) => followLink(event, uri, true),
+        hover: (event, uri) => showLinkTip(event, uri),
+        leave: () => hideLinkTip(),
       },
     });
     termRef.current = term;
     term.loadAddon(new Unicode11Addon());
     term.unicode.activeVersion = "11";
     term.open(el);
+    let linkTip: HTMLDivElement | null = null;
+    const hideLinkTip = () => {
+      linkTip?.remove();
+      linkTip = null;
+    };
+    const trackingOn = () => term.modes.mouseTrackingMode !== "none";
+    const showLinkTip = (event: MouseEvent, uri: string) => {
+      const r = routeTermLink(uri, paneCtxRef.current);
+      if (!r || !term.element) {
+        hideLinkTip();
+        return;
+      }
+      if (!linkTip) {
+        linkTip = document.createElement("div");
+        linkTip.className = "xterm-hover";
+        linkTip.style.position = "absolute";
+        linkTip.style.zIndex = "30";
+        linkTip.style.maxWidth = "280px";
+        linkTip.style.padding = "3px 6px";
+        linkTip.style.borderRadius = "4px";
+        linkTip.style.font = "12px/1.3 sans-serif";
+        linkTip.style.pointerEvents = "none";
+        linkTip.style.boxShadow = "0 2px 8px rgba(0,0,0,.35)";
+        term.element.appendChild(linkTip);
+      }
+      const theme = term.options.theme;
+      linkTip.style.background = theme?.background || "#111";
+      linkTip.style.color = theme?.foreground || "#eee";
+      linkTip.style.border = `1px solid ${theme?.foreground || "#888"}`;
+      linkTip.textContent = linkHoverHint(trackingOn(), r.kind);
+      const box = term.element.getBoundingClientRect();
+      linkTip.style.left = `${Math.max(4, event.clientX - box.left + 12)}px`;
+      linkTip.style.top = `${Math.max(4, event.clientY - box.top + 16)}px`;
+    };
+    const followLink = (event: MouseEvent, uri: string, log = false) => {
+      if (!shouldActivateLink(trackingOn(), { ctrl: event.ctrlKey, meta: event.metaKey, shift: event.shiftKey })) return;
+      const r = routeTermLink(uri, paneCtxRef.current);
+      // o alvo cru do primeiro clique num OSC 8 (e todos com ?diag=1) vai para o log
+      if (log && (DIAG || !osc8Logged)) {
+        osc8Logged = true;
+        const c = paneCtxRef.current;
+        void conn
+          .api("/api/log", {
+            msg: `link osc8: alvo=${JSON.stringify(uri)} kind=${c.paneKind ?? ""} wsl=${!!c.paneWsl} distro=${c.paneDistro ?? ""} -> ${r ? `${r.kind} ${"url" in r ? r.url : r.path}` : "não clicável"}`,
+          })
+          .catch(() => undefined);
+      }
+      if (!r) return;
+      if (r.kind === "http") {
+        void openExternal(conn, r.url);
+        return;
+      }
+      if (r.kind === "file") {
+        onOpenFileRef.current?.(r.path);
+        return;
+      }
+      const req =
+        r.kind === "open"
+          ? conn.api("/api/local-file/open-default", { path: r.path })
+          : conn.api("/api/local-file/reveal", { path: r.path }).then(() => {
+              flash("Não abro este arquivo por clique, porque pode ser um programa. Mostrei na pasta.");
+            });
+      void req.catch((e: Error) => flash(e.message));
+    };
     // Fallback (sem OSC 8): URL solta (com/sem esquema) ou caminho de
     // arquivo local solto no texto cru da linha — nunca pisa num intervalo
-    // ja' coberto por um hyperlink OSC 8 real.
+    // ja' coberto por um hyperlink OSC 8 real. Linha isWrapped entra no
+    // mesmo caminho, para a quebra não cortar o arquivo no meio.
     const linkProvider = term.registerLinkProvider({
       provideLinks(y, callback) {
-        const line = term.buffer.active.getLine(y - 1);
-        if (!line) {
-          callback(undefined);
-          return;
+        const buf = term.buffer.active;
+        const n = Math.max(buf.length, rawRowsRef.current.length);
+        const rows: LinkRow[] = [];
+        for (let i = 0; i < n; i++) {
+          const line = buf.getLine(i);
+          const cells: CellLike[] = [];
+          if (line) {
+            for (let x = 0; x < line.length; x++) {
+              const c = line.getCell(x);
+              if (!c) break;
+              cells.push({ chars: c.getChars(), width: c.getWidth() });
+            }
+          }
+          rows.push({ cells, wrapped: !!line?.isWrapped, raw: rawRowsRef.current[i] });
         }
-        // texto e colunas pelas celulas reais do xterm (caractere largo,
-        // emoji...), para o sublinhado cair exatamente sobre o caminho
-        const cells: CellLike[] = [];
-        for (let x = 0; x < line.length; x++) {
-          const c = line.getCell(x);
-          if (!c) break;
-          cells.push({ chars: c.getChars(), width: c.getWidth() });
-        }
-        const links = lineFallbackLinks(cells, rawRowsRef.current[y - 1]).flatMap((s) => {
+        const links = fallbackLinksTouching(rows, y).flatMap((s) => {
           const r = routeTermLink(s.uri, paneCtxRef.current);
           if (!r) return [];
           return [
             {
-              range: { start: { x: s.x1, y }, end: { x: s.x2, y } },
+              range: { start: { x: s.x1, y: s.y1 }, end: { x: s.x2, y: s.y2 } },
               text: s.uri,
-              activate: () => {
-                if (r.kind === "http") void openExternal(conn, r.url);
-                else onOpenFileRef.current?.(r.path);
-              },
+              activate: (event: MouseEvent) => followLink(event, s.uri, false),
+              hover: (event: MouseEvent) => showLinkTip(event, s.uri),
+              leave: () => hideLinkTip(),
             },
           ];
         });
         callback(links.length ? links : undefined);
       },
     });
+    // Com rastreamento, o xterm manda o clique ao programa. Ctrl+clique para
+    // no screen (não sobe até o handler do xterm) e o link abre. O clique
+    // puro continua indo ao programa — e o onData só repassa se houve
+    // entrada de verdade agora.
+    const screenEl = el.querySelector(".xterm-screen");
+    const onLinkMouseDown = (ev: Event) => {
+      if (!(ev instanceof MouseEvent) || ev.button !== 0) return;
+      const tracking = trackingOn();
+      if (tracking) lastUserInput.current = Date.now();
+      if (suppressAppMouseDown(tracking, { ctrl: ev.ctrlKey, meta: ev.metaKey, shift: ev.shiftKey })) ev.stopPropagation();
+    };
+    const markMouse = () => {
+      if (trackingOn()) lastUserInput.current = Date.now();
+    };
+    screenEl?.addEventListener("mousedown", onLinkMouseDown);
+    screenEl?.addEventListener("mouseup", markMouse);
+    screenEl?.addEventListener("mousemove", markMouse);
     setSize({ cols: term.cols, rows: term.rows });
 
     term.attachCustomKeyEventHandler((ev) => {
@@ -821,6 +891,10 @@ export function TerminalView({
       dataSub.dispose();
       selSub.dispose();
       linkProvider.dispose();
+      screenEl?.removeEventListener("mousedown", onLinkMouseDown);
+      screenEl?.removeEventListener("mouseup", markMouse);
+      screenEl?.removeEventListener("mousemove", markMouse);
+      hideLinkTip();
       term.dispose();
       termRef.current = null;
     };
