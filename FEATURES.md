@@ -361,17 +361,25 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   grid with one card per terminal, showing a text print of the screen (last
   lines), name, type, folder path and tab. Includes terminals in closed tabs,
   loose ones and ended ones. Search by name, folder, type, tab or `#id` (and
-  optionally the screen text); filters Todos / Em abas / Sem aba / Encerrados.
-  Click opens the terminal (a closed tab is reopened, a loose terminal gets a
-  new tab); Enter opens the first match (2026-10-09).
+  optionally the screen text). Two chip rows combine: state (Todos / Em abas /
+  Sem aba / Encerrados) and type (Todos plus one chip per type that is present,
+  the same groups as the sidebar, in the sidebar's order, plus Agentes when
+  there is an agent). Counts on each row follow the other filters and the
+  search. Clicking the selected chip returns to Todos. An ended terminal has
+  no stored type, so it only matches Todos (and Encerrados). **Limpar filtros**
+  clears state, type and search. The grid's type choice does not change the
+  sidebar filter. Click opens the terminal (a closed tab is reopened, a loose
+  terminal gets a new tab); Enter opens the first match (2026-10-14).
 - 🟢 **Phone web app: grid view** (button in the list header, remembered on the
   phone). Same cards as the Studio popup: screen print, name, folder, type and
   tab (or "Aba fechada"), with the same search as the desktop popup (name,
   folder, type, tab or #number; optional "search the screen too"), the
-  Todos / Em abas / Sem aba / Encerrados filters with counts, and the `#id` on
-  each card. Needs the Studio build with `/api/phone/layout` and
+  Todos / Em abas / Sem aba / Encerrados filters and the type chips (one per
+  type present, same groups and order as the sidebar, plus Agentes). Counts
+  follow the other active filters. **Limpar filtros** clears state, type and
+  search. Needs the Studio build with `/api/phone/layout` and
   `/api/phone/content`; with an older Studio the cards show without print and
-  tab (2026-10-10).
+  tab (2026-10-14).
 
 ## 8. SSH, serial, and SFTP
 

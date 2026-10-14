@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Todos os terminais** and the phone grid: a second chip row filters by terminal type (WSL, PowerShell, cmd, SSH, Serial and the other groups the sidebar already uses, plus Agentes). Chips are only the types present, in the sidebar's group order. State, type and search combine. Each row's counts follow the other filters. An ended terminal has no stored type and only matches Todos. **Limpar filtros** clears state, type and search. The grid filter does not change the sidebar filter.
 - Site: a "Se a interface travar, os terminais continuam" section with a before/after proof, a GitHub button and MIT badge in the header, and screenshots of the database panel and SSH.
 
 ## [0.2.1] - 2026-10-14

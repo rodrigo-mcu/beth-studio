@@ -57,6 +57,17 @@ A barra lateral lista seus terminais. Quatro visões: **Minha organização**, *
 
 Os botões de ferramenta ficam numa fileira sob o título do painel: **SSH e Serial**, **Abrir arquivo**, **Novo arquivo**, **Falar**, **Tarefas**, **Banco de dados** e **Configurações** (**Buscar** fica na caixa de busca). Com o painel recolhido, os botões passam para a barra de abas; os que não cabem vão para o menu **Mais ações**. Use o botão de recolher/mostrar a barra lateral à esquerda da barra de abas.
 
+### Todos os terminais
+
+1. Na barra de abas, clique no botão de grade ao lado de **+**.
+2. A primeira fileira filtra por estado: **Todos**, **Em abas**, **Sem aba** e **Encerrados**. Clicar de novo no estado escolhido volta para **Todos**.
+3. A segunda fileira filtra por tipo. Há **Todos** e um botão para cada tipo que existe agora (WSL, PowerShell, cmd, Git Bash, SSH, Serial e os demais). PowerShell 5.1 e PowerShell 7 ficam juntos, como na barra lateral. **Agentes** aparece quando há um agente. A ordem é a de Configurações, **Barra lateral**.
+4. Estado, tipo e a busca valem ao mesmo tempo. O número em cada botão conta o que os outros filtros deixam passar: escolher WSL muda a conta de **Em abas**, e escolher **Em abas** muda a conta de WSL, sem zerar o botão que está selecionado.
+5. Um terminal encerrado não guarda o tipo. Ele entra em **Todos** e em **Encerrados**, e não aparece dentro de WSL, PowerShell ou outro tipo.
+6. Se a combinação não achar nada, a grade mostra **Nenhum terminal encontrado** e o botão **Limpar filtros**, que zera estado, tipo e busca.
+7. O tipo escolhido aqui não muda o filtro da barra lateral, nem o contrário.
+8. No celular, a visão em grade tem as mesmas duas fileiras. Um tipo que o host ainda não classifica (por exemplo bash, zsh, fish ou sh) entra em **Outros**.
+
 ### Navegador de pastas
 
 O Studio aberto pelo navegador usa um navegador de pastas dentro da página em **Procurar…** e em **Abrir arquivo**. O mesmo navegador aparece como **Salvar como** ao salvar um texto novo.
