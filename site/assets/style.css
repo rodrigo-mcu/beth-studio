@@ -155,6 +155,10 @@ figure.diagram figcaption { color: var(--muted); font-size: 0.78rem; margin-top:
 .shot figcaption { color: var(--muted); font-size: 0.82rem; margin-top: 0.5rem; display: none; }
 .shot.ok figcaption { display: block; }
 .shot.r-phone { width: min(100%, 14rem); margin-inline: auto; }
+.phones { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.1rem; margin-top: 1.25rem; }
+.phones .shot.r-phone { width: min(100%, 14rem); margin: 0; }
+.phones .shot figcaption { margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+.phones-note { margin: 1.3rem 0 0; font: 0.76rem var(--mono); color: var(--muted); text-align: center; }
 .hero-shot { margin-top: clamp(2rem, 5vw, 3.5rem); }
 
 /* secoes */
