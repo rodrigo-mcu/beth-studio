@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beth Studio: terminals that outlive the interface</title>
+<meta name="description" content="Beth Studio is a mouse-first terminal for Windows. A persistent host owns your shells, AI agents and WSL sessions, so if the interface freezes, your terminals keep running.">
+<meta name="color-scheme" content="light dark">
+<link rel="alternate" hreflang="pt-BR" href="../index.html">
+<link rel="alternate" hreflang="en" href="index.html">
+<link rel="alternate" hreflang="x-default" href="../index.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1217'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23f5a524'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="index.html"><span class="dot" aria-hidden="true"></span>Beth Studio</a>
+    <nav class="main" aria-label="Page sections">
+      <a href="#how-it-works">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#heavy-use">Heavy use</a>
+      <a href="#download">Download</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <a href="../index.html" lang="pt-BR" hreflang="pt-BR" aria-label="Ler esta página em português">PT</a>
+      <span aria-current="true" lang="en">EN</span>
+    </div>
+  </div>
+</header>
+
+<main id="content">
+  <div class="wrap hero">
+    <p class="eyebrow">A mouse-first terminal for Windows</p>
+    <h1>Terminals that outlive the interface.</h1>
+    <p class="lead"><strong>Beth Studio</strong> separates your terminals from the interface. A <strong>persistent host</strong> owns your shells, AI agents and WSL sessions. If the interface freezes, or you restart it, everything keeps running.</p>
+    <div class="cta">
+      <a class="btn" href="#download">Download for Windows</a>
+      <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">View on GitHub</a>
+    </div>
+    <p class="note">Open source. Windows 10 or 11. Linux and macOS: planned, no date.</p>
+    <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
+
+    <div class="problem">
+      <h2>The problem</h2>
+      <p>In ordinary terminals, the terminal and the graphical interface live in the same process. When the interface freezes or slows down, your terminals die with it and you lose whatever was running. The trouble is almost always the interface, not the console.</p>
+    </div>
+  </div>
+
+  <section id="how-it-works" aria-labelledby="h-how">
+    <div class="wrap how">
+      <div>
+        <h2 class="title" id="h-how">How it works</h2>
+        <ol>
+          <li><strong>The host owns the terminals.</strong> <code>bethstudio-host.exe</code> (derived from WezTerm) holds every shell, agent and WSL session.</li>
+          <li><strong>The interface is just a layer.</strong> Studio (Go + React in WebView2) connects to the host and displays the terminals. Closing, freezing or restarting the interface does not touch them.</li>
+          <li><strong>Update without losing anything.</strong> Under <em>Settings &gt; About &gt; Reload interface</em> the new interface comes in and the host keeps running.</li>
+          <li><strong>If the host itself goes down,</strong> Studio starts another one and recreates the terminals in the same tabs and folders. What was running inside them is not recovered, only the shell, folder, title and position.</li>
+        </ol>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 400 420" role="img" aria-labelledby="dg-t dg-d">
+          <title id="dg-t">Diagram: persistent host and interface</title>
+          <desc id="dg-d">On top, the interface connected to the persistent host, which holds the terminals. Below, the interface has gone down, but the host keeps every terminal running.</desc>
+          <text class="d-state" x="40" y="18">NORMAL</text>
+          <rect class="d-ui" x="40" y="28" width="320" height="50" rx="10"/>
+          <text class="d-t" x="200" y="58" text-anchor="middle">Interface (Studio)</text>
+          <line class="d-link" x1="200" y1="82" x2="200" y2="114"/>
+          <polygon class="d-arrow" points="200,78 194,88 206,88"/>
+          <polygon class="d-arrow" points="200,118 194,108 206,108"/>
+          <rect class="d-host" x="40" y="118" width="320" height="86" rx="10"/>
+          <text class="d-t" x="200" y="141" text-anchor="middle">Persistent host</text>
+          <rect class="d-chip" x="52" y="158" width="64" height="30" rx="6"/><text class="d-m" x="84" y="177" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="126" y="158" width="64" height="30" rx="6"/><text class="d-m" x="158" y="177" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="200" y="158" width="64" height="30" rx="6"/><text class="d-m" x="232" y="177" text-anchor="middle">agent</text>
+          <rect class="d-chip" x="274" y="158" width="74" height="30" rx="6"/><text class="d-m" x="311" y="177" text-anchor="middle">build</text>
+
+          <text class="d-state" x="40" y="240">THE INTERFACE WENT DOWN</text>
+          <rect class="d-ui-dead" x="40" y="250" width="320" height="50" rx="10"/>
+          <text class="d-s" x="200" y="280" text-anchor="middle">Interface frozen or closed</text>
+          <line class="d-x" x1="334" y1="262" x2="348" y2="288"/><line class="d-x" x1="348" y1="262" x2="334" y2="288"/>
+          <line class="d-link-dead" x1="200" y1="304" x2="200" y2="332"/>
+          <rect class="d-host" x="40" y="336" width="320" height="76" rx="10"/>
+          <text class="d-ok" x="200" y="357" text-anchor="middle">Host: terminals keep running</text>
+          <rect class="d-chip" x="52" y="368" width="64" height="30" rx="6"/><text class="d-m" x="84" y="387" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="126" y="368" width="64" height="30" rx="6"/><text class="d-m" x="158" y="387" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="200" y="368" width="64" height="30" rx="6"/><text class="d-m" x="232" y="387" text-anchor="middle">agent</text>
+          <rect class="d-chip" x="274" y="368" width="74" height="30" rx="6"/><text class="d-m" x="311" y="387" text-anchor="middle">build</text>
+        </svg>
+        <figcaption>Simplified schematic, not a screenshot.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="features" aria-labelledby="h-feat">
+    <div class="wrap">
+      <h2 class="title" id="h-feat">Features</h2>
+      <p class="sub">A terminal and the tools around it, in one program.</p>
+      <ul class="grid">
+        <li><article class="card"><h3>Update without killing terminals</h3><p>Reload the interface without restarting Studio and without touching the host. Terminals and agents stay alive.</p></article></li>
+        <li><article class="card"><h3>Built-in task manager</h3><p>CPU, memory, GPU and disk for the computer, plus what each terminal consumes. It helps you tell whether the weight is in the interface or in the programs you run.</p></article></li>
+        <li><article class="card"><h3>Paste an image or file into the terminal</h3><p>Copy a screenshot or a file in Explorer and paste: Studio saves a file and pastes its path so the agent can open it. In WSL, <code>C:\…</code> becomes <code>/mnt/c/…</code>.</p></article></li>
+        <li><article class="card"><h3>Mouse first</h3><p>New tab, split, theme, font and detach to a window: everything is done by clicking, with no config file and no shortcuts to memorize.</p></article></li>
+        <li><article class="card"><h3>Tabs, splits and search</h3><p>Tabs, draggable splits, search, and sidebar views by organization, type or folder.</p></article></li>
+        <li><article class="card"><h3>All terminals</h3><p>A grid with one card per terminal, showing a text preview of its screen, so you can find the one you want at a glance.</p></article></li>
+        <li><article class="card"><h3>Detached terminal</h3><p>Move a terminal to its own window, even on another monitor, and drag it back to the tabs. It keeps running the whole time.</p></article></li>
+        <li><article class="card"><h3>Agent waiting</h3><p>An amber dot tells you when an AI agent stopped and is waiting for you, on the tab, in the sidebar and in the tray. Notification and sound are optional.</p></article></li>
+        <li><article class="card"><h3>Voice dictation</h3><p>Speak, review the text and send it to the terminal, with optional correction by an AI model.</p><span class="tag">uses the AI provider you configure</span></article></li>
+        <li><article class="card"><h3>Database client</h3><p>Built-in client for PostgreSQL, MySQL/MariaDB, SQL Server and SQLite: object tree, SQL with autocomplete and saved queries.</p></article></li>
+        <li><article class="card"><h3>SSH, serial and SFTP</h3><p>Saved SSH hosts and serial ports, and an SFTP window with local and remote panes.</p></article></li>
+        <li><article class="card"><h3>Editor and notes</h3><p>Open and edit text and Markdown, with a formatted preview, and keep notes that save themselves.</p></article></li>
+        <li><article class="card"><h3>Browser and phone</h3><p>Use the full Studio in another computer's browser, or a dedicated phone page to talk to your agents. Off by default.</p><span class="tag">needs a server of your own</span></article></li>
+        <li><article class="card"><h3>Self-recovery</h3><p>If the host goes down, Studio starts it again and recreates the terminals in the same tabs and folders.</p></article></li>
+        <li><article class="card"><h3>WSL with smart startup</h3><p>A WSL terminal waits for the distro to respond and the folder to appear before opening, instead of closing right away or landing in the wrong folder.</p></article></li>
+        <li><article class="card"><h3>Themes and fonts</h3><p>Gogh and VS Code style themes, font choice, and theme and font per terminal.</p></article></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="heavy-use" class="heavy" aria-labelledby="h-heavy">
+    <div class="wrap">
+      <h2 class="title" id="h-heavy">Built for heavy use</h2>
+      <p class="quote">The author uses Beth Studio every day with about 35 terminals open at the same time.</p>
+      <p>That means WSL2 and PowerShell sessions, several AI agents and long builds. <strong>In the author's experience</strong>, typing stays smooth in that setup, and the built-in monitor showed that the bottleneck was not WSL2.</p>
+      <p>This is real use of the project, not a performance test: there are no published measurements and no comparison with other products.</p>
+    </div>
+  </section>
+
+  <section id="download" aria-labelledby="h-download">
+    <div class="wrap">
+      <h2 class="title" id="h-download">Download and install</h2>
+      <p class="sub">From the repository's Releases page. Requires Windows 10 or 11.</p>
+      <div class="dl">
+        <article class="card"><h3>BethStudio-Setup.exe</h3><p>Single-file installer. Recommended.</p></article>
+        <article class="card"><h3>BethStudio-&lt;version&gt;-windows-x64.zip</h3><p>Portable version: unzip it and open <code>bethstudio-web.exe</code>.</p></article>
+      </div>
+      <p><a class="btn" href="https://github.com/rodrigo-mcu/beth-studio/releases/latest">Open the Releases page</a></p>
+      <ol class="steps">
+        <li>Download <code>BethStudio-Setup.exe</code> and check the file against <code>SHA256SUMS.txt</code>.</li>
+        <li>Run it, pick a folder and click <strong>Install</strong> (the button label in the installer is in Portuguese).</li>
+        <li>Open Studio from the shortcut or from the installer's open button.</li>
+      </ol>
+      <p class="note">The install is portable: no Windows registry entries and no hidden folders. Updating while the host is running does not take down your terminals.</p>
+      <div class="planned">
+        <h3>Linux and macOS: planned</h3>
+        <p>Today Beth Studio runs on Windows only. There are plans to port it to Linux and macOS, but with no date and no commitment to deliver.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <ul>
+      <li><a href="https://github.com/rodrigo-mcu/beth-studio">Repository on GitHub</a></li>
+      <li><a href="https://github.com/rodrigo-mcu/beth-studio/wiki">Manual (wiki)</a></li>
+      <li><a href="https://github.com/rodrigo-mcu/beth-studio/releases/latest">Releases</a></li>
+    </ul>
+    <p>Independent open source project. Beth Studio grew out of WezTerm; it is not affiliated with or endorsed by that project. This page uses no trackers, analytics or external resources.</p>
+    <p>Note: the Beth Studio interface and its documentation (wiki) are in Brazilian Portuguese. An English version is still to come.</p>
+  </div>
+</footer>
+</body>
+</html>
