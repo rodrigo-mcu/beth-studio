@@ -16,7 +16,7 @@ Cada pacote já leva `LICENSE.md`, `NOTICE.md`, `THIRD-PARTY-NOTICES.md` e os te
 ## 0. Antes de começar (uma vez)
 
 - Remote do GitHub configurado: `git remote add origin https://github.com/<usuario>/<repositorio>.git`.
-- Ferramentas na máquina (só para o caminho local): Rust nightly + MSVC + Strawberry Perl, Go 1.24+, Node.js 20 + pnpm, Python 3.
+- Ferramentas na máquina (só para o caminho local): Rust nightly + MSVC + Strawberry Perl, Go 1.24+, Node.js 24 (os testes em TypeScript exigem 22.18 ou mais) + pnpm, Python 3.
 - Em **Settings > Actions > General** do repositório, deixe **Workflow permissions** em *Read and write* (o release usa `contents: write`).
 
 ## 1. Preparar a versão

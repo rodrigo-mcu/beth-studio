@@ -66,7 +66,7 @@ jobs:
           cache-dependency-path: bethstudio-web/go.sum
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - run: corepack enable
       - name: Frontend tests and build
         working-directory: bethstudio-web/frontend
