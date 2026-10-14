@@ -108,6 +108,27 @@ test("SSH por host e ordem configurável dos grupos", async () => {
   assert.ok(!passesKindFilter(panes[0], ["ssh"]));
 });
 
+test("kind novo (bash, zsh, fish, sh ou outro) cai em Outros; unknown e vazio continuam Desconhecido", async () => {
+  const { kindGroup, KIND_LABEL, KIND_ORDER } = await import("../src/lib/kinds.ts");
+  // Quebra se um shell de outra plataforma voltar para "unknown" ou ganhar grupo novo em KIND_ORDER.
+  assert.deepEqual(KIND_ORDER, ["wsl", "powershell", "cmd", "gitbash", "ssh", "serial", "other", "unknown"]);
+  for (const kind of ["bash", "zsh", "fish", "sh", "nu"]) {
+    assert.equal(kindGroup(P(1, kind, { kind_label: kind })), "other");
+  }
+  assert.equal(kindGroup(P(2, "bash", { kind_label: "" })), "other");
+  assert.equal(kindGroup(P(3, "unknown", { kind_label: "" })), "unknown");
+  assert.equal(kindGroup(P(4, "", { kind_label: "bash" })), "unknown");
+  assert.equal(kindGroup(P(5, "powershell", { kind_label: "" })), "powershell");
+  assert.equal(KIND_LABEL.other, "Outros");
+  const panes = [P(1, "bash", { kind_label: "bash" }), P(2, "zsh", { kind_label: "" }), P(3, "unknown")];
+  assert.equal(countKinds(panes).other, 2);
+  assert.equal(countKinds(panes).unknown, 1);
+  assert.deepEqual(
+    groupByKind(panes).map((s) => s.key),
+    ["other", "unknown"],
+  );
+});
+
 test("Serial: grupo próprio depois de SSH", async () => {
   const { kindGroup } = await import("../src/lib/kinds.ts");
   const panes = [P(1, "serial", { kind_label: "Serial · COM3" }), P(2, "ssh", { ssh_host: "srv" }), P(3, "cmd")];
