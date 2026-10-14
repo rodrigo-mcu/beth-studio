@@ -14,7 +14,7 @@ Se o WebView2 faltar, o Studio mostra uma mensagem pedindo para instalá-lo. Ele
 
 1. Dê dois cliques em `BethStudio-Setup.exe`. O instalador é uma janela nativa do Windows (não usa WebView).
 2. Em **Pasta**, confira o destino. A sugestão é a pasta Public da máquina, normalmente `C:\Users\Public\BethStudio`. Clique em **Procurar…** para escolher outra.
-3. Deixe marcada a opção **Criar atalhos no Área de Trabalho e no Menu Iniciar** se quiser os atalhos. Ela vem marcada.
+3. Deixe marcada a opção **Criar atalhos na Área de Trabalho e no Menu Iniciar** se quiser os atalhos. Ela vem marcada.
 4. A opção **Encerrar tudo antes de instalar (fecha o Beth Studio e todos os terminais)** vem desmarcada. Marque só se quiser que a instalação feche tudo e atualize inclusive o host. O instalador pede uma confirmação antes (OK ou Cancelar), porque tudo o que roda nos terminais será perdido.
 5. Clique em **Instalar**. Se já existe uma instalação na pasta, o botão se chama **Atualizar**.
 6. Ao terminar, clique em **Abrir** para iniciar o Beth Studio. O botão **Abrir** só funciona se a pasta já tiver o `bethstudio-web.exe`.
@@ -84,7 +84,7 @@ Não há desinstalador. Como a instalação é portátil, remova à mão:
 
 1. Se quiser manter os terminais, não faça nada ainda. Para sair de verdade, use **Encerrar tudo** na bandeja e confirme.
 2. Apague a pasta de instalação (por exemplo `C:\Users\Public\BethStudio`).
-3. Apague os atalhos `BethStudio.lnk` do Área de Trabalho e do Menu Iniciar, se os criou.
+3. Apague os atalhos `BethStudio.lnk` da Área de Trabalho e do Menu Iniciar, se os criou.
 4. Se quiser apagar também seus dados, apague `%APPDATA%\bethstudio\` e `%LOCALAPPDATA%\bethstudio-web\`.
 
 ## Variáveis de ambiente úteis

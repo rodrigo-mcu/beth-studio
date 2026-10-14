@@ -1456,7 +1456,7 @@ Para remover, apague a pasta (e os atalhos, se os criou).";
                      Os arquivos do programa estão só nesta pasta (visível, não oculta).\n{}{}{}",
                     dest.display(),
                     if want_shortcut {
-                        "Atalhos criados no Área de Trabalho e no Menu Iniciar."
+                        "Atalhos criados na Área de Trabalho e no Menu Iniciar."
                     } else {
                         "Sem atalhos."
                     },
@@ -1563,7 +1563,7 @@ Para remover, apague a pasta (e os atalhos, se os criou).";
                 }
                 let shortcut = child(
                     "BUTTON",
-                    "Criar atalhos no Área de Trabalho e no Menu Iniciar",
+                    "Criar atalhos na Área de Trabalho e no Menu Iniciar",
                     BS_AUTOCHECKBOX as u32 | WS_TABSTOP,
                     20,
                     HEADER_H + 142,
