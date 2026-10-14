@@ -1029,6 +1029,7 @@ export function App() {
           conn={conn}
           panes={snap.panes ?? []}
           layout={layout}
+          kindOrder={sidebarPrefs.kind_order}
           onClose={() => setTermGrid(false)}
           onOpen={(c) => {
             setTermGrid(false);
