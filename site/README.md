@@ -31,6 +31,11 @@ A página reserva espaços de proporção fixa para capturas reais. Enquanto o a
 | `wsl-ubuntu.webp` | 4:3 (1044x788) | Terminal WSL com Ubuntu aberto na pasta do terminal do Windows |
 | `grade-terminais.webp` | 4:3 (1044x788) | "Todos os terminais": grade com prévia, busca e filtros |
 | `provedores-ia.webp` | 4:3 (1044x788) | Configurações > Provedores de IA (sem chaves cadastradas) |
+| `persistencia.webp` | 4:3 (1044x788) | Terminal mostrando o mesmo Id de host antes e depois de reiniciar a interface |
+| `banco-consulta.webp` | 4:3 (1044x788) | Janela Banco de dados: editor SQL, resultados por instrução e exportação (banco SQLite de exemplo) |
+| `banco-confirmacao.webp` | 4:3 (1044x788) | Confirmação antes de alterar o banco, listando cada instrução |
+| `banco-nova-conexao.webp` | 4:3 (1044x788) | Formulário de nova conexão (PostgreSQL, MySQL/MariaDB, SQL Server, SQLite) |
+| `ssh-novo-host.webp` | 4:3 (1044x788) | Formulário de novo host SSH (sem host real) |
 | `voz-celular.webp` | 9:19 (ex.: 900x1900) | (ainda sem captura) WebApp do celular com o texto ditado no campo de mensagem |
 
 Tema claro/escuro: segue o sistema e tem botão no cabeçalho; a escolha fica em `localStorage` (a página funciona sem ele).

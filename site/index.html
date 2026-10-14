@@ -20,6 +20,7 @@
   <div class="wrap bar">
     <a class="brand" href="index.html"><span class="dot" aria-hidden="true"></span>Beth Studio</a>
     <nav class="main" aria-label="Seções da página">
+      <a href="#nao-cai">Não cai</a>
       <a href="#como-funciona">Como funciona</a>
       <a href="#voz">Voz</a>
       <a href="#dia-longo">Dia longo</a>
@@ -28,6 +29,8 @@
       <a href="#baixar">Baixar</a>
     </nav>
     <div class="ctl">
+      <a class="gh-btn" href="https://github.com/rodrigo-mcu/beth-studio" aria-label="Repositório do Beth Studio no GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+      <a class="lic-badge" href="https://github.com/rodrigo-mcu/beth-studio/blob/main/LICENSE.md" title="Licença MIT: código aberto">MIT</a>
       <button type="button" class="theme-btn" id="tema" hidden aria-label="Mudar o tema">
         <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg><span>Tema</span>
       </button>
@@ -101,6 +104,29 @@
       <p>Em terminais comuns, o terminal e a interface gráfica vivem no mesmo processo. Quando a interface trava ou fica lenta, os terminais morrem junto e você perde o que estava rodando. O problema quase sempre está na interface, não no console.</p>
     </div>
   </div>
+
+  <section id="nao-cai" aria-labelledby="h-nao-cai">
+    <div class="wrap">
+      <p class="sec-label">sem perder sessão</p>
+      <h2 class="title" id="h-nao-cai">Se a interface travar, os terminais continuam</h2>
+      <p class="sub">Os shells, os agentes de IA e as sessões WSL ficam no host, que é um processo separado da interface. Fechar, travar ou reiniciar a interface não encosta neles.</p>
+      <ul class="long-list">
+        <li><b>01</b><div><h3>Reinicie só a interface</h3><p>Se a janela travar, feche e abra o Studio de novo. Os terminais voltam com o histórico na tela, e o host nem percebe.</p></div></li>
+        <li><b>02</b><div><h3>Atualize a interface sem matar o host</h3><p>Em Configurações &gt; Sobre, <em>Recarregar interface</em> aplica uma interface nova sem reiniciar o Studio nem o host. A partir da versão 0.2.1, <em>Verificar atualização</em> busca o release no GitHub e pergunta se você quer só a interface ou também o host. O host só é tocado se você confirmar.</p></div></li>
+        <li><b>03</b><div><h3>Se o próprio host cair, ele sobe de novo</h3><p>O Studio sobe outro host e recria os terminais nas mesmas abas e pastas.</p></div></li>
+      </ul>
+      <div style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:56rem">
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: antes e depois</span></div>
+          <div class="frame">
+            <img src="assets/shots/persistencia.webp" width="1044" height="788" loading="lazy" alt="Terminal do Studio mostrando o mesmo Id de host antes e depois de reiniciar a interface." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/persistencia.webp</code></div>
+          </div>
+          <figcaption>Prova: o mesmo terminal e o mesmo host (Id 9700, iniciado às 16:00:05), antes e depois de reiniciar a interface.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
 
   <section id="como-funciona" class="how" aria-labelledby="h-como">
     <div class="wrap">
@@ -227,6 +253,38 @@
             <div class="ph"><strong>Captura de tela</strong><code>assets/shots/provedores-ia.webp</code></div>
           </div>
           <figcaption>Provedores de IA: você cadastra as chaves de transcrição e de correção, que ficam cifradas no PC.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Banco de dados: consulta</span></div>
+          <div class="frame">
+            <img src="assets/shots/banco-consulta.webp" width="1044" height="788" loading="lazy" alt="Editor SQL com realce, uma aba de resultado por instrução, grade com os tipos das colunas e botões de exportar." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/banco-consulta.webp</code></div>
+          </div>
+          <figcaption>Banco de dados: editor SQL com realce, uma aba de resultado por instrução e exportação para CSV, JSON ou SQL.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Banco de dados: confirmação</span></div>
+          <div class="frame">
+            <img src="assets/shots/banco-confirmacao.webp" width="1044" height="788" loading="lazy" alt="Diálogo que lista cada instrução e avisa se ela altera a estrutura ou os dados, antes de executar." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/banco-confirmacao.webp</code></div>
+          </div>
+          <figcaption>Antes de alterar o banco, o Studio mostra cada instrução e pede confirmação.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Banco de dados: nova conexão</span></div>
+          <div class="frame">
+            <img src="assets/shots/banco-nova-conexao.webp" width="1044" height="788" loading="lazy" alt="Formulário com PostgreSQL, MySQL/MariaDB, SQL Server e SQLite, e o botão Selecionar ao lado de Banco inicial." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/banco-nova-conexao.webp</code></div>
+          </div>
+          <figcaption>PostgreSQL, MySQL/MariaDB, SQL Server e SQLite, com o botão Selecionar para listar os bancos do servidor.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>SSH</span></div>
+          <div class="frame">
+            <img src="assets/shots/ssh-novo-host.webp" width="1044" height="788" loading="lazy" alt="Formulário de novo host SSH com senha, arquivo de chave ou agente do Windows e pasta inicial do SFTP." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/ssh-novo-host.webp</code></div>
+          </div>
+          <figcaption>SSH: senha, arquivo de chave ou agente SSH do Windows, com a senha cifrada pela conta do Windows e pasta inicial do SFTP.</figcaption>
         </figure>
       </div>
     </div>
@@ -381,6 +439,7 @@
       <li><a href="https://github.com/rodrigo-mcu/beth-studio/wiki">Manual (wiki)</a></li>
       <li><a href="https://github.com/rodrigo-mcu/beth-studio/releases/latest">Releases</a></li>
     </ul>
+    <p><a href="https://github.com/rodrigo-mcu/beth-studio/blob/main/LICENSE.md">Licença MIT</a>: o Beth Studio é software livre. Você pode usar, copiar, modificar e distribuir, mantendo o aviso de copyright. © Wez Furlong e colaboradores do WezTerm; © Rodrigo e colaboradores do Beth Studio.</p>
     <p>Projeto de código aberto e independente. O Beth Studio nasceu do WezTerm; não é afiliado nem endossado por esse projeto. Esta página não usa rastreadores, analytics nem recursos externos. Ela guarda só a sua escolha de tema, no próprio navegador.</p>
     <p>A interface e a documentação do Beth Studio estão em português do Brasil.</p>
   </div>

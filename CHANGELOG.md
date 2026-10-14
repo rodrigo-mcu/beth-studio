@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- Site: a "Se a interface travar, os terminais continuam" section with a before/after proof, a GitHub button and MIT badge in the header, and screenshots of the database panel and SSH.
+
 ## [0.2.1] - 2026-10-14
 
 ### Fixed
