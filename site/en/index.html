@@ -112,7 +112,7 @@
       <p class="sub">Shells, AI agents and WSL sessions live in the host, a process separate from the interface. Closing, hanging or restarting the interface does not touch them.</p>
       <ul class="long-list">
         <li><b>01</b><div><h3>Restart only the interface</h3><p>If the window hangs, close it and open the Studio again. The terminals come back with their history on screen, and the host never notices.</p></div></li>
-        <li><b>02</b><div><h3>Update the interface without killing the host</h3><p>Under Settings &gt; About, <em>Recarregar interface</em> (reload interface) applies a new interface without restarting the Studio or the host. From version 0.2.1, <em>Verificar atualização</em> (check for updates) looks up the GitHub release and asks whether you want only the interface or the host too. The host is only touched if you confirm.</p></div></li>
+        <li><b>02</b><div><h3>Update the interface without killing the host</h3><p>Under Settings &gt; About, <em>Recarregar interface</em> (reload interface) applies a new interface without restarting the Studio or the host. If you update with the installer while terminals are open, it asks whether you want only the interface or the host too, and answering “No” keeps the host and the terminals. From version 0.2.1, <em>Verificar atualização</em> (check for updates) looks up the GitHub release and asks whether you want only the interface or the host too. The host is only touched if you confirm.</p></div></li>
         <li><b>03</b><div><h3>If the host itself goes down, it comes back</h3><p>The Studio starts another host and recreates the terminals in the same tabs and folders.</p></div></li>
       </ul>
       <div style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:56rem">
@@ -123,6 +123,16 @@
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/persistencia.webp</code></div>
           </div>
           <figcaption>Proof: the same terminal and the same host (Id 9700, started at 16:00:05), before and after restarting the interface.</figcaption>
+        </figure>
+      </div>
+      <div style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:34rem">
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio installer</span></div>
+          <div class="frame" style="aspect-ratio:520 / 459">
+            <img src="assets/shots/instalador-pergunta-host.webp" width="520" height="459" loading="lazy" alt="Installer prompt when updating: Yes closes the hosts and updates everything; No updates only the interface and the hosts and terminals keep running; Cancel does not update." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/instalador-pergunta-host.webp</code></div>
+          </div>
+          <figcaption>When you update over an existing install, the installer asks what to do: “No” updates only the interface and keeps the host and the terminals; “Yes” closes everything. (The installer is in Portuguese.)</figcaption>
         </figure>
       </div>
     </div>

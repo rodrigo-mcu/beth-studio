@@ -112,7 +112,7 @@
       <p class="sub">Os shells, os agentes de IA e as sessões WSL ficam no host, que é um processo separado da interface. Fechar, travar ou reiniciar a interface não encosta neles.</p>
       <ul class="long-list">
         <li><b>01</b><div><h3>Reinicie só a interface</h3><p>Se a janela travar, feche e abra o Studio de novo. Os terminais voltam com o histórico na tela, e o host nem percebe.</p></div></li>
-        <li><b>02</b><div><h3>Atualize a interface sem matar o host</h3><p>Em Configurações &gt; Sobre, <em>Recarregar interface</em> aplica uma interface nova sem reiniciar o Studio nem o host. A partir da versão 0.2.1, <em>Verificar atualização</em> busca o release no GitHub e pergunta se você quer só a interface ou também o host. O host só é tocado se você confirmar.</p></div></li>
+        <li><b>02</b><div><h3>Atualize a interface sem matar o host</h3><p>Em Configurações &gt; Sobre, <em>Recarregar interface</em> aplica uma interface nova sem reiniciar o Studio nem o host. Se você atualizar pelo instalador com terminais abertos, ele pergunta se quer só a interface ou também o host, e responder “Não” mantém o host e os terminais. A partir da versão 0.2.1, <em>Verificar atualização</em> busca o release no GitHub e pergunta se você quer só a interface ou também o host. O host só é tocado se você confirmar.</p></div></li>
         <li><b>03</b><div><h3>Se o próprio host cair, ele sobe de novo</h3><p>O Studio sobe outro host e recria os terminais nas mesmas abas e pastas.</p></div></li>
       </ul>
       <div style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:56rem">
@@ -123,6 +123,16 @@
             <div class="ph"><strong>Captura de tela</strong><code>assets/shots/persistencia.webp</code></div>
           </div>
           <figcaption>Prova: o mesmo terminal e o mesmo host (Id 9700, iniciado às 16:00:05), antes e depois de reiniciar a interface.</figcaption>
+        </figure>
+      </div>
+      <div style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:34rem">
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Instalador do Beth Studio</span></div>
+          <div class="frame" style="aspect-ratio:520 / 459">
+            <img src="assets/shots/instalador-pergunta-host.webp" width="520" height="459" loading="lazy" alt="Pergunta do instalador ao atualizar: Sim encerra os hosts e atualiza tudo; Não atualiza só a interface e os hosts e terminais continuam; Cancelar não atualiza." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/instalador-pergunta-host.webp</code></div>
+          </div>
+          <figcaption>Ao atualizar por cima, o instalador pergunta o que fazer: “Não” atualiza só a interface e mantém o host e os terminais; “Sim” encerra tudo.</figcaption>
         </figure>
       </div>
     </div>
