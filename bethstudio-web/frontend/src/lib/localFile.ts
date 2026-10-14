@@ -125,6 +125,12 @@ export function paneWslDistro(ctx: PaneLinkCtx): string | null {
 export function resolveLinkPath(raw: string, ctx: PaneLinkCtx): string | null {
   const candidate = stripFileScheme(raw.trim());
   if (!candidate) return null;
+  // "~" e "~/..." ficam para o Go expandir (os.UserHomeDir). Colar no cwd
+  // viraria "D:\docs\~\..." e abriria o arquivo errado.
+  if (candidate === "~" || /^~[\\/]/.test(candidate)) {
+    const rest = candidate.slice(1).replace(/^[\\/]+/, "").replace(/\//g, "\\");
+    return rest ? `~\\${rest}` : "~";
+  }
   if (isWindowsAbsolutePath(candidate)) return candidate.replace(/\//g, "\\");
   if (isUncPath(candidate)) return candidate;
   if (hasScheme(candidate)) return null; // vscode:, mailto:... nunca e' arquivo

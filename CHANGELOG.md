@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 - The installer, the wiki install page and the phone page use Brazilian Portuguese ("arquivo", "Registro", "Área de Trabalho", "conexão") instead of European Portuguese.
+- Clicking a file path in terminal output opens more than preview types: PDF, Office documents, archives and other existing files open in the Windows default program. Text and images still open in the preview panel. Programs and scripts are shown in Explorer instead of being launched.
+- With mouse tracking on, Ctrl+click (or Cmd+click) opens the link and the hover hint says so; a plain click still goes to the program. OSC 8 hyperlinks open their real http(s) target in the default browser.
 
 ### Added
 - Site (`site/`, Portuguese and English) with real screenshots of the Studio on Windows 11, and a `Pages` workflow that publishes it to GitHub Pages.

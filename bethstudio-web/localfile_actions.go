@@ -10,9 +10,10 @@ package main
 //   POST /api/local-file/reveal  {"path"}  abre a pasta no Explorer com o
 //        arquivo selecionado (vale para \\wsl.localhost\... e \\wsl$\...).
 //
-// A origem passa pela mesma validacao do preview (absoluto, sem esquema,
-// sem "..", extensao da lista). O destino vem do dialogo do Windows, mas e'
-// validado de novo (saveAsTarget) antes de escrever.
+// A origem do "Salvar como" passa pela mesma validacao do preview
+// (absoluto, sem esquema, sem "..", extensao da lista). O destino vem do
+// dialogo do Windows e e' validado de novo (saveAsTarget) antes de escrever.
+// "Mostrar na pasta" aceita qualquer arquivo que exista — mostrar não executa.
 
 import (
 	"encoding/json"
@@ -148,17 +149,28 @@ func serveLocalFileSaveAs(w http.ResponseWriter, r *http.Request) {
 var revealLocal = func(path string) error { return revealInExplorer(path, true) }
 
 func serveLocalFileReveal(w http.ResponseWriter, r *http.Request) {
-	path, ok := readPathBody(w, r)
-	if !ok {
+	if r.Method != http.MethodPost || !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, "use POST application/json", http.StatusBadRequest)
 		return
 	}
-	f, err := openLocalFile(path)
+	var req struct {
+		Path string `json:"path"`
+	}
+	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&req) != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
+		return
+	}
+	path, err := validateLocalPath(req.Path)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": friendlyFileError(err)})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	path = f.Name() // \\wsl.localhost ou \\wsl$, o que existir
-	f.Close()
+	// Qualquer arquivo que exista, inclusive programa: mostrar na pasta não executa.
+	path, err = openRegularFile(path)
+	if err != nil {
+		writeLocalFileOpError(w, err)
+		return
+	}
 	if err := revealLocal(path); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "não foi possível abrir a pasta"})
 		return

@@ -29,10 +29,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/sys/windows"
 )
 
 // textFileExt / imageFileExt: extensoes permitidas (minusculas, com ponto).
@@ -58,9 +59,29 @@ const (
 	localImageMax       = 25 << 20 // 25 MiB
 )
 
+// expandHomePath troca "~" e "~/..." pela pasta do usuário. Não mexe em
+// mais nada: ".." continua sendo rejeitado por validateLocalPath.
+func expandHomePath(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw != "~" && !strings.HasPrefix(raw, "~/") && !strings.HasPrefix(raw, `~\`) {
+		return raw
+	}
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return raw
+	}
+	rest := strings.TrimPrefix(raw, "~")
+	rest = strings.TrimPrefix(rest, "/")
+	rest = strings.TrimPrefix(rest, `\`)
+	if rest == "" {
+		return home
+	}
+	return filepath.Join(home, rest)
+}
+
 // validateLocalPath: caminho absoluto (unidade do Windows ou UNC/\\wsl$\...),
 // sem esquema, sem ".." (antes ou depois de limpar). Devolve o caminho
-// limpo, pronto para os.Open.
+// limpo, pronto para os.Open. "~" é a pasta do usuário.
 func validateLocalPath(raw string) (string, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -69,6 +90,11 @@ func validateLocalPath(raw string) (string, error) {
 	if strings.Contains(raw, "://") {
 		return "", errors.New("esquema não é permitido aqui (é um link, não um arquivo local)")
 	}
+	// Antes de expandir "~": filepath.Join apagaria o ".." e o caminho sairia da pasta.
+	if strings.Contains(raw, "..") {
+		return "", errors.New("caminho com \"..\" não é permitido")
+	}
+	raw = expandHomePath(raw)
 	if strings.Contains(raw, "..") {
 		return "", errors.New("caminho com \"..\" não é permitido")
 	}
@@ -209,11 +235,65 @@ func serveLocalFile(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.Copy(w, f)
 }
 
+// Extensões que o Windows executa (ou pode executar) ao "abrir". Um clique
+// na saída do terminal nunca dispara isso: esses arquivos só aparecem na pasta.
+var dangerousFileExt = map[string]struct{}{
+	".exe": {}, ".bat": {}, ".cmd": {}, ".com": {}, ".scr": {}, ".pif": {},
+	".msi": {}, ".msp": {}, ".msix": {}, ".appx": {}, ".appinstaller": {},
+	".ps1": {}, ".psm1": {}, ".psd1": {}, ".psc1": {},
+	".vbs": {}, ".vbe": {}, ".js": {}, ".jse": {}, ".wsf": {}, ".wsh": {}, ".ws": {}, ".wsc": {},
+	".hta": {}, ".cpl": {}, ".msc": {}, ".lnk": {}, ".scf": {}, ".inf": {}, ".reg": {},
+	".url": {}, ".website": {}, ".gadget": {}, ".appref-ms": {},
+	".dll": {}, ".sys": {}, ".jar": {},
+}
+
+func isDangerousFileExt(path string) bool {
+	_, ok := dangerousFileExt[strings.ToLower(filepath.Ext(path))]
+	return ok
+}
+
+var errNotAFile = errors.New("é uma pasta, não um arquivo")
+
+// openRegularFile abre um arquivo que existe e não é pasta. O caminho já
+// passou por validateLocalPath. Devolve o nome que abriu de fato
+// (\\wsl.localhost ou \\wsl$).
+func openRegularFile(path string) (string, error) {
+	if strings.HasPrefix(path, `\\.\`) {
+		return "", errors.New("caminho de dispositivo não é permitido")
+	}
+	f, err := openLocalFile(path)
+	if err != nil {
+		return "", err
+	}
+	st, err := f.Stat()
+	name := f.Name()
+	f.Close()
+	if err != nil {
+		return "", err
+	}
+	if st.IsDir() {
+		return "", errNotAFile
+	}
+	return name, nil
+}
+
+func writeLocalFileOpError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, errNotAFile):
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	case os.IsNotExist(err):
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": friendlyFileError(err)})
+	case os.IsPermission(err):
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": friendlyFileError(err)})
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+}
+
 // serveOpenLocalFileDefault: POST /api/local-file/open-default — abre o
-// arquivo no editor padrao do Windows (cmd /c start "" <caminho>). So'
-// dispara com um clique explicito do usuario no painel de preview (botao
-// "Abrir com o editor padrão"), nunca automaticamente. Mesma validacao de
-// caminho/extensao do preview — nao abre nada fora da lista permitida.
+// arquivo no programa padrão do Windows. Vale para qualquer arquivo que
+// exista (o preview continua só com texto e imagem). Programa e script
+// (.exe, .bat, .ps1, .lnk e similares) não são executados.
 func serveOpenLocalFileDefault(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost || !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		http.Error(w, "use POST application/json", http.StatusBadRequest)
@@ -222,7 +302,7 @@ func serveOpenLocalFileDefault(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Path string `json:"path"`
 	}
-	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&req) != nil {
+	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&req) != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
 		return
 	}
@@ -231,26 +311,32 @@ func serveOpenLocalFileDefault(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	if _, category := localFileCategory(path); category == "" {
-		writeJSON(w, http.StatusForbidden, map[string]string{"error": "tipo de arquivo não suportado"})
+	if isDangerousFileExt(path) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "este arquivo não é aberto por clique (pode ser um programa)"})
 		return
 	}
-	f, err := openLocalFile(path)
+	path, err = openRegularFile(path)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": friendlyFileError(err)})
+		writeLocalFileOpError(w, err)
 		return
 	}
-	path = f.Name() // o caminho que abriu de fato (\\wsl.localhost ou \\wsl$)
-	f.Close()
 	if err := launchLocalFileDefault(path); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "não foi possível abrir o editor padrão"})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "não foi possível abrir o programa padrão"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"path": path})
 }
 
+// ShellExecute abre com a associação do Windows, sem passar por cmd.exe
+// (um nome com & ou | não vira outro comando).
 var launchLocalFileDefault = func(path string) error {
-	cmd := exec.Command("cmd", "/c", "start", "", path)
-	hideChildWindow(&cmd.SysProcAttr)
-	return cmd.Start()
+	verb, err := windows.UTF16PtrFromString("open")
+	if err != nil {
+		return err
+	}
+	file, err := windows.UTF16PtrFromString(path)
+	if err != nil {
+		return err
+	}
+	return windows.ShellExecute(0, verb, file, nil, nil, windows.SW_SHOWNORMAL)
 }

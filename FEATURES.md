@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-09.
+Last updated: 2026-10-14.
 
 ---
 
@@ -270,8 +270,14 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   lightened until it reads (minimum contrast 3:1), so Claude Code's
   bright-white bold stays visible on light themes (2026-09-27).
 - 🟢 Terminal menu: copy or save the full scrollback, and print the
-  visible area (patch 0188). `http(s)` links open in the default browser. Local
-  `.md` / `.txt` / `.log` and images open in a preview panel.
+  visible area (patch 0188). `http(s)` links, including an OSC 8 hyperlink
+  whose visible text is only "here", open in the default browser. Local
+  `.md` / `.txt` / `.log` and images open in a preview panel. Any other
+  existing file (PDF, Office, archive, and the rest) opens in the Windows
+  default program. Programs and scripts (`.exe`, `.bat`, `.ps1`, `.lnk`,
+  `.js` and the like) are shown in Explorer and are not launched. While a
+  fullscreen program has mouse tracking on, a plain click still goes to
+  that program; the hover hint says **Ctrl+click** to open the link.
 - 🟢 **Colar arquivo do Explorer** (Ctrl+V or Colar, 2026-10-01). A file
   copied in Explorer — PDF, video, or anything else — is copied into
   `C:\tmp\bethstudio\clipboard-images` (or `%TEMP%\bethstudio\clipboard-images`

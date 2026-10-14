@@ -23,7 +23,7 @@ O Studio (`bethstudio-web`) funciona como uma página que roda dentro do WebView
 - **Origem obrigatória no WebSocket.** Uma conexão WebSocket sem o cabeçalho `Origin` é recusada. Qualquer requisição com `Origin` precisa ser a do próprio Studio (`http://127.0.0.1:<porta>` ou `localhost` na mesma porta).
 - **Verificação de `Host`.** Só `127.0.0.1:<porta>` e `localhost:<porta>` são aceitos, para impedir DNS rebinding.
 - **Política de conteúdo (CSP)** restrita e `frame-ancestors 'none'`. O navegador não fala com provedores externos: todas as chamadas de rede saem do programa em Go.
-- **Operações com arquivos** exigem caminho absoluto, sem `..`, com extensão permitida e limite de tamanho. Escritas são feitas por arquivo temporário e renomeação.
+- **Operações com arquivos** exigem caminho absoluto, sem `..`. Prévia e gravação só aceitam extensão de texto ou imagem, com limite de tamanho; a escrita usa arquivo temporário e renomeação. Abrir no programa padrão vale para qualquer arquivo que exista e não seja programa ou script; esses só são mostrados na pasta, sem execução.
 
 ### Cofre de segredos
 
