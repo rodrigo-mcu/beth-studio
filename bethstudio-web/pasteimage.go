@@ -384,7 +384,10 @@ func (s *server) servePasteClipboard(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// paneLooksWSL looks the pane's cwd up in the last list.
+// paneLooksWSL: o pane roda no WSL? Vale o campo "wsl" da lista enriquecida
+// (kind wsl, ou agente com cwd Linux) e, na falta dele, o cwd. Só o cwd não
+// basta: um terminal WSL aberto pelo Studio lista o cwd do processo do lado
+// Windows (file:///C:/Users/...), não o do shell Linux.
 func (h *hub) paneLooksWSL(pane int) bool {
 	h.mu.Lock()
 	list := h.lastList
@@ -393,6 +396,7 @@ func (h *hub) paneLooksWSL(pane int) bool {
 		Panes []struct {
 			PaneID int    `json:"pane_id"`
 			Cwd    string `json:"cwd"`
+			WSL    bool   `json:"wsl"`
 		} `json:"panes"`
 	}
 	if list == nil || jsonUnmarshal(list, &ev) != nil {
@@ -400,7 +404,7 @@ func (h *hub) paneLooksWSL(pane int) bool {
 	}
 	for _, p := range ev.Panes {
 		if p.PaneID == pane {
-			return cwdLooksWSL(p.Cwd)
+			return p.WSL || cwdLooksWSL(p.Cwd)
 		}
 	}
 	return false

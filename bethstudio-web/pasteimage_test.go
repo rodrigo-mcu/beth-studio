@@ -259,3 +259,25 @@ func TestPasteFileCopy(t *testing.T) {
 		t.Fatalf("traversal/wsl: %+v", out)
 	}
 }
+
+// Terminal WSL aberto pelo Studio: o host lista o cwd do processo do lado
+// Windows, mas a lista enriquecida marca wsl=true. A conversão para /mnt/...
+// deve seguir o campo, não só o cwd.
+func TestPaneLooksWSLUsesEnrichedFlag(t *testing.T) {
+	h := &hub{lastList: []byte(`{"ev":"list","panes":[` +
+		`{"pane_id":4,"cwd":"file:///C:/Users/dev/","wsl":true},` +
+		`{"pane_id":5,"cwd":"file:///C:/demo/api/"},` +
+		`{"pane_id":6,"cwd":"file://pc/home/dev"}]}`)}
+	if !h.paneLooksWSL(4) {
+		t.Fatal("pane WSL com cwd do Windows deveria ser WSL")
+	}
+	if h.paneLooksWSL(5) {
+		t.Fatal("pane PowerShell não é WSL")
+	}
+	if !h.paneLooksWSL(6) {
+		t.Fatal("cwd Linux continua valendo")
+	}
+	if got := filePathText(`C:\tmp\bethstudio\clipboard-images\a.pdf`, h.paneLooksWSL(4)); got != "/mnt/c/tmp/bethstudio/clipboard-images/a.pdf" {
+		t.Fatalf("caminho %q", got)
+	}
+}
