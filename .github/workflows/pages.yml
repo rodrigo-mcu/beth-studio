@@ -1,0 +1,45 @@
+# Publica o site de divulgação (pasta site/, em português e inglês) no GitHub Pages.
+#
+# Uma vez só, no repositório: Settings > Pages > Build and deployment > Source = "GitHub Actions".
+# Depois disso, todo push no main que mude site/ publica de novo.
+# Endereço: https://<usuario>.github.io/<repositorio>/
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Confere que o site tem as duas línguas
+        run: |
+          test -f site/index.html
+          test -f site/en/index.html
+          test -f site/assets/style.css
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

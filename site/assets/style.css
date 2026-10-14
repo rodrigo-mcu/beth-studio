@@ -134,7 +134,7 @@ figure.diagram figcaption { color: var(--muted); font-size: 0.78rem; margin-top:
 
 /* espaco para capturas de tela (proporcao fixa; o placeholder some quando a imagem carrega) */
 .shot { position: relative; margin: 0; }
-.shot .frame { position: relative; width: 100%; aspect-ratio: 16 / 10; background: var(--shot-bg); border: 2px solid var(--line-strong); overflow: hidden; }
+.shot .frame { position: relative; width: 100%; aspect-ratio: 4 / 3; background: var(--shot-bg); border: 2px solid var(--line-strong); overflow: hidden; }
 .shot.r-phone .frame { aspect-ratio: 9 / 19; border-radius: 18px; }
 .shot.win .frame { border-radius: 0 0 6px 6px; border-top: 0; }
 .shot .chrome { display: flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.7rem; background: var(--surface-2); border: 2px solid var(--line-strong); border-radius: 6px 6px 0 0; font: 0.72rem var(--mono); color: var(--muted); }
@@ -253,3 +253,7 @@ footer p { margin: 0 0 0.5rem; max-width: 46rem; }
   figure.diagram { box-shadow: 4px 4px 0 var(--line); }
   .vblock { box-shadow: 3px 3px 0 var(--line); }
 }
+
+/* galeria "Em ação": capturas reais do Studio no Windows */
+.gallery { display: grid; gap: clamp(1.25rem, 3vw, 2rem); grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); margin-top: clamp(1.5rem, 4vw, 2.5rem); }
+.gallery .shot figcaption { margin-top: 0.6rem; font-size: 0.9rem; color: var(--muted); }

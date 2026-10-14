@@ -90,8 +90,8 @@
     <figure class="shot win hero-shot">
       <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
       <div class="frame">
-        <img src="assets/shots/hero-studio.webp" width="1600" height="1000" loading="lazy" alt="Janela do Beth Studio com a barra lateral, as abas e dois terminais divididos." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
-        <div class="ph"><strong>Espaço para captura de tela</strong><span>Esquema reservado, não é uma captura. Arquivo esperado:</span><code>assets/shots/hero-studio.webp</code><span>proporção 16:10</span></div>
+        <img src="assets/shots/hero-studio.webp" width="1044" height="788" loading="lazy" alt="Janela do Beth Studio com a barra lateral, as abas e dois terminais divididos." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+        <div class="ph"><strong>Espaço para captura de tela</strong><span>Esquema reservado, não é uma captura. Arquivo esperado:</span><code>assets/shots/hero-studio.webp</code><span>proporção 4:3</span></div>
       </div>
       <figcaption>O Studio no Windows: barra lateral, abas e terminais divididos.</figcaption>
     </figure>
@@ -168,12 +168,12 @@
       </div>
 
       <figure class="shot win" style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:56rem">
-        <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Falar</span></div>
+        <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Configurações · Voz e IA</span></div>
         <div class="frame">
-          <img src="assets/shots/voz-windows.webp" width="1600" height="1000" loading="lazy" alt="Painel de voz do Studio com o texto transcrito e a caixa com o que a correção mudou." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
-          <div class="ph"><strong>Espaço para captura de tela</strong><span>Esquema reservado, não é uma captura. Arquivo esperado:</span><code>assets/shots/voz-windows.webp</code><span>proporção 16:10</span></div>
+          <img src="assets/shots/voz-configuracao.webp" width="1044" height="788" loading="lazy" alt="Configurações de voz do Studio: microfone, teste do caminho inteiro, provedor, modelo e idioma da transcrição e a correção opcional por IA." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+          <div class="ph"><strong>Espaço para captura de tela</strong><span>Esquema reservado, não é uma captura. Arquivo esperado:</span><code>assets/shots/voz-configuracao.webp</code><span>proporção 4:3</span></div>
         </div>
-        <figcaption>O painel de voz do Studio: revisão do texto antes de enviar.</figcaption>
+        <figcaption>As configurações de voz do Studio: microfone, “Testar tudo”, provedor e modelo da transcrição e a correção opcional por IA.</figcaption>
       </figure>
 
       <div class="where">
@@ -186,6 +186,48 @@
         <h3>Para onde vão o áudio e o texto</h3>
         <p>O áudio vai para o provedor de transcrição que você configurou, e o texto transcrito vai para o provedor de correção, se você ligou a correção. Com provedores locais, os dados ficam no endereço que você definiu, por padrão o próprio computador. No celular, o áudio chega primeiro ao seu PC.</p>
         <p>O Beth Studio não guarda o áudio nem o texto: guarda só a configuração e o registro de custo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="em-acao" aria-labelledby="h-acao">
+    <div class="wrap">
+      <p class="sec-label">em ação</p>
+      <h2 class="title" id="h-acao">Veja o Beth Studio funcionando</h2>
+      <p class="sub">Capturas reais do Studio no Windows 11, instalado a partir do release. O conteúdo dos terminais é de exemplo.</p>
+      <div class="gallery">
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Tarefas</span></div>
+          <div class="frame">
+            <img src="assets/shots/tarefas.webp" width="1044" height="788" loading="lazy" alt="Gerenciador de tarefas com CPU, memória, GPUs, disco e o WSL2 em camadas." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/tarefas.webp</code></div>
+          </div>
+          <figcaption>Gerenciador de tarefas: CPU, memória, GPU, disco e o WSL2 em camadas (uso no Linux, ocupado no Windows, o que ainda pode crescer), para ver onde está o peso.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: WSL</span></div>
+          <div class="frame">
+            <img src="assets/shots/wsl-ubuntu.webp" width="1044" height="788" loading="lazy" alt="Terminal do Ubuntu no WSL2 dentro do Beth Studio, na pasta do projeto do Windows." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/wsl-ubuntu.webp</code></div>
+          </div>
+          <figcaption>Terminal WSL com Ubuntu: abre na pasta do terminal do Windows, convertida para o caminho do WSL.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Todos os terminais</span></div>
+          <div class="frame">
+            <img src="assets/shots/grade-terminais.webp" width="1044" height="788" loading="lazy" alt="Grade com todos os terminais, com prévia da tela, busca e filtros." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/grade-terminais.webp</code></div>
+          </div>
+          <figcaption>Todos os terminais em grade: prévia da tela, nome, pasta, tipo e aba, com busca e filtros.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Provedores de IA</span></div>
+          <div class="frame">
+            <img src="assets/shots/provedores-ia.webp" width="1044" height="788" loading="lazy" alt="Tela de provedores de IA com campos de chave, modelos e preços." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/provedores-ia.webp</code></div>
+          </div>
+          <figcaption>Provedores de IA: você cadastra as chaves de transcrição e de correção, que ficam cifradas no PC.</figcaption>
+        </figure>
       </div>
     </div>
   </section>

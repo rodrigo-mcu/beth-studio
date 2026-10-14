@@ -91,7 +91,7 @@
       <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
       <div class="frame">
         <img src="../assets/shots/hero-studio.webp" width="1600" height="1000" loading="lazy" alt="The Beth Studio window with the sidebar, tabs and two split terminals." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
-        <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture. Expected file:</span><code>assets/shots/hero-studio.webp</code><span>aspect ratio 16:10</span></div>
+        <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture. Expected file:</span><code>assets/shots/hero-studio.webp</code><span>aspect ratio 4:3</span></div>
       </div>
       <figcaption>Studio on Windows: sidebar, tabs and split terminals.</figcaption>
     </figure>
@@ -168,12 +168,12 @@
       </div>
 
       <figure class="shot win" style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:56rem">
-        <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Speak</span></div>
+        <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Settings · Voice and AI</span></div>
         <div class="frame">
-          <img src="../assets/shots/voz-windows.webp" width="1600" height="1000" loading="lazy" alt="Studio voice panel with the transcribed text and the box showing what the correction changed." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
-          <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture. Expected file:</span><code>assets/shots/voz-windows.webp</code><span>aspect ratio 16:10</span></div>
+          <img src="../assets/shots/voz-configuracao.webp" width="1044" height="788" loading="lazy" alt="Studio voice settings: microphone, full-path test, transcription provider, model and language, and the optional AI correction." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+          <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture. Expected file:</span><code>assets/shots/voz-configuracao.webp</code><span>aspect ratio 4:3</span></div>
         </div>
-        <figcaption>The Studio voice panel: reviewing the text before sending.</figcaption>
+        <figcaption>The Studio voice settings: microphone, “Test everything”, transcription provider and model, and the optional AI correction.</figcaption>
       </figure>
 
       <div class="where">
@@ -186,6 +186,48 @@
         <h3>Where the audio and the text go</h3>
         <p>The audio goes to the transcription provider you configured, and the transcribed text goes to the correction provider, if you turned correction on. With local providers, the data stays at the address you set, by default the computer itself. On the phone, the audio reaches your PC first.</p>
         <p>Beth Studio does not keep the audio or the text: it keeps only the settings and the cost log.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="in-action" aria-labelledby="h-action">
+    <div class="wrap">
+      <p class="sec-label">in action</p>
+      <h2 class="title" id="h-action">See Beth Studio at work</h2>
+      <p class="sub">Real screenshots of the Studio on Windows 11, installed from the release. The terminal contents are samples. The interface is in Portuguese.</p>
+      <div class="gallery">
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Tasks</span></div>
+          <div class="frame">
+            <img src="assets/shots/tarefas.webp" width="1044" height="788" loading="lazy" alt="Task manager with CPU, memory, GPUs, disk and WSL2 in layers." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/tarefas.webp</code></div>
+          </div>
+          <figcaption>Task manager: CPU, memory, GPU, disk and WSL2 in layers (used in Linux, taken in Windows, room to grow), so you can see where the weight is.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: WSL</span></div>
+          <div class="frame">
+            <img src="assets/shots/wsl-ubuntu.webp" width="1044" height="788" loading="lazy" alt="Ubuntu terminal on WSL2 inside Beth Studio, in the Windows project folder." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/wsl-ubuntu.webp</code></div>
+          </div>
+          <figcaption>WSL terminal with Ubuntu: it opens in the folder of the Windows terminal, converted to the WSL path.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: All terminals</span></div>
+          <div class="frame">
+            <img src="assets/shots/grade-terminais.webp" width="1044" height="788" loading="lazy" alt="Grid with all terminals, with a screen preview, search and filters." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/grade-terminais.webp</code></div>
+          </div>
+          <figcaption>All terminals in a grid: screen preview, name, folder, type and tab, with search and filters.</figcaption>
+        </figure>
+        <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: AI providers</span></div>
+          <div class="frame">
+            <img src="assets/shots/provedores-ia.webp" width="1044" height="788" loading="lazy" alt="AI providers screen with key fields, models and prices." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/provedores-ia.webp</code></div>
+          </div>
+          <figcaption>AI providers: you add the transcription and correction keys, which stay encrypted on the PC.</figcaption>
+        </figure>
       </div>
     </div>
   </section>

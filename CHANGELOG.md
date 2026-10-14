@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- The installer, the wiki install page and the phone page use Brazilian Portuguese ("arquivo", "Registro", "Área de Trabalho", "conexão") instead of European Portuguese.
+
+### Added
+- Site (`site/`, Portuguese and English) with real screenshots of the Studio on Windows 11, and a `Pages` workflow that publishes it to GitHub Pages.
+
 ## [0.2.0] - 2026-10-14
 
 ### Changed
