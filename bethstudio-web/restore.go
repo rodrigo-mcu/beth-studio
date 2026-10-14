@@ -70,8 +70,10 @@ func runRestore(ctx context.Context, specs []paneSpec, env restoreEnv, gate wslR
 			done++
 		}
 		p := restoreProgress{Total: total, Done: done, Stage: stage, Distro: distro, Message: msg}
-		mu.Unlock()
+		// entrega dentro do lock: fora dele, dois terminais podiam entregar o
+		// progresso fora de ordem e a barra andava para trás
 		env.Progress(p)
+		mu.Unlock()
 	}
 	fail := func(s paneSpec, reason string) {
 		mu.Lock()

@@ -6,12 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-14
+
 ### Added
 - **Todos os terminais** and the phone grid: a second chip row filters by terminal type (WSL, PowerShell, cmd, SSH, Serial and the other groups the sidebar already uses, plus Agentes). Chips are only the types present, in the sidebar's group order. State, type and search combine. Each row's counts follow the other filters. An ended terminal has no stored type and only matches Todos. **Limpar filtros** clears state, type and search. The grid filter does not change the sidebar filter.
 - Site: a "Se a interface travar, os terminais continuam" section with a before/after proof, a GitHub button and MIT badge in the header, and screenshots of the database panel and SSH.
 
 ### Fixed
 - Pasting a file or image into a WSL terminal opened by the Studio now converts the path to `/mnt/c/...`. The host lists such a terminal's cwd as a Windows folder, so the check looked only at the cwd and treated the pane as Windows; it now also uses the pane's WSL flag.
+- The restore progress could be delivered out of order when several terminals started at once, so the bar could move backwards. Updates are now delivered in order.
+
+### Changed
+- The copyright notice carries the author's full name (licenses, third-party notices and the site footer).
 
 ## [0.2.1] - 2026-10-14
 

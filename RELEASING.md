@@ -34,7 +34,7 @@ git tag -a v0.2.0 -m "Beth Studio 0.2.0"
 git push origin main v0.2.0
 ```
 
-O workflow `Release` roda os testes, compila tudo e cria um **release em rascunho** com os arquivos. Leva de 30 a 60 minutos (o Rust é o mais lento).
+O workflow `Release` roda os testes, compila tudo e cria um **release em rascunho** com os arquivos. Leva de 30 a 60 minutos (o Rust é o mais lento). Se a mensagem do commit para o qual a tag aponta tiver `[publicar]`, o release já sai **publicado** (sem rascunho). Uma versão com hífen, como `0.3.0-rc.1`, sai marcada como pré-lançamento.
 
 ## 2b. Na sua máquina
 

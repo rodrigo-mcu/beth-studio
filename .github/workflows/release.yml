@@ -3,7 +3,9 @@
 #   git tag -a v0.2.0 -m "Beth Studio 0.2.0" && git push origin v0.2.0
 #
 # O release nasce como RASCUNHO (draft): revise as notas e os arquivos no GitHub
-# e clique em "Publish release". Passo a passo e conferências: RELEASING.md.
+# e clique em "Publish release". Se a mensagem do commit da tag tiver
+# "[publicar]", o release já sai publicado. Versão com hífen (0.3.0-rc.1) sai
+# como pré-lançamento. Passo a passo e conferências: RELEASING.md.
 name: Release
 
 on:
@@ -54,7 +56,8 @@ jobs:
       - name: Draft GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          draft: ${{ !contains(github.event.head_commit.message, '[publicar]') }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
           name: Beth Studio ${{ github.ref_name }}
           body_path: dist/release/RELEASE_NOTES.md
           files: |
