@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beth Studio: talk instead of typing, terminals that stay up</title>
-<meta name="description" content="Beth Studio is a mouse-first terminal for Windows with voice dictation in Studio and on your phone. A persistent host owns your shells, AI agents and WSL sessions, so if the interface freezes, your terminals keep running.">
+<title>Beth Studio: the interface can freeze, the terminals keep running</title>
+<meta name="description" content="Beth Studio's interface can freeze or close without taking your terminals down. Dictate by voice with no separate app, organize tabs and splits your way, and follow your AI agents from your phone.">
 <meta name="color-scheme" content="light dark">
 <link rel="alternate" hreflang="pt-BR" href="../index.html">
 <link rel="alternate" hreflang="en" href="index.html">
@@ -44,66 +44,137 @@
 
 <main id="content">
   <div class="wrap hero">
-    <div class="hero-grid">
-      <div>
-        <p class="eyebrow">A mouse-first terminal for Windows</p>
-        <h1>Talk instead of typing. Terminals that <span class="hl">outlive</span> the UI.</h1>
-        <p class="lead"><strong>Beth Studio</strong> dictates by voice on Windows and on your phone, tells you when an AI agent is waiting for you, and keeps your terminals in a <strong>persistent host</strong>. If the interface freezes, or you restart it, shells, agents and WSL sessions keep running.</p>
-        <div class="cta">
-          <a class="btn" href="#download">Download for Windows</a>
-          <a class="btn ghost" href="#voice">See the voice</a>
-          <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">GitHub</a>
-        </div>
-        <p class="note">Open source. Windows 10 or 11. Linux and macOS: planned, no date.</p>
-        <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
-      </div>
-      <figure class="diagram">
-        <svg viewBox="0 0 400 420" role="img" aria-labelledby="dg-t dg-d">
-          <title id="dg-t">Diagram: persistent host and interface</title>
-          <desc id="dg-d">On top, the interface connected to the persistent host, which holds the terminals. Below, the interface has gone down, but the host keeps every terminal running.</desc>
-          <text class="d-state" x="40" y="18">NORMAL</text>
-          <rect class="d-ui" x="40" y="28" width="320" height="50" rx="6"/>
-          <text class="d-t" x="200" y="58" text-anchor="middle">Interface (Studio)</text>
-          <line class="d-link" x1="200" y1="82" x2="200" y2="114"/>
-          <polygon class="d-arrow" points="200,78 194,88 206,88"/>
-          <polygon class="d-arrow" points="200,118 194,108 206,108"/>
-          <rect class="d-host" x="40" y="118" width="320" height="86" rx="6"/>
-          <text class="d-t" x="200" y="141" text-anchor="middle">Persistent host</text>
-          <rect class="d-chip" x="52" y="158" width="64" height="30" rx="4"/><text class="d-m" x="84" y="177" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="158" width="64" height="30" rx="4"/><text class="d-m" x="158" y="177" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="158" width="64" height="30" rx="4"/><text class="d-m" x="232" y="177" text-anchor="middle">agent</text>
-          <rect class="d-chip" x="274" y="158" width="74" height="30" rx="4"/><text class="d-m" x="311" y="177" text-anchor="middle">build</text>
+    <p class="eyebrow">A Windows terminal, mouse and touch first</p>
+    <h1>The interface froze? <span class="hl">The terminals keep running</span>.</h1>
+    <p class="lead">Dictate with no separate app and review before you send. Follow your terminals and AI agents from your phone too.</p>
+    <div class="cta">
+      <a class="btn" href="#download">Download for Windows</a>
+      <a class="btn ghost" href="#how-it-works">See how it works</a>
+      <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">GitHub</a>
+    </div>
+    <p class="note">Open source, MIT. Windows 10 or 11. Linux and macOS: planned, no date.</p>
+    <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
 
-          <text class="d-state" x="40" y="240">THE INTERFACE WENT DOWN</text>
-          <rect class="d-ui-dead" x="40" y="250" width="320" height="50" rx="6"/>
-          <text class="d-s" x="200" y="280" text-anchor="middle">Interface frozen or closed</text>
-          <line class="d-x" x1="334" y1="262" x2="348" y2="288"/><line class="d-x" x1="348" y1="262" x2="334" y2="288"/>
-          <line class="d-link-dead" x1="200" y1="304" x2="200" y2="332"/>
-          <rect class="d-host" x="40" y="336" width="320" height="76" rx="6"/>
-          <text class="d-ok" x="200" y="357" text-anchor="middle">Host: terminals keep running</text>
-          <rect class="d-chip" x="52" y="368" width="64" height="30" rx="4"/><text class="d-m" x="84" y="387" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="368" width="64" height="30" rx="4"/><text class="d-m" x="158" y="387" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="368" width="64" height="30" rx="4"/><text class="d-m" x="232" y="387" text-anchor="middle">agent</text>
-          <rect class="d-chip" x="274" y="368" width="74" height="30" rx="4"/><text class="d-m" x="311" y="387" text-anchor="middle">build</text>
+    <ul class="pillars" aria-label="Beth Studio's four strongest points">
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="22" height="9" rx="2"/><path d="M9 7l4 4M13 7l-4 4"/><line x1="14" y1="12" x2="14" y2="17"/><rect x="3" y="18" width="22" height="7" rx="2"/><circle cx="21" cy="21.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+        <h3>Interface froze? The terminals keep going.</h3>
+        <p>Shells, AI agents and WSL sessions live in a host separate from the interface. Reopen it and everything is still there, with its history.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="18" height="13" rx="2"/><path d="M5 17l-2 6h22l-2-6"/><line x1="9" y1="9" x2="19" y2="9"/></svg>
+        <h3>Close the tab. The task keeps going.</h3>
+        <p>Closing a tab does not end the terminal: it keeps running in the host. Reopen it from the terminal list, or check in from your phone.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="22" rx="1.5"/><rect x="15" y="3" width="10" height="9" rx="1.5"/><rect x="15" y="16" width="10" height="9" rx="1.5"/></svg>
+        <h3>As many tabs as you want, your way.</h3>
+        <p>Tabs, splits in any direction, a terminal popped into its own window, and a grid with search. You choose how to organize.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="3" width="8" height="14" rx="4"/><path d="M6 13a8 8 0 0 0 16 0"/><line x1="14" y1="21" x2="14" y2="25"/><line x1="9" y1="25" x2="19" y2="25"/></svg>
+        <h3>Dictate instead of typing.</h3>
+        <p>Record your voice, transcribe it, review it, and send it to the terminal, with no copy-pasting from another app.</p>
+      </li>
+    </ul>
+
+    <ul class="pillars-secondary" aria-label="Two more strong points">
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="14" height="24" rx="3"/><line x1="12" y1="22" x2="16" y2="22"/></svg>
+        <h3>Follow along from your phone.</h3>
+        <p>See your terminals and the agents waiting for you, and reply by text or voice from your phone's browser.</p>
+        <p class="fine">Needs the <code>bethstudio-proxy</code> relay, hosted by you; off by default.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="4"/><path d="M10 6v2M10 20v2M3 14h2M15 14h2"/><rect x="18" y="4" width="7" height="20" rx="2"/></svg>
+        <h3>Mouse and touch first.</h3>
+        <p>Everything is done by clicking. No config file, no shortcut to memorize.</p>
+      </li>
+    </ul>
+
+    <div class="also">
+      <p class="also-label">also included</p>
+      <ul class="facts">
+        <li>Tells you when an agent is waiting</li>
+        <li>Task manager with layered WSL2 usage</li>
+        <li>Built-in database client and SSH/SFTP</li>
+      </ul>
+    </div>
+
+    <div class="proof">
+      <figure class="diagram host-sketch">
+        <svg viewBox="0 0 320 320" role="img" aria-labelledby="dgA-t dgA-d">
+          <title id="dgA-t">Diagram: persistent host and interface</title>
+          <desc id="dgA-d">On top, the interface connected to the persistent host, which holds the terminals. Below, the interface has frozen, but the host keeps the same terminals running.</desc>
+          <text class="d-state" x="18" y="14">NORMAL</text>
+          <rect class="d-ui" x="16" y="22" width="288" height="46" rx="6"/>
+          <text class="d-t" x="160" y="49" text-anchor="middle">Interface (Studio)</text>
+          <line class="d-link" x1="160" y1="68" x2="160" y2="96"/>
+          <polygon class="d-arrow" points="160,64 154,74 166,74"/>
+          <polygon class="d-arrow" points="160,100 154,90 166,90"/>
+          <rect class="d-host" x="16" y="96" width="288" height="70" rx="6"/>
+          <text class="d-t" x="160" y="116" text-anchor="middle">Persistent host</text>
+          <rect class="d-chip" x="22" y="128" width="84" height="26" rx="4"/><text class="d-m" x="64" y="145" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="118" y="128" width="84" height="26" rx="4"/><text class="d-m" x="160" y="145" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="214" y="128" width="84" height="26" rx="4"/><text class="d-m" x="256" y="145" text-anchor="middle">agent</text>
+
+          <text class="d-state d-bad" x="18" y="182">THE INTERFACE FROZE</text>
+          <rect class="d-ui-dead" x="16" y="190" width="288" height="46" rx="6"/>
+          <text class="d-s" x="160" y="217" text-anchor="middle">Frozen or closed</text>
+          <line class="d-x" x1="270" y1="200" x2="294" y2="224"/><line class="d-x" x1="294" y1="200" x2="270" y2="224"/>
+          <line class="d-link-dead" x1="160" y1="236" x2="160" y2="250"/>
+          <rect class="d-host" x="16" y="250" width="288" height="66" rx="6"/>
+          <text class="d-ok" x="160" y="270" text-anchor="middle">Terminals keep running</text>
+          <rect class="d-chip" x="22" y="282" width="84" height="26" rx="4"/><text class="d-m" x="64" y="299" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="118" y="282" width="84" height="26" rx="4"/><text class="d-m" x="160" y="299" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="214" y="282" width="84" height="26" rx="4"/><text class="d-m" x="256" y="299" text-anchor="middle">agent</text>
         </svg>
         <figcaption>Simplified diagram, not a screenshot.</figcaption>
       </figure>
-    </div>
-
-    <figure class="shot win hero-shot">
-      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
-      <div class="frame">
-        <img src="../assets/shots/hero-studio.webp" width="1600" height="1000" loading="lazy" alt="The Beth Studio window with the sidebar, tabs and two split terminals." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
-        <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture. Expected file:</span><code>assets/shots/hero-studio.webp</code><span>aspect ratio 4:3</span></div>
+      <div class="proof-secondary">
+        <figure class="shot win proof-shot">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
+          <div class="frame">
+            <img src="../assets/shots/hero-studio.webp" width="1044" height="788" loading="lazy" alt="Beth Studio window with the sidebar, tabs, and two split terminals." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/hero-studio.webp</code></div>
+          </div>
+          <figcaption>Tabs and splits, for real: a real screenshot of the Studio.</figcaption>
+        </figure>
+        <figure class="shot r-phone">
+          <div class="frame" style="aspect-ratio:412 / 713">
+            <img src="../assets/shots/celular-lista.webp" width="412" height="713" loading="lazy" alt="Terminal list on the phone page, with the Waiting for you group on top and the WSL, PowerShell and cmd filters." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/celular-lista.webp</code></div>
+          </div>
+          <figcaption>On your phone: whatever is waiting for you goes to the top. (The interface is in Portuguese.)</figcaption>
+        </figure>
       </div>
-      <figcaption>Studio on Windows: sidebar, tabs and split terminals.</figcaption>
-    </figure>
-
-    <div class="problem">
-      <h2>The problem</h2>
-      <p>In ordinary terminals, the terminal and the graphical interface live in the same process. When the interface freezes or slows down, your terminals die with it and you lose whatever was running. The trouble is almost always the interface, not the console.</p>
     </div>
   </div>
+
+  <section id="why-it-exists" aria-labelledby="h-why">
+    <div class="wrap">
+      <p class="sec-label">why it exists</p>
+      <h2 class="title" id="h-why">Why Beth Studio exists</h2>
+      <p class="sub">Three things got in the way of a daily terminal routine, day after day. Each one became a direct answer in the product.</p>
+      <ul class="why-pairs">
+        <li>
+          <div class="why-pain"><b>Pain</b><p>The terminal would hang, and sometimes it took the whole app down with it, along with everything that was open.</p></div>
+          <span class="why-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span>
+          <div class="why-answer"><b>Answer</b><p>Here the interface and the terminals are separate processes. If the interface goes down, the terminals stay up.</p></div>
+        </li>
+        <li>
+          <div class="why-pain"><b>Pain</b><p>Everything needed the keyboard, in an age when the mouse and touch already exist.</p></div>
+          <span class="why-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span>
+          <div class="why-answer"><b>Answer</b><p>Here everything is done by clicking. No shortcut is required.</p></div>
+        </li>
+        <li>
+          <div class="why-pain"><b>Pain</b><p>Talking is often faster than typing, but dictation tools lived outside the terminal: record, copy, paste.</p></div>
+          <span class="why-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span>
+          <div class="why-answer"><b>Answer</b><p>Here dictation is part of the terminal. Record, transcribe, review and send, without leaving the program.</p></div>
+        </li>
+      </ul>
+    </div>
+  </section>
 
   <section id="nao-cai" aria-labelledby="h-nao-cai">
     <div class="wrap">
@@ -119,7 +190,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: before and after</span></div>
           <div class="frame">
-            <img src="assets/shots/persistencia.webp" width="1044" height="788" loading="lazy" alt="Studio terminal showing the same host Id before and after restarting the interface." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/persistencia.webp" width="1044" height="788" loading="lazy" alt="Studio terminal showing the same host Id before and after restarting the interface." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/persistencia.webp</code></div>
           </div>
           <figcaption>Proof: the same terminal and the same host (Id 9700, started at 16:00:05), before and after restarting the interface.</figcaption>
@@ -129,7 +200,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio installer</span></div>
           <div class="frame" style="aspect-ratio:520 / 459">
-            <img src="assets/shots/instalador-pergunta-host.webp" width="520" height="459" loading="lazy" alt="Installer prompt when updating: Yes closes the hosts and updates everything; No updates only the interface and the hosts and terminals keep running; Cancel does not update." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/instalador-pergunta-host.webp" width="520" height="459" loading="lazy" alt="Installer prompt when updating: Yes closes the hosts and updates everything; No updates only the interface and the hosts and terminals keep running; Cancel does not update." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/instalador-pergunta-host.webp</code></div>
           </div>
           <figcaption>When you update over an existing install, the installer asks what to do: “No” updates only the interface and keeps the host and the terminals; “Yes” closes everything. (The installer is in Portuguese.)</figcaption>
@@ -245,7 +316,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Tasks</span></div>
           <div class="frame">
-            <img src="assets/shots/tarefas.webp" width="1044" height="788" loading="lazy" alt="Task manager with CPU, memory, GPUs, disk and WSL2 in layers." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/tarefas.webp" width="1044" height="788" loading="lazy" alt="Task manager with CPU, memory, GPUs, disk and WSL2 in layers." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/tarefas.webp</code></div>
           </div>
           <figcaption>Task manager: CPU, memory, GPU, disk and WSL2 in layers (used in Linux, taken in Windows, room to grow), so you can see where the weight is.</figcaption>
@@ -253,7 +324,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: WSL</span></div>
           <div class="frame">
-            <img src="assets/shots/wsl-ubuntu.webp" width="1044" height="788" loading="lazy" alt="Ubuntu terminal on WSL2 inside Beth Studio, in the Windows project folder." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/wsl-ubuntu.webp" width="1044" height="788" loading="lazy" alt="Ubuntu terminal on WSL2 inside Beth Studio, in the Windows project folder." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/wsl-ubuntu.webp</code></div>
           </div>
           <figcaption>WSL terminal with Ubuntu: it opens in the folder of the Windows terminal, converted to the WSL path.</figcaption>
@@ -261,15 +332,23 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: All terminals</span></div>
           <div class="frame">
-            <img src="assets/shots/grade-terminais.webp" width="1044" height="788" loading="lazy" alt="Grid with all terminals, with a screen preview, search and filters." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/grade-terminais.webp" width="1044" height="788" loading="lazy" alt="Grid with all terminals, with a screen preview, search and filters." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/grade-terminais.webp</code></div>
           </div>
           <figcaption>All terminals in a grid: screen preview, name, folder, type and tab, with search and filters.</figcaption>
         </figure>
         <figure class="shot win">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Paste a file</span></div>
+          <div class="frame">
+            <img src="../assets/shots/colar-arquivo-windows.webp" width="1044" height="788" loading="lazy" alt="PowerShell terminal in Beth Studio with the full path of a PDF pasted after copying the file." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Screenshot</strong><code>assets/shots/colar-arquivo-windows.webp</code></div>
+          </div>
+          <figcaption>Copy a file (or an image) and paste it into the terminal: Beth Studio keeps a copy and pastes the full path, so you don't type it. Handy for agents that can't paste an image on Windows.</figcaption>
+        </figure>
+        <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: AI providers</span></div>
           <div class="frame">
-            <img src="assets/shots/provedores-ia.webp" width="1044" height="788" loading="lazy" alt="AI providers screen with key fields, models and prices." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/provedores-ia.webp" width="1044" height="788" loading="lazy" alt="AI providers screen with key fields, models and prices." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/provedores-ia.webp</code></div>
           </div>
           <figcaption>AI providers: you add the transcription and correction keys, which stay encrypted on the PC.</figcaption>
@@ -277,7 +356,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Database: query</span></div>
           <div class="frame">
-            <img src="assets/shots/banco-consulta.webp" width="1044" height="788" loading="lazy" alt="SQL editor with highlighting, one result tab per statement, a grid with column types and export buttons." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/banco-consulta.webp" width="1044" height="788" loading="lazy" alt="SQL editor with highlighting, one result tab per statement, a grid with column types and export buttons." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/banco-consulta.webp</code></div>
           </div>
           <figcaption>Database: SQL editor with highlighting, one result tab per statement, and export to CSV, JSON or SQL.</figcaption>
@@ -285,7 +364,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Database: confirmation</span></div>
           <div class="frame">
-            <img src="assets/shots/banco-confirmacao.webp" width="1044" height="788" loading="lazy" alt="Dialog that lists each statement and warns whether it changes the structure or the data, before running." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/banco-confirmacao.webp" width="1044" height="788" loading="lazy" alt="Dialog that lists each statement and warns whether it changes the structure or the data, before running." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/banco-confirmacao.webp</code></div>
           </div>
           <figcaption>Before changing the database, the Studio shows each statement and asks for confirmation.</figcaption>
@@ -293,7 +372,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Database: new connection</span></div>
           <div class="frame">
-            <img src="assets/shots/banco-nova-conexao.webp" width="1044" height="788" loading="lazy" alt="Form with PostgreSQL, MySQL/MariaDB, SQL Server and SQLite, and a Select button next to Initial database." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/banco-nova-conexao.webp" width="1044" height="788" loading="lazy" alt="Form with PostgreSQL, MySQL/MariaDB, SQL Server and SQLite, and a Select button next to Initial database." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/banco-nova-conexao.webp</code></div>
           </div>
           <figcaption>PostgreSQL, MySQL/MariaDB, SQL Server and SQLite, with a Select button that lists the server's databases.</figcaption>
@@ -301,7 +380,7 @@
         <figure class="shot win">
           <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>SSH</span></div>
           <div class="frame">
-            <img src="assets/shots/ssh-novo-host.webp" width="1044" height="788" loading="lazy" alt="New SSH host form with password, key file or Windows agent, and the SFTP start folder." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <img src="../assets/shots/ssh-novo-host.webp" width="1044" height="788" loading="lazy" alt="New SSH host form with password, key file or Windows agent, and the SFTP start folder." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
             <div class="ph"><strong>Screenshot</strong><code>assets/shots/ssh-novo-host.webp</code></div>
           </div>
           <figcaption>SSH: password, key file or the Windows SSH agent, with the password encrypted by the Windows account and an SFTP start folder.</figcaption>

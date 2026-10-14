@@ -100,12 +100,10 @@ nav.main a:hover { border-bottom-color: var(--accent); }
 @media (max-width: 40rem) { .gh-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .gh-btn { padding: 0.28rem 0.5rem; } }
 
 /* hero */
-.hero { padding-block: clamp(2rem, 6vw, 4.5rem) clamp(2rem, 5vw, 3.5rem); }
-.hero-grid { display: grid; gap: clamp(1.5rem, 4vw, 3.5rem); grid-template-columns: 1fr; align-items: center; }
-@media (min-width: 60rem) { .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
+.hero { padding-block: clamp(1.75rem, 5vw, 3.5rem) clamp(2.25rem, 5vw, 3.5rem); }
 .eyebrow { font-family: var(--mono); font-size: 0.8rem; color: var(--accent-ink); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 1rem; }
 .eyebrow::before { content: "> "; }
-h1 { font-size: clamp(2.5rem, 7.4vw, 5.2rem); line-height: 0.98; margin: 0 0 1.4rem; letter-spacing: -0.025em; font-weight: 700; max-width: 13ch; }
+h1 { font-size: clamp(2rem, 4.6vw, 3.4rem); line-height: 1.08; margin: 0 0 1rem; letter-spacing: -0.02em; font-weight: 700; max-width: 19ch; }
 .hl { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--accent) 55%, transparent) 62% 94%, transparent 94%); }
 .lead { font-size: clamp(1.05rem, 2.2vw, 1.25rem); color: var(--muted); max-width: 40rem; margin: 0 0 1.5rem; }
 .lead strong { color: var(--ink); }
@@ -118,6 +116,36 @@ h1 { font-size: clamp(2.5rem, 7.4vw, 5.2rem); line-height: 0.98; margin: 0 0 1.4
 .prompt { margin: 1.5rem 0 0; font-family: var(--mono); color: var(--muted); font-size: 0.95rem; }
 .prompt .caret { display: inline-block; width: 0.6ch; height: 1.1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1.1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
+
+/* faixa de pilares: os 4 pontos fortes mais importantes, logo abaixo do titulo */
+.pillars { list-style: none; padding: 1.5rem 0 0; margin: clamp(1.5rem, 4vw, 2.5rem) 0 0; display: grid; grid-template-columns: 1fr; gap: 1.4rem; border-top: 2px solid var(--line-strong); }
+@media (min-width: 36rem) { .pillars { grid-template-columns: 1fr 1fr; gap: 1.6rem 2rem; } }
+@media (min-width: 64rem) { .pillars { grid-template-columns: repeat(4, 1fr); } }
+.pillar-ic { display: block; width: 1.7rem; height: 1.7rem; margin-bottom: 0.6rem; color: var(--accent-ink); }
+.pillars h3 { font-size: 1.05rem; line-height: 1.25; margin: 0 0 0.35rem; }
+.pillars p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.pillars .fine { margin-top: 0.5rem; font-size: 0.78rem; font-family: var(--mono); color: var(--muted); }
+
+/* segundo nivel: mais dois pontos fortes, discretos, abaixo dos 4 principais */
+.pillars-secondary { list-style: none; padding: 1.1rem 0 0; margin: 1.3rem 0 0; display: grid; grid-template-columns: 1fr; gap: 1rem; border-top: 1px dashed var(--line); }
+@media (min-width: 36rem) { .pillars-secondary { grid-template-columns: 1fr 1fr; gap: 1rem 2rem; } }
+.pillars-secondary .pillar-ic { width: 1.3rem; height: 1.3rem; margin-bottom: 0.4rem; opacity: 0.85; }
+.pillars-secondary h3 { font-size: 0.95rem; margin: 0 0 0.25rem; }
+.pillars-secondary p { font-size: 0.88rem; }
+
+/* complementos curtos: lista enxuta, reaproveita o padrao "+" ja usado na secao de voz */
+.also { margin: 1rem 0 0; }
+.also-label { font: 0.78rem var(--mono); color: var(--muted); margin: 0 0 0.3rem; }
+.also .facts { margin: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 1.5rem; }
+.also .facts li { padding-left: 1.2rem; }
+
+/* prova visual: diagrama de persistencia (principal) + grade com uma captura real e o esquema do celular */
+.proof { margin-top: clamp(2rem, 4vw, 3rem); display: grid; gap: 1.5rem; }
+.proof .host-sketch { max-width: 26rem; margin-inline: auto; }
+.proof-secondary { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+@media (min-width: 40rem) { .proof-secondary { grid-template-columns: 3fr 2fr; align-items: start; } }
+.proof-shot { max-width: 22rem; margin-inline: auto; width: 100%; }
+.proof .phone-sketch { max-width: 14rem; margin-inline: auto; }
 
 /* diagrama (peca central) */
 figure.diagram { margin: 0; background: var(--surface); border: 2px solid var(--line-strong); border-radius: 6px; padding: 1rem 1rem 0.7rem; box-shadow: 8px 8px 0 var(--line); }
@@ -135,7 +163,19 @@ figure.diagram figcaption { color: var(--muted); font-size: 0.78rem; margin-top:
 .d-s { fill: var(--muted); font: 12px var(--body); }
 .d-m { fill: var(--ink); font: 11px var(--mono); }
 .d-state { fill: var(--accent-ink); font: 700 12px var(--mono); letter-spacing: 0.06em; }
+.d-bad { fill: var(--bad); }
 .d-ok { fill: var(--ok); font: 700 12px var(--body); }
+
+/* esquema do celular: contorno simplificado, nao e uma captura */
+.d-phone-body { fill: var(--surface); stroke: var(--line-strong); stroke-width: 3; }
+.d-phone-notch { fill: var(--line); }
+.d-phone-h { fill: var(--ink); font: 700 12px var(--display); }
+.d-phone-div { stroke: var(--line); stroke-width: 1; }
+.d-wait { fill: var(--accent); stroke: var(--line-strong); stroke-width: 1.5; }
+.d-wait-text { fill: var(--on-accent); font: 700 10px var(--mono); }
+.d-mic-bg { fill: var(--accent); stroke: var(--line-strong); stroke-width: 2.5; }
+.d-mic-cap { fill: var(--on-accent); }
+.d-mic-ico { stroke: var(--on-accent); stroke-width: 2; fill: none; stroke-linecap: round; }
 
 /* espaco para capturas de tela (proporcao fixa; o placeholder some quando a imagem carrega) */
 .shot { position: relative; margin: 0; }
@@ -167,9 +207,20 @@ section { padding-block: clamp(2.5rem, 6vw, 4.5rem); border-top: 2px solid var(-
 h2.title { font-size: clamp(1.9rem, 5vw, 3.2rem); margin: 0 0 0.8rem; letter-spacing: -0.02em; line-height: 1.05; max-width: 22ch; }
 .sub { color: var(--muted); max-width: 44rem; margin: 0 0 2rem; font-size: 1.05rem; }
 
-.problem { border-left: 6px solid var(--bad); background: var(--surface); padding: 1rem 1.25rem; max-width: 46rem; margin-top: clamp(1.5rem, 4vw, 2.5rem); }
-.problem h2 { font-size: 0.8rem; margin: 0 0 0.35rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--bad); }
-.problem p { margin: 0; }
+/* por que existe: pares dor -> resposta, cores reaproveitadas do diagrama (bad/ok) */
+.why-pairs { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; }
+.why-pairs li { display: grid; grid-template-columns: 1fr; gap: 0.6rem; padding: 1.1rem 0; border-top: 1px solid var(--line); }
+.why-pairs li:first-child { border-top: 0; padding-top: 0; }
+@media (min-width: 48rem) { .why-pairs li { grid-template-columns: 1fr 2.4rem 1fr; align-items: center; gap: 1.2rem; } }
+.why-pain, .why-answer { margin: 0; }
+.why-pain b, .why-answer b { display: block; font: 700 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 0.3rem; }
+.why-pain b { color: var(--bad); }
+.why-answer b { color: var(--ok); }
+.why-pain p, .why-answer p { margin: 0; }
+.why-pain p { color: var(--muted); }
+.why-arrow { display: flex; align-items: center; justify-content: center; color: var(--accent-ink); transform: rotate(90deg); }
+@media (min-width: 48rem) { .why-arrow { transform: none; } }
+.why-arrow svg { width: 1.3rem; height: 1.3rem; }
 
 /* como funciona */
 .how ol { list-style: none; counter-reset: s; padding: 0; margin: 0; max-width: 52rem; }
