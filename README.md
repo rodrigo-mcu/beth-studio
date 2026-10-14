@@ -1,6 +1,6 @@
 # Beth Studio
 
-**Beth Studio** é um terminal para Windows pensado para o mouse. Seus terminais, agentes de IA e sessões WSL ficam num processo que não morre quando você fecha uma janela, e a interface (abas, divisões, arquivos, banco de dados, SSH, voz) roda por cima dele.
+**Beth Studio** é um terminal para Windows feito para quem trabalha com muitos terminais ao mesmo tempo e não quer perdê-los quando a interface trava. Um host persistente é o dono dos terminais, dos agentes de IA e das sessões WSL; a interface (abas, divisões, arquivos, banco de dados, SSH, voz) é só uma camada por cima, e é pensada para o mouse.
 
 Mais do que um terminal, o Beth Studio é um estúdio de trabalho: o terminal, um editor, um cliente de banco de dados, SSH/serial/SFTP e acesso pelo navegador ou pelo celular, tudo no mesmo programa.
 
@@ -8,12 +8,15 @@ Mais do que um terminal, o Beth Studio é um estúdio de trabalho: o terminal, u
 
 ## Por que existe
 
+Em muitos terminais, o terminal e a interface gráfica vivem no mesmo processo. Quando a interface trava ou fica lenta, os terminais morrem junto e você perde o que estava rodando. Na experiência do autor, o problema quase sempre está na interface, não no console. O Beth Studio separa as duas coisas.
+
 - **Terminais que sobrevivem.** Um host persistente (`bethstudio-host.exe`) é o dono de todos os terminais. Fechar o Studio, travar a interface ou reiniciá-la não mata os shells, os agentes nem as sessões WSL.
-- **Feito para uso pesado.** O autor usa o Beth Studio todo dia com cerca de 35 terminais abertos ao mesmo tempo: builds longos, vários agentes de IA rodando e sessões em WSL2 e PowerShell. Isso é uso real do projeto, não um teste de desempenho com medidas publicadas.
-- **Imagens e arquivos chegam ao agente.** Copie uma imagem (Print Screen, "copiar imagem") ou um arquivo no Explorer e cole no terminal: o Studio salva um arquivo e cola o caminho, para o agente conseguir abri-lo. Imagens chegam como `![image](caminho)`. Num terminal WSL o caminho já vem reescrito de `C:\…` para `/mnt/c/…`. Soltar o arquivo sobre o terminal faz o mesmo. Veja [Arquivos, notas e área de transferência](wiki/Arquivos-notas-e-area-de-transferencia.md).
-- **Atualiza a interface sem matar os hosts.** Uma versão nova da interface entra com **Configurações > Sobre > Recarregar interface**, sem reiniciar o Studio e sem encostar no `bethstudio-host.exe`, então terminais e agentes continuam rodando. Cada release traz o `BethStudio-ui-<versão>.zip` só com a interface. Atualizar pelo instalador com o host rodando também não derruba os terminais.
-- **Mouse primeiro.** Nova aba, divisão, tema, fonte, destacar em janela: tudo se faz clicando, sem arquivo de configuração e sem atalho para decorar.
+- **Interface que se troca a qualquer momento.** Uma versão nova da interface entra com **Configurações > Sobre > Recarregar interface**, sem reiniciar o Studio e sem encostar no `bethstudio-host.exe`: o host continua rodando e os terminais e agentes seguem vivos. Cada release traz o `BethStudio-ui-<versão>.zip` só com a interface. Atualizar pelo instalador com o host rodando também não derruba os terminais.
+- **Feito para muitos terminais.** O autor usa o Beth Studio todo dia com cerca de 35 terminais abertos ao mesmo tempo: sessões em WSL2 e PowerShell, vários agentes de IA e builds longos. Na experiência do autor, a digitação continua fluida nesse cenário. Isso é uso real do projeto, não um teste de desempenho com medidas publicadas.
+- **Gerenciador de tarefas interno.** Mostra CPU, memória, GPU e disco do computador e o consumo de cada terminal, separando o host, a interface e os processos dentro dos terminais. Serve para ver se o peso está na interface ou nos programas que você roda. Veja [Monitor do sistema](wiki/Monitor-do-sistema.md).
 - **Recupera sozinho.** Se o próprio host cair, o Studio sobe outro e recria os terminais nas mesmas abas e pastas.
+- **Imagens e arquivos chegam ao agente.** Copie uma imagem (Print Screen, "copiar imagem") ou um arquivo no Explorer e cole no terminal: o Studio salva um arquivo e cola o caminho, para o agente conseguir abri-lo. Imagens chegam como `![image](caminho)`. Num terminal WSL o caminho já vem reescrito de `C:\…` para `/mnt/c/…`. Soltar o arquivo sobre o terminal faz o mesmo. Veja [Arquivos, notas e área de transferência](wiki/Arquivos-notas-e-area-de-transferencia.md).
+- **Mouse primeiro.** Nova aba, divisão, tema, fonte, destacar em janela: tudo se faz clicando, sem arquivo de configuração e sem atalho para decorar.
 - **Uma interface só.** O Studio (Go + React em WebView2) é a única interface. A janela nativa que existia antes foi removida.
 
 ## O que dá para fazer
