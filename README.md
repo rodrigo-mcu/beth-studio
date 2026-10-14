@@ -1,5 +1,7 @@
 # Beth Studio
 
+**Site:** [rodrigo-mcu.github.io/beth-studio](https://rodrigo-mcu.github.io/beth-studio/) (português) · [English](https://rodrigo-mcu.github.io/beth-studio/en/) · **Baixar:** [Releases](https://github.com/rodrigo-mcu/beth-studio/releases/latest)
+
 **Beth Studio** é um terminal para Windows feito para quem trabalha com muitos terminais ao mesmo tempo e não quer perdê-los quando a interface trava. Um host persistente é o dono dos terminais, dos agentes de IA e das sessões WSL; a interface (abas, divisões, arquivos, banco de dados, SSH, voz) é só uma camada por cima, e é pensada para o mouse.
 
 Mais do que um terminal, o Beth Studio é um estúdio de trabalho: o terminal, um editor, um cliente de banco de dados, SSH/serial/SFTP e acesso pelo navegador ou pelo celular, tudo no mesmo programa.
