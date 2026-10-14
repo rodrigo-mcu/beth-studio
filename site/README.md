@@ -31,6 +31,7 @@ A página reserva espaços de proporção fixa para capturas reais. Enquanto o a
 | `wsl-ubuntu.webp` | 4:3 (1044x788) | Terminal WSL com Ubuntu aberto na pasta do terminal do Windows |
 | `grade-terminais.webp` | 4:3 (1044x788) | "Todos os terminais": grade com prévia, busca e filtros |
 | `colar-arquivo-windows.webp` | 4:3 (1044x788) | Arquivo copiado e colado no terminal PowerShell: o caminho completo é colado |
+| `colar-arquivo-wsl.webp` | 1320x180 | O mesmo arquivo colado no terminal WSL: o caminho vira /mnt/c/... (recorte só do terminal) |
 | `provedores-ia.webp` | 4:3 (1044x788) | Configurações > Provedores de IA (sem chaves cadastradas) |
 | `persistencia.webp` | 4:3 (1044x788) | Terminal mostrando o mesmo Id de host antes e depois de reiniciar a interface |
 | `banco-consulta.webp` | 4:3 (1044x788) | Janela Banco de dados: editor SQL, resultados por instrução e exportação (banco SQLite de exemplo) |
