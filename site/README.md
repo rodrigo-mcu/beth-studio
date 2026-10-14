@@ -37,7 +37,10 @@ A página reserva espaços de proporção fixa para capturas reais. Enquanto o a
 | `banco-nova-conexao.webp` | 4:3 (1044x788) | Formulário de nova conexão (PostgreSQL, MySQL/MariaDB, SQL Server, SQLite) |
 | `ssh-novo-host.webp` | 4:3 (1044x788) | Formulário de novo host SSH (sem host real) |
 | `instalador-pergunta-host.webp` | 520x459 | Pergunta do instalador ao atualizar por cima: "Não" atualiza só a interface e mantém o host |
-| `voz-celular.webp` | 9:19 (ex.: 900x1900) | (ainda sem captura) WebApp do celular com o texto ditado no campo de mensagem |
+| `celular-lista.webp` | 412x713 | Página do celular (aberta em localhost, em janela de celular): lista com "Esperando você" no topo |
+| `celular-conversa.webp` | 412x713 | Página do celular: conversa de um terminal, teclas rápidas e botão de microfone |
+| `agente-aguardando.webp` | 4:3 (1044x788) | Studio com o aviso "aguardando" no terminal, na barra lateral e na aba |
+| `voz-celular.webp` | 9:19 (ex.: 900x1900) | (substituído por `celular-conversa.webp`) WebApp do celular com o texto ditado no campo de mensagem |
 
 Tema claro/escuro: segue o sistema e tem botão no cabeçalho; a escolha fica em `localStorage` (a página funciona sem ele).
 
