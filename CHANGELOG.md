@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 - Docs: the README and the FAQ say that Linux and macOS ports are planned (no date, no commitment).
+- Docs: the README highlights heavy daily use, image and file paste for agents, and interface updates without stopping the hosts.
 
 ### Added
 - Database connection form: a **Selecionar** button next to **Banco inicial** connects with the form's data and lists the databases to pick from (PostgreSQL and SQL Server).

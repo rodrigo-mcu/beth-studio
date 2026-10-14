@@ -9,6 +9,9 @@ Mais do que um terminal, o Beth Studio é um estúdio de trabalho: o terminal, u
 ## Por que existe
 
 - **Terminais que sobrevivem.** Um host persistente (`bethstudio-host.exe`) é o dono de todos os terminais. Fechar o Studio, travar a interface ou reiniciá-la não mata os shells, os agentes nem as sessões WSL.
+- **Feito para uso pesado.** O autor usa o Beth Studio todo dia com cerca de 35 terminais abertos ao mesmo tempo: builds longos, vários agentes de IA rodando e sessões em WSL2 e PowerShell. Isso é uso real do projeto, não um teste de desempenho com medidas publicadas.
+- **Imagens e arquivos chegam ao agente.** Copie uma imagem (Print Screen, "copiar imagem") ou um arquivo no Explorer e cole no terminal: o Studio salva um arquivo e cola o caminho, para o agente conseguir abri-lo. Imagens chegam como `![image](caminho)`. Num terminal WSL o caminho já vem reescrito de `C:\…` para `/mnt/c/…`. Soltar o arquivo sobre o terminal faz o mesmo. Veja [Arquivos, notas e área de transferência](wiki/Arquivos-notas-e-area-de-transferencia.md).
+- **Atualiza a interface sem matar os hosts.** Uma versão nova da interface entra com **Configurações > Sobre > Recarregar interface**, sem reiniciar o Studio e sem encostar no `bethstudio-host.exe`, então terminais e agentes continuam rodando. Cada release traz o `BethStudio-ui-<versão>.zip` só com a interface. Atualizar pelo instalador com o host rodando também não derruba os terminais.
 - **Mouse primeiro.** Nova aba, divisão, tema, fonte, destacar em janela: tudo se faz clicando, sem arquivo de configuração e sem atalho para decorar.
 - **Recupera sozinho.** Se o próprio host cair, o Studio sobe outro e recria os terminais nas mesmas abas e pastas.
 - **Uma interface só.** O Studio (Go + React em WebView2) é a única interface. A janela nativa que existia antes foi removida.
