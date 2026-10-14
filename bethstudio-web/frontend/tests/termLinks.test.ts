@@ -2,6 +2,7 @@
 // visível); sem OSC 8, cai no fallback de URL/arquivo solto no texto.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { extractFileCandidates, extractUrlCandidates, parseOsc8Spans, rowLinkCandidates, stripEscapes } from "../src/lib/termLinks.ts";
 
 const ESC = "\x1b";
@@ -80,7 +81,7 @@ test("rowLinkCandidates: texto visível de um OSC8 que por acaso parece um camin
 });
 
 // --- caso real: agente no WSL, OSC 8 + caminho solto entre parênteses ----
-import { cellText, lineFallbackLinks, routeTermLink, spanColumns, type CellLike } from "../src/lib/termLinks.ts";
+import { cellText, fallbackLinksTouching, lineFallbackLinks, linkHoverHint, routeTermLink, shouldActivateLink, spanColumns, suppressAppMouseDown, type CellLike } from "../src/lib/termLinks.ts";
 
 const WIDE = new Set(["⏺"]);
 /** Células como o xterm faz: caractere largo ocupa 2 (a segunda com largura 0). */
@@ -128,12 +129,15 @@ test("caso real WSL: clicar no OSC 8 OU no caminho solto abre o mesmo .md no pai
   }
 });
 
-test("routeTermLink: http vai pro navegador; esquema estranho ou extensão fora da lista não é clicável", () => {
+test("routeTermLink: http vai pro navegador; esquema estranho ou pasta não é clicável; executável vai para a pasta", () => {
   const ctx = { paneKind: "wsl", paneWsl: true, paneDistro: "Debian" };
   assert.deepEqual(routeTermLink("https://example.com/x", ctx), { kind: "http", url: "https://example.com/x" });
   assert.equal(routeTermLink("mailto:a@example.com", ctx), null);
   assert.equal(routeTermLink("vscode://file/mnt/data/x.md", ctx), null);
-  assert.equal(routeTermLink("file:///mnt/data/app.exe", ctx), null);
+  assert.deepEqual(routeTermLink("file:///mnt/data/app.exe", ctx), {
+    kind: "reveal",
+    path: "\\\\wsl.localhost\\Debian\\mnt\\data\\app.exe",
+  });
   assert.equal(routeTermLink("file:///mnt/data/repo/", ctx), null);
   assert.equal(routeTermLink(WSL_PATH, { paneKind: "powershell" }), null); // Linux num pane Windows
   assert.deepEqual(routeTermLink("/mnt/c/Users/u/notes.md", ctx), { kind: "file", path: "C:\\Users\\u\\notes.md" });
@@ -162,4 +166,139 @@ test("linha crua diferente das células: ainda não põe link por cima do rótul
   const cells = cellsOf("x" + stripEscapes(raw)); // uma coluna a mais: não bate
   const links = lineFallbackLinks(cells, raw);
   assert.deepEqual(links.map((l) => l.uri), [WSL_PATH]);
+});
+
+const WIN = { paneKind: "powershell", paneCwd: "file:///D:/docs/" };
+
+test("caminho Windows com barras invertidas (.pdf .docx .xlsx .zip) abre no programa padrão", () => {
+  const cases = ["D:\\docs\\manual.pdf", "D:\\docs\\relatorio.docx", "D:\\docs\\planilha.xlsx", "D:\\docs\\pacote.zip"];
+  for (const raw of cases) {
+    const visible = `veja ${raw} agora`;
+    const files = extractFileCandidates(visible);
+    assert.equal(files.length, 1, raw);
+    assert.equal(files[0].uri, raw);
+    assert.deepEqual(routeTermLink(raw, WIN), { kind: "open", path: raw }, raw);
+    const links = lineFallbackLinks(cellsOf(visible), visible);
+    assert.equal(links.length, 1, raw);
+    assert.equal(links[0].uri, raw);
+    const at = visible.indexOf(raw);
+    assert.equal(links[0].x1, at + 1, raw);
+    assert.equal(links[0].x2, at + raw.length, raw);
+  }
+});
+
+test("caminho com espaços entre aspas: o intervalo não inclui as aspas", () => {
+  const path = "D:\\docs\\meu arquivo.pdf";
+  const visible = `abra "${path}" por favor`;
+  const files = extractFileCandidates(visible);
+  assert.deepEqual(files.map((f) => f.uri), [path]);
+  const links = lineFallbackLinks(cellsOf(visible), visible);
+  assert.equal(links.length, 1);
+  assert.equal(links[0].uri, path);
+  const at = visible.indexOf(path);
+  assert.equal(links[0].x1, at + 1);
+  assert.equal(links[0].x2, at + path.length);
+  assert.equal(visible[links[0].x1 - 2], '"');
+  assert.equal(visible[links[0].x2], '"');
+});
+
+test("executável e similares não abrem: mostram o arquivo na pasta", () => {
+  for (const ext of [".exe", ".bat", ".cmd", ".ps1", ".lnk", ".js", ".vbs", ".msi", ".scr"]) {
+    const path = `D:\\docs\\ferramenta${ext}`;
+    assert.deepEqual(routeTermLink(path, WIN), { kind: "reveal", path }, ext);
+  }
+});
+
+test("file://, til, relativo e WSL de um .pdf abrem no programa padrão", () => {
+  assert.deepEqual(routeTermLink("file:///D:/docs/manual.pdf", WIN), { kind: "open", path: "D:\\docs\\manual.pdf" });
+  assert.deepEqual(routeTermLink("~\\docs\\manual.pdf", WIN), { kind: "open", path: "~\\docs\\manual.pdf" });
+  assert.deepEqual(routeTermLink("~/docs/manual.pdf", WIN), { kind: "open", path: "~\\docs\\manual.pdf" });
+  assert.deepEqual(routeTermLink("manual.pdf", WIN), { kind: "open", path: "D:\\docs\\manual.pdf" });
+  const wsl = { paneKind: "wsl", paneWsl: true, paneDistro: "Debian", paneCwd: "file://wsl.localhost/Debian/home/u" };
+  assert.deepEqual(routeTermLink("/home/u/docs/manual.pdf", wsl), {
+    kind: "open",
+    path: "\\\\wsl.localhost\\Debian\\home\\u\\docs\\manual.pdf",
+  });
+  assert.deepEqual(routeTermLink("/mnt/d/docs/manual.pdf", wsl), { kind: "open", path: "D:\\docs\\manual.pdf" });
+});
+
+test("URL solta e OSC 8 com texto here abrem no navegador", () => {
+  const uri = "https://example.com/device?code=ABCD";
+  assert.deepEqual(routeTermLink(uri, WIN), { kind: "http", url: uri });
+  const row = `Click ${osc8(uri, "here")} to show full URL`;
+  const spans = parseOsc8Spans(row);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].uri, uri);
+  assert.equal(stripEscapes(row).slice(spans[0].start, spans[0].end), "here");
+  const visible = stripEscapes(row);
+  const links = lineFallbackLinks(cellsOf(visible), row);
+  assert.deepEqual(links.map((l) => l.uri), []);
+});
+
+test("caractere largo antes do .pdf: a coluna acompanha a largura", () => {
+  const path = "D:\\docs\\manual.pdf";
+  const visible = `⏺ ${path}`;
+  const links = lineFallbackLinks(cellsOf(visible), visible);
+  assert.equal(links.length, 1);
+  const at = visible.indexOf(path);
+  assert.equal(links[0].x1, at + 1 + 1);
+  assert.equal(links[0].x2, at + path.length + 1);
+  assert.equal(links[0].uri, path);
+});
+
+test("linha mais longa que as células visíveis: o caminho inteiro continua sendo o alvo", () => {
+  const full = "D:\\docs\\sub\\manual.pdf";
+  const visible = full.slice(0, 12);
+  const links = lineFallbackLinks(cellsOf(visible), full);
+  assert.equal(links.length, 1);
+  assert.equal(links[0].uri, full);
+  assert.equal(links[0].x1, 1);
+  assert.equal(links[0].x2, visible.length);
+});
+
+test("caminho quebrado com isWrapped: o alvo é o caminho inteiro e as colunas batem em cada pedaço", () => {
+  const path = "D:\\docs\\manual.pdf";
+  const cut = 8;
+  const head = `veja ${path.slice(0, cut)}`;
+  const tail = path.slice(cut);
+  const rows = [
+    { cells: cellsOf(head), wrapped: false, raw: head },
+    { cells: cellsOf(tail), wrapped: true, raw: tail },
+  ];
+  const links = fallbackLinksTouching(rows, 1);
+  assert.equal(links.length, 1);
+  assert.equal(links[0].uri, path);
+  assert.equal(links[0].y1, 1);
+  assert.equal(links[0].x1, "veja ".length + 1);
+  assert.equal(links[0].y2, 2);
+  assert.equal(links[0].x2, tail.length);
+  assert.deepEqual(fallbackLinksTouching(rows, 2), links);
+});
+
+test("rastreamento de mouse: clique puro vai ao programa; Ctrl+clique abre e não é reportado", () => {
+  const plain = { ctrl: false, meta: false, shift: false };
+  const ctrl = { ctrl: true, meta: false, shift: false };
+  const shift = { ctrl: false, meta: false, shift: true };
+  assert.equal(shouldActivateLink(false, plain), true);
+  assert.equal(shouldActivateLink(true, plain), false);
+  assert.equal(shouldActivateLink(true, ctrl), true);
+  assert.equal(shouldActivateLink(true, shift), false);
+  assert.equal(shouldActivateLink(false, shift), false);
+  assert.equal(suppressAppMouseDown(true, ctrl), true);
+  assert.equal(suppressAppMouseDown(true, plain), false);
+  assert.equal(suppressAppMouseDown(false, ctrl), false);
+  assert.match(linkHoverHint(true, "open"), /Ctrl\+clique para abrir/);
+  assert.match(linkHoverHint(false, "http"), /^Clique para abrir no navegador$/);
+  assert.match(linkHoverHint(true, "reveal"), /mostrar na pasta/);
+});
+
+// Sem DOM: o gesto no xterm é conferido lendo o componente, como links.test.ts.
+test("TerminalView: Ctrl+clique abre, a dica aparece e o clique puro segue para o programa", () => {
+  const src = fs.readFileSync("src/components/TerminalView.tsx", "utf8");
+  assert.match(src, /shouldActivateLink/);
+  assert.match(src, /suppressAppMouseDown/);
+  assert.match(src, /linkHoverHint/);
+  assert.match(src, /xterm-hover/);
+  assert.match(src, /\/api\/local-file\/open-default/);
+  assert.match(src, /\/api\/local-file\/reveal/);
 });

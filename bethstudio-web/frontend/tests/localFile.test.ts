@@ -123,6 +123,13 @@ test("file:// do WSL: host ignorado, %XX decodificado, wsl.localhost vira UNC", 
   assert.equal(resolveLinkPath("vscode://file/x.md", { paneKind: "powershell", paneCwd: "file:///C:/src" }), null);
 });
 
+test("resolveLinkPath: til não é colado no cwd como se fosse relativo", () => {
+  const ctx = { paneKind: "powershell", paneCwd: "file:///D:/docs/" };
+  assert.equal(resolveLinkPath("~\\docs\\manual.pdf", ctx), "~\\docs\\manual.pdf");
+  assert.equal(resolveLinkPath("~/docs/manual.pdf", ctx), "~\\docs\\manual.pdf");
+  assert.equal(resolveLinkPath("~", ctx), "~");
+});
+
 test("resolveLinkPath: ambíguo (sem cwd claro, ou pane sem cwd) não vira clicável", () => {
   assert.equal(resolveLinkPath("relatorio.md", { paneKind: "powershell" }), null);
   assert.equal(resolveLinkPath("relatorio.md", { paneKind: "wsl", paneCwd: "" }), null);
