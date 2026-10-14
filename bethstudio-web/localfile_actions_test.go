@@ -123,6 +123,18 @@ func TestServeReveal(t *testing.T) {
 	if rr.Code != 200 || revealed != p {
 		t.Fatalf("reveal: %d %s revealed=%q", rr.Code, rr.Body, revealed)
 	}
+	// executável não é programa para abrir, mas aparece na pasta
+	exe := filepath.Join(dir, "ferramenta.exe")
+	os.WriteFile(exe, []byte("x"), 0o644)
+	revealed = ""
+	reqExe := httptest.NewRequest("POST", "/api/local-file/reveal", strings.NewReader(`{"path":`+strconv.Quote(exe)+`}`))
+	reqExe.Header.Set("Content-Type", "application/json")
+	rrExe := httptest.NewRecorder()
+	serveLocalFileReveal(rrExe, reqExe)
+	if rrExe.Code != 200 || revealed != exe {
+		t.Fatalf("reveal exe: %d %s revealed=%q", rrExe.Code, rrExe.Body, revealed)
+	}
+
 	// nao existe
 	revealed = ""
 	req2 := httptest.NewRequest("POST", "/api/local-file/reveal", strings.NewReader(`{"path":`+strconv.Quote(filepath.Join(dir, "sumiu.png"))+`}`))

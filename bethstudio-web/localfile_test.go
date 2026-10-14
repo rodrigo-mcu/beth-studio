@@ -11,6 +11,24 @@ import (
 	"testing"
 )
 
+func TestExpandHomePath(t *testing.T) {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		t.Fatal(err)
+	}
+	got, err := validateLocalPath(`~\docs\manual.pdf`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(home, "docs", "manual.pdf")
+	if got != want {
+		t.Fatalf("expand = %q, queria %q", got, want)
+	}
+	if _, err := validateLocalPath(`~\..\manual.pdf`); err == nil {
+		t.Fatal("~ com .. deveria ser rejeitado")
+	}
+}
+
 func TestValidateLocalPath(t *testing.T) {
 	ok := []string{`C:\src\repo\README.md`, `C:/src/repo/README.md`, `\\wsl$\Debian\home\user\notes.txt`, `\\server\share\photo.png`}
 	for _, p := range ok {
@@ -209,6 +227,41 @@ func TestServeOpenLocalFileDefault(t *testing.T) {
 	serveOpenLocalFileDefault(rr4, req4)
 	if rr4.Code != 404 {
 		t.Fatalf("não existe: %d %s", rr4.Code, rr4.Body)
+	}
+
+	// pdf (e similares) abre no programa padrão; a existência é conferida antes
+	pdf := filepath.Join(dir, "manual.pdf")
+	os.WriteFile(pdf, []byte("%PDF"), 0o644)
+	launchedPath = ""
+	bodyPdf := `{"path":` + strconv.Quote(pdf) + `}`
+	reqPdf := httptest.NewRequest("POST", "/api/local-file/open-default", strings.NewReader(bodyPdf))
+	reqPdf.Header.Set("Content-Type", "application/json")
+	rrPdf := httptest.NewRecorder()
+	serveOpenLocalFileDefault(rrPdf, reqPdf)
+	if rrPdf.Code != 200 || launchedPath != pdf {
+		t.Fatalf("pdf: %d %s launched=%q", rrPdf.Code, rrPdf.Body, launchedPath)
+	}
+	for _, name := range []string{"a.docx", "a.xlsx", "a.zip"} {
+		p := filepath.Join(dir, name)
+		os.WriteFile(p, []byte("x"), 0o644)
+		launchedPath = ""
+		reqN := httptest.NewRequest("POST", "/api/local-file/open-default", strings.NewReader(`{"path":`+strconv.Quote(p)+`}`))
+		reqN.Header.Set("Content-Type", "application/json")
+		rrN := httptest.NewRecorder()
+		serveOpenLocalFileDefault(rrN, reqN)
+		if rrN.Code != 200 || launchedPath != p {
+			t.Fatalf("%s: %d %s launched=%q", name, rrN.Code, rrN.Body, launchedPath)
+		}
+	}
+
+	// pasta não abre
+	bodyDir := `{"path":` + strconv.Quote(dir) + `}`
+	reqDir := httptest.NewRequest("POST", "/api/local-file/open-default", strings.NewReader(bodyDir))
+	reqDir.Header.Set("Content-Type", "application/json")
+	rrDir := httptest.NewRecorder()
+	serveOpenLocalFileDefault(rrDir, reqDir)
+	if rrDir.Code != 400 {
+		t.Fatalf("pasta: %d %s", rrDir.Code, rrDir.Body)
 	}
 
 	// metodo errado
