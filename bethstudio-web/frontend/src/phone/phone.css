@@ -429,6 +429,17 @@ button:disabled {
   color: var(--bg);
 }
 
+.p-chips--wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.p-chips--wrap .p-chip {
+  height: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+}
+
 /* --- menu ------------------------------------------------------------- */
 
 .p-menu {
@@ -681,6 +692,11 @@ button:disabled {
   font-weight: 600;
   font-size: 14px;
   min-height: 32px;
+}
+
+.p-link--touch {
+  min-height: 44px;
+  padding: 8px 12px;
 }
 
 .p-prefix {

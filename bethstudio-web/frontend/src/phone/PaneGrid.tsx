@@ -4,7 +4,7 @@ import type { Connection } from "@/lib/connection";
 import type { AgentState } from "@/lib/agents";
 import type { PaneInfo } from "@/lib/types";
 import type { Layout } from "@/lib/layout";
-import { buildCards, countByFilter, filterCards, previewLines, type GridCard, type GridFilter } from "@/lib/termGrid";
+import { buildCards, facetKindChips, facetStateCounts, filterCards, previewLines, toggleChip, type GridCard, type GridFilter, type GridKind } from "@/lib/termGrid";
 import { shortCwd } from "@/lib/panes";
 import { waitedFor } from "./text";
 
@@ -47,6 +47,7 @@ export function useGridData(conn: Connection, active: boolean): { layout: Layout
 // Busca e filtro da grade sobrevivem a abrir um terminal e voltar.
 let keptQuery = "";
 let keptFilter: GridFilter = "all";
+let keptKind: GridKind = "all";
 let keptScreen = false;
 
 const FILTERS: { id: GridFilter; label: string }[] = [
@@ -60,6 +61,8 @@ interface Props {
   conn: Connection;
   /** todos os terminais vivos, sem filtro: a grade tem a própria busca */
   panes: PaneInfo[];
+  /** ordem dos grupos da barra lateral do Studio; vazio usa a ordem padrão */
+  kindOrder?: string[] | null;
   agents: AgentState;
   nameOf: (p: PaneInfo) => string;
   now: number;
@@ -67,10 +70,11 @@ interface Props {
 }
 
 /** "Todos os terminais" como no desktop: cartões com print, nome, pasta, tipo e aba, com busca e filtros. */
-export function PaneGrid({ conn, panes, agents, nameOf, now, onOpen }: Props) {
+export function PaneGrid({ conn, panes, kindOrder, agents, nameOf, now, onOpen }: Props) {
   const { layout, shots } = useGridData(conn, true);
   const [query, setQueryState] = useState(keptQuery);
   const [filter, setFilterState] = useState<GridFilter>(keptFilter);
+  const [kind, setKindState] = useState<GridKind>(keptKind);
   const [withScreen, setWithScreenState] = useState(keptScreen);
   const setQuery = (v: string) => {
     keptQuery = v;
@@ -80,9 +84,18 @@ export function PaneGrid({ conn, panes, agents, nameOf, now, onOpen }: Props) {
     keptFilter = v;
     setFilterState(v);
   };
+  const setKind = (v: GridKind) => {
+    keptKind = v;
+    setKindState(v);
+  };
   const setWithScreen = (v: boolean) => {
     keptScreen = v;
     setWithScreenState(v);
+  };
+  const clearFilters = () => {
+    setQuery("");
+    setFilter("all");
+    setKind("all");
   };
 
   const cards = useMemo(() => {
@@ -94,7 +107,6 @@ export function PaneGrid({ conn, panes, agents, nameOf, now, onOpen }: Props) {
     // quem espera você vem primeiro; fora isso, a ordem do desktop
     return [...named.filter((c) => agents[c.pane]), ...named.filter((c) => !agents[c.pane])];
   }, [panes, layout, agents, nameOf]);
-  const counts = useMemo(() => countByFilter(cards), [cards]);
   const screens = useMemo(() => {
     const m = new Map(shots);
     for (const c of cards) {
@@ -103,7 +115,12 @@ export function PaneGrid({ conn, panes, agents, nameOf, now, onOpen }: Props) {
     }
     return m;
   }, [shots, cards, conn]);
-  const shown = useMemo(() => filterCards(cards, filter, query, screens, withScreen), [cards, filter, query, screens, withScreen]);
+  const counts = useMemo(() => facetStateCounts(cards, kind, query, screens, withScreen), [cards, kind, query, screens, withScreen]);
+  const kindChips = useMemo(
+    () => facetKindChips(cards, filter, query, screens, withScreen, kindOrder, kind),
+    [cards, filter, query, screens, withScreen, kindOrder, kind],
+  );
+  const shown = useMemo(() => filterCards(cards, filter, query, screens, withScreen, kind), [cards, filter, query, screens, withScreen, kind]);
   const filters = layout ? FILTERS : FILTERS.slice(0, 1);
 
   return (
@@ -129,10 +146,19 @@ export function PaneGrid({ conn, panes, agents, nameOf, now, onOpen }: Props) {
           )}
         </label>
         {filters.length > 1 && (
-          <div className="p-chips" role="group" aria-label="Quais terminais">
+          <div className="p-chips p-chips--wrap" role="group" aria-label="Estado do terminal">
             {filters.map((f) => (
-              <button key={f.id} type="button" className="p-chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+              <button key={f.id} type="button" className="p-chip" aria-pressed={filter === f.id} onClick={() => setFilter(toggleChip(filter, f.id, "all"))}>
                 {f.label} {counts[f.id]}
+              </button>
+            ))}
+          </div>
+        )}
+        {cards.length > 0 && (
+          <div className="p-chips p-chips--wrap" role="group" aria-label="Tipo de terminal">
+            {kindChips.map((chip) => (
+              <button key={chip.id} type="button" className="p-chip" aria-pressed={kind === chip.id} onClick={() => setKind(toggleChip(kind, chip.id, "all"))}>
+                {chip.label} {chip.count}
               </button>
             ))}
           </div>
@@ -146,15 +172,8 @@ export function PaneGrid({ conn, panes, agents, nameOf, now, onOpen }: Props) {
         <div className="p-empty">
           <strong>{cards.length === 0 ? "Nenhum terminal aberto" : "Nenhum terminal encontrado"}</strong>
           {cards.length > 0 && (
-            <button
-              type="button"
-              className="p-link"
-              onClick={() => {
-                setQuery("");
-                setFilter("all");
-              }}
-            >
-              Mostrar todos
+            <button type="button" className="p-link p-link--touch" onClick={clearFilters}>
+              Limpar filtros
             </button>
           )}
         </div>

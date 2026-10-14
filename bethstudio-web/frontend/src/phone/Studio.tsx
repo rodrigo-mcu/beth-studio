@@ -138,6 +138,7 @@ export function Studio({ local, onSession }: { local: boolean; onSession: (s: Se
             gone={paneId != null && snap.panes != null && !info}
             banner={banner}
             canLogout={!local}
+            kindOrder={snap.settings?.sidebar?.kind_order}
             onOpen={open}
             onLogout={() => leave("login")}
           />

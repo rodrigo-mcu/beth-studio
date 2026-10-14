@@ -37,11 +37,13 @@ interface Props {
   gone: boolean;
   banner: ReactNode;
   canLogout: boolean;
+  /** ordem dos tipos escolhida em Configurações no Studio */
+  kindOrder?: string[] | null;
   onOpen: (id: number) => void;
   onLogout: () => void;
 }
 
-export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, banner, canLogout, onOpen, onLogout }: Props) {
+export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, banner, canLogout, kindOrder, onOpen, onLogout }: Props) {
   const [menu, setMenu] = useState(false);
   const [view, setViewState] = useState<View>(loadView);
   const setView = (v: View) => {
@@ -199,7 +201,7 @@ export function AgentList({ conn, panes, agents, recent, nameOf, online, gone, b
             Abra um terminal no Beth Studio do PC e ele aparece aqui.
           </div>
         )}
-        {view === "grid" && all && <PaneGrid conn={conn} panes={all} agents={agents} nameOf={label} now={now} onOpen={onOpen} />}
+        {view === "grid" && all && <PaneGrid conn={conn} panes={all} kindOrder={kindOrder} agents={agents} nameOf={label} now={now} onOpen={onOpen} />}
         {view === "list" && waiting.length > 0 && (
           <>
             <div className="p-group p-group--wait">{waiting.length === 1 ? "Esperando você" : `${waiting.length} esperando você`}</div>

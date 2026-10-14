@@ -58,8 +58,15 @@ export function kindGroup(p: Pick<PaneInfo, "kind">): KindGroup {
     case "mobaxterm":
     case "other":
       return "other";
-    default:
+    case "unknown":
+    case "":
+    case undefined:
       return "unknown";
+    default:
+      // bash, zsh, fish, sh e qualquer kind ainda sem grupo (Linux/macOS).
+      // Cai em Outros; KIND_ORDER salvo pelo usuario nao ganha entrada nova.
+      // kind ausente, vazio ou "unknown" continua Desconhecido. kind_label nao entra aqui.
+      return "other";
   }
 }
 
