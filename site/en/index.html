@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beth Studio: terminals that outlive the interface</title>
-<meta name="description" content="Beth Studio is a mouse-first terminal for Windows. A persistent host owns your shells, AI agents and WSL sessions, so if the interface freezes, your terminals keep running.">
+<title>Beth Studio: talk instead of typing, terminals that stay up</title>
+<meta name="description" content="Beth Studio is a mouse-first terminal for Windows with voice dictation in Studio and on your phone. A persistent host owns your shells, AI agents and WSL sessions, so if the interface freezes, your terminals keep running.">
 <meta name="color-scheme" content="light dark">
 <link rel="alternate" hreflang="pt-BR" href="../index.html">
 <link rel="alternate" hreflang="en" href="index.html">
 <link rel="alternate" hreflang="x-default" href="../index.html">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1217'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23f5a524'/%3E%3C/svg%3E">
+<script>(function(){try{var t=localStorage.getItem('bs-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -20,28 +21,80 @@
     <a class="brand" href="index.html"><span class="dot" aria-hidden="true"></span>Beth Studio</a>
     <nav class="main" aria-label="Page sections">
       <a href="#how-it-works">How it works</a>
+      <a href="#voice">Voice</a>
+      <a href="#long-days">Long days</a>
       <a href="#features">Features</a>
       <a href="#heavy-use">Heavy use</a>
       <a href="#download">Download</a>
     </nav>
-    <div class="lang" role="group" aria-label="Language">
-      <a href="../index.html" lang="pt-BR" hreflang="pt-BR" aria-label="Ler esta página em português">PT</a>
-      <span aria-current="true" lang="en">EN</span>
+    <div class="ctl">
+      <button type="button" class="theme-btn" id="tema" hidden aria-label="Change theme">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg><span>Theme</span>
+      </button>
+      <div class="lang" role="group" aria-label="Language">
+        <a href="../index.html" lang="pt-BR" hreflang="pt-BR" aria-label="Ler esta página em português">PT</a>
+        <span aria-current="true" lang="en">EN</span>
+      </div>
     </div>
   </div>
 </header>
 
 <main id="content">
   <div class="wrap hero">
-    <p class="eyebrow">A mouse-first terminal for Windows</p>
-    <h1>Terminals that outlive the interface.</h1>
-    <p class="lead"><strong>Beth Studio</strong> separates your terminals from the interface. A <strong>persistent host</strong> owns your shells, AI agents and WSL sessions. If the interface freezes, or you restart it, everything keeps running.</p>
-    <div class="cta">
-      <a class="btn" href="#download">Download for Windows</a>
-      <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">View on GitHub</a>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">A mouse-first terminal for Windows</p>
+        <h1>Talk instead of typing. Terminals that <span class="hl">outlive</span> the UI.</h1>
+        <p class="lead"><strong>Beth Studio</strong> dictates by voice on Windows and on your phone, tells you when an AI agent is waiting for you, and keeps your terminals in a <strong>persistent host</strong>. If the interface freezes, or you restart it, shells, agents and WSL sessions keep running.</p>
+        <div class="cta">
+          <a class="btn" href="#download">Download for Windows</a>
+          <a class="btn ghost" href="#voice">See the voice</a>
+          <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">GitHub</a>
+        </div>
+        <p class="note">Open source. Windows 10 or 11. Linux and macOS: planned, no date.</p>
+        <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 400 420" role="img" aria-labelledby="dg-t dg-d">
+          <title id="dg-t">Diagram: persistent host and interface</title>
+          <desc id="dg-d">On top, the interface connected to the persistent host, which holds the terminals. Below, the interface has gone down, but the host keeps every terminal running.</desc>
+          <text class="d-state" x="40" y="18">NORMAL</text>
+          <rect class="d-ui" x="40" y="28" width="320" height="50" rx="6"/>
+          <text class="d-t" x="200" y="58" text-anchor="middle">Interface (Studio)</text>
+          <line class="d-link" x1="200" y1="82" x2="200" y2="114"/>
+          <polygon class="d-arrow" points="200,78 194,88 206,88"/>
+          <polygon class="d-arrow" points="200,118 194,108 206,108"/>
+          <rect class="d-host" x="40" y="118" width="320" height="86" rx="6"/>
+          <text class="d-t" x="200" y="141" text-anchor="middle">Persistent host</text>
+          <rect class="d-chip" x="52" y="158" width="64" height="30" rx="4"/><text class="d-m" x="84" y="177" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="126" y="158" width="64" height="30" rx="4"/><text class="d-m" x="158" y="177" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="200" y="158" width="64" height="30" rx="4"/><text class="d-m" x="232" y="177" text-anchor="middle">agent</text>
+          <rect class="d-chip" x="274" y="158" width="74" height="30" rx="4"/><text class="d-m" x="311" y="177" text-anchor="middle">build</text>
+
+          <text class="d-state" x="40" y="240">THE INTERFACE WENT DOWN</text>
+          <rect class="d-ui-dead" x="40" y="250" width="320" height="50" rx="6"/>
+          <text class="d-s" x="200" y="280" text-anchor="middle">Interface frozen or closed</text>
+          <line class="d-x" x1="334" y1="262" x2="348" y2="288"/><line class="d-x" x1="348" y1="262" x2="334" y2="288"/>
+          <line class="d-link-dead" x1="200" y1="304" x2="200" y2="332"/>
+          <rect class="d-host" x="40" y="336" width="320" height="76" rx="6"/>
+          <text class="d-ok" x="200" y="357" text-anchor="middle">Host: terminals keep running</text>
+          <rect class="d-chip" x="52" y="368" width="64" height="30" rx="4"/><text class="d-m" x="84" y="387" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="126" y="368" width="64" height="30" rx="4"/><text class="d-m" x="158" y="387" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="200" y="368" width="64" height="30" rx="4"/><text class="d-m" x="232" y="387" text-anchor="middle">agent</text>
+          <rect class="d-chip" x="274" y="368" width="74" height="30" rx="4"/><text class="d-m" x="311" y="387" text-anchor="middle">build</text>
+        </svg>
+        <figcaption>Simplified diagram, not a screenshot.</figcaption>
+      </figure>
     </div>
-    <p class="note">Open source. Windows 10 or 11. Linux and macOS: planned, no date.</p>
-    <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
+
+    <figure class="shot win hero-shot">
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
+      <div class="frame">
+        <img src="../assets/shots/hero-studio.webp" width="1600" height="1000" loading="lazy" alt="The Beth Studio window with the sidebar, tabs and two split terminals." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+        <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture. Expected file:</span><code>assets/shots/hero-studio.webp</code><span>aspect ratio 16:10</span></div>
+      </div>
+      <figcaption>Studio on Windows: sidebar, tabs and split terminals.</figcaption>
+    </figure>
 
     <div class="problem">
       <h2>The problem</h2>
@@ -49,78 +102,199 @@
     </div>
   </div>
 
-  <section id="how-it-works" aria-labelledby="h-how">
-    <div class="wrap how">
-      <div>
-        <h2 class="title" id="h-how">How it works</h2>
-        <ol>
-          <li><strong>The host owns the terminals.</strong> <code>bethstudio-host.exe</code> (derived from WezTerm) holds every shell, agent and WSL session.</li>
-          <li><strong>The interface is just a layer.</strong> Studio (Go + React in WebView2) connects to the host and displays the terminals. Closing, freezing or restarting the interface does not touch them.</li>
-          <li><strong>Update without losing anything.</strong> Under <em>Settings &gt; About &gt; Reload interface</em> the new interface comes in and the host keeps running.</li>
-          <li><strong>If the host itself goes down,</strong> Studio starts another one and recreates the terminals in the same tabs and folders. What was running inside them is not recovered, only the shell, folder, title and position.</li>
-        </ol>
-      </div>
-      <figure class="diagram">
-        <svg viewBox="0 0 400 420" role="img" aria-labelledby="dg-t dg-d">
-          <title id="dg-t">Diagram: persistent host and interface</title>
-          <desc id="dg-d">On top, the interface connected to the persistent host, which holds the terminals. Below, the interface has gone down, but the host keeps every terminal running.</desc>
-          <text class="d-state" x="40" y="18">NORMAL</text>
-          <rect class="d-ui" x="40" y="28" width="320" height="50" rx="10"/>
-          <text class="d-t" x="200" y="58" text-anchor="middle">Interface (Studio)</text>
-          <line class="d-link" x1="200" y1="82" x2="200" y2="114"/>
-          <polygon class="d-arrow" points="200,78 194,88 206,88"/>
-          <polygon class="d-arrow" points="200,118 194,108 206,108"/>
-          <rect class="d-host" x="40" y="118" width="320" height="86" rx="10"/>
-          <text class="d-t" x="200" y="141" text-anchor="middle">Persistent host</text>
-          <rect class="d-chip" x="52" y="158" width="64" height="30" rx="6"/><text class="d-m" x="84" y="177" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="158" width="64" height="30" rx="6"/><text class="d-m" x="158" y="177" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="158" width="64" height="30" rx="6"/><text class="d-m" x="232" y="177" text-anchor="middle">agent</text>
-          <rect class="d-chip" x="274" y="158" width="74" height="30" rx="6"/><text class="d-m" x="311" y="177" text-anchor="middle">build</text>
+  <section id="how-it-works" class="how" aria-labelledby="h-how">
+    <div class="wrap">
+      <p class="sec-label">01 / architecture</p>
+      <h2 class="title" id="h-how">How it works</h2>
+      <ol>
+        <li><div><strong>The host owns the terminals.</strong> <code>bethstudio-host.exe</code> (derived from WezTerm) holds every shell, agent and WSL session.</div></li>
+        <li><div><strong>The interface is just a layer.</strong> Studio (Go + React in WebView2) connects to the host and displays the terminals. Closing, freezing or restarting the interface does not touch them.</div></li>
+        <li><div><strong>Update without losing anything.</strong> Under <em>Settings &gt; About &gt; Reload interface</em> the new interface comes in and the host keeps running.</div></li>
+        <li><div><strong>If the host itself goes down,</strong> Studio starts another one and recreates the terminals in the same tabs and folders. What was running inside them is not recovered, only the shell, folder, title and position.</div></li>
+      </ol>
+    </div>
+  </section>
 
-          <text class="d-state" x="40" y="240">THE INTERFACE WENT DOWN</text>
-          <rect class="d-ui-dead" x="40" y="250" width="320" height="50" rx="10"/>
-          <text class="d-s" x="200" y="280" text-anchor="middle">Interface frozen or closed</text>
-          <line class="d-x" x1="334" y1="262" x2="348" y2="288"/><line class="d-x" x1="348" y1="262" x2="334" y2="288"/>
-          <line class="d-link-dead" x1="200" y1="304" x2="200" y2="332"/>
-          <rect class="d-host" x="40" y="336" width="320" height="76" rx="10"/>
-          <text class="d-ok" x="200" y="357" text-anchor="middle">Host: terminals keep running</text>
-          <rect class="d-chip" x="52" y="368" width="64" height="30" rx="6"/><text class="d-m" x="84" y="387" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="368" width="64" height="30" rx="6"/><text class="d-m" x="158" y="387" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="368" width="64" height="30" rx="6"/><text class="d-m" x="232" y="387" text-anchor="middle">agent</text>
-          <rect class="d-chip" x="274" y="368" width="74" height="30" rx="6"/><text class="d-m" x="311" y="387" text-anchor="middle">build</text>
-        </svg>
-        <figcaption>Simplified schematic, not a screenshot.</figcaption>
+  <section id="voice" class="voice" aria-labelledby="h-voice">
+    <div class="wrap">
+      <p class="sec-label">02 / voice</p>
+      <h2 class="title" id="h-voice">Talk instead of typing</h2>
+      <p class="sub">Record, the text is transcribed, you review it, and only then send it. This works in Studio on Windows and on the phone page. In neither does the text press Enter by itself before you have looked at it.</p>
+
+      <div class="vgrid">
+        <article class="vblock" aria-labelledby="h-vwin">
+          <span class="badge">Windows</span>
+          <h3 id="h-vwin">In Studio on the PC</h3>
+          <p>You record with the microphone, the audio is transcribed and, if you want, corrected by a language model before it is pasted into the terminal.</p>
+          <svg class="wave" viewBox="0 0 240 36" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="14" width="5" height="8" rx="2"/><rect x="12" y="9" width="5" height="18" rx="2"/><rect x="22" y="4" width="5" height="28" rx="2"/><rect x="32" y="11" width="5" height="14" rx="2"/><rect x="42" y="2" width="5" height="32" rx="2"/><rect x="52" y="8" width="5" height="20" rx="2"/><rect x="62" y="13" width="5" height="10" rx="2"/><rect x="72" y="5" width="5" height="26" rx="2"/><rect x="82" y="10" width="5" height="16" rx="2"/><rect x="92" y="15" width="5" height="6" rx="2"/><rect x="102" y="7" width="5" height="22" rx="2"/><rect x="112" y="3" width="5" height="30" rx="2"/><rect x="122" y="12" width="5" height="12" rx="2"/><rect x="132" y="6" width="5" height="24" rx="2"/><rect x="142" y="14" width="5" height="8" rx="2"/><rect x="152" y="9" width="5" height="18" rx="2"/><rect x="162" y="4" width="5" height="28" rx="2"/><rect x="172" y="13" width="5" height="10" rx="2"/><rect x="182" y="8" width="5" height="20" rx="2"/><rect x="192" y="15" width="5" height="6" rx="2"/><rect x="202" y="10" width="5" height="16" rx="2"/><rect x="212" y="5" width="5" height="26" rx="2"/><rect x="222" y="14" width="5" height="8" rx="2"/><rect x="232" y="16" width="5" height="4" rx="2"/></svg>
+          <ol class="vsteps">
+            <li><b>Record</b><span>Click Speak (the button is labeled in Portuguese, “Falar”). A bar shows the sound level and warns if no sound is picked up. Recording lasts up to 10 minutes.</span></li>
+            <li><b>Transcribe</b><span>When you stop, the audio goes to the transcription provider you chose.</span></li>
+            <li class="opt"><b>Correct, if you want</b><span>A language model fixes recognition errors. It is off by default. If it takes too long, Studio uses the uncorrected text.</span></li>
+            <li><b>Review</b><span>See what the correction changed and switch between the original and the corrected text.</span></li>
+            <li><b>Send to the terminal</b><span>The text is pasted without pressing Enter. You confirm in the agent itself.</span></li>
+          </ol>
+          <ul class="facts">
+            <li>The first time, a privacy notice tells you where the audio and the text go.</li>
+            <li>The cost of each call is logged on this computer only, without storing audio or text. You can set a monthly limit warning.</li>
+            <li>The voice model and the database model are configured separately, in Settings.</li>
+            <li>The voice panel does not close on an outside click while it records, transcribes, corrects or shows the text for review.</li>
+          </ul>
+        </article>
+
+        <article class="vblock" aria-labelledby="h-vphone">
+          <span class="badge">Phone</span>
+          <h3 id="h-vphone">In the phone WebApp</h3>
+          <p>A page of its own that opens in the phone's browser. The Speak button records with a level meter.</p>
+          <ol class="vsteps">
+            <li><b>Record</b><span>Tap Speak and watch the level meter.</span></li>
+            <li><b>Transcribe</b><span>The audio goes up to your PC, and your PC sends it to the transcription provider you configured.</span></li>
+            <li class="opt"><b>Correct, if you want</b><span>The AI correction streams into the message field itself.</span></li>
+            <li><b>Review</b><span>The text lands in the field. Use “Voltar ao que foi transcrito” (back to the transcript) or Apagar (delete). Dictating again adds to the text.</span></li>
+            <li><b>Send</b><span>Nothing reaches the terminal until you tap Enviar (Send), which pastes the text and presses Enter.</span></li>
+          </ol>
+          <ul class="facts">
+            <li>The phone never receives the voice provider's address or key.</li>
+            <li>It needs the <code>bethstudio-proxy</code> program on a server of your own. Off by default.</li>
+          </ul>
+          <figure class="shot r-phone" style="margin-top:1.25rem">
+            <div class="frame">
+              <img src="../assets/shots/voz-celular.webp" width="900" height="1900" loading="lazy" alt="Phone screen with the Speak button and the transcribed text in the message field." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+              <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture.</span><code>assets/shots/voz-celular.webp</code><span>aspect ratio 9:19</span></div>
+            </div>
+            <figcaption>Dictation on the phone, with the text in the field for review.</figcaption>
+          </figure>
+        </article>
+      </div>
+
+      <figure class="shot win" style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:56rem">
+        <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Speak</span></div>
+        <div class="frame">
+          <img src="../assets/shots/voz-windows.webp" width="1600" height="1000" loading="lazy" alt="Studio voice panel with the transcribed text and the box showing what the correction changed." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+          <div class="ph"><strong>Screenshot placeholder</strong><span>Reserved space, not a real capture. Expected file:</span><code>assets/shots/voz-windows.webp</code><span>aspect ratio 16:10</span></div>
+        </div>
+        <figcaption>The Studio voice panel: reviewing the text before sending.</figcaption>
       </figure>
+
+      <div class="where">
+        <h3>Where the audio and the text go</h3>
+        <p>The audio goes to the transcription provider you configured, and the transcribed text goes to the correction provider, if you turned correction on. With local providers, the data stays at the address you set, by default the computer itself. On the phone, the audio reaches your PC first.</p>
+        <p>Beth Studio does not keep the audio or the text: it keeps only the settings and the cost log.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="long-days" aria-labelledby="h-long">
+    <div class="wrap">
+      <p class="sec-label">03 / long sessions</p>
+      <h2 class="title" id="h-long">For long working days</h2>
+      <p class="sub">A long day in the terminal tends to follow the same script: long texts for the agent, waiting, freezes, and files going back and forth. Each item below deals with one of those, and all of them already exist in the product.</p>
+      <ul class="long-list">
+        <li><b>01</b><div><h3>Talk instead of typing long texts</h3><p>Dictate with the microphone on the PC or on the phone, review, and send. Nothing is sent before you confirm.</p></div></li>
+        <li><b>02</b><div><h3>A notice when the agent is waiting for you</h3><p>An amber dot shows on the tab, in the sidebar and in the tray, with an “N waiting” summary. Windows notification and sound are optional.</p></div></li>
+        <li><b>03</b><div><h3>Follow along from your phone</h3><p>The list shows agents waiting for you first, with how long they have waited. Answer in large text with quick keys (1, 2, 3, arrows, Enter, Esc).</p></div></li>
+        <li><b>04</b><div><h3>Persistent host</h3><p>Terminals live in a separate process. If the interface freezes, they keep running.</p></div></li>
+        <li><b>05</b><div><h3>An interface you can update without killing sessions</h3><p>Reload the interface under Settings &gt; About without restarting the host. Terminals and agents stay alive.</p></div></li>
+        <li><b>06</b><div><h3>Images and files for the agent</h3><p>Paste a screenshot or a file copied in Explorer: Studio saves a copy and pastes its path. On the phone, attach an image to the message.</p></div></li>
+        <li><b>07</b><div><h3>Built-in task manager</h3><p>CPU, memory, GPU and disk, plus what each terminal consumes, to tell whether the weight is in the interface or in the programs you run.</p></div></li>
+        <li><b>08</b><div><h3>Terminals that come back after a crash</h3><p>If the host itself goes down, Studio starts it again and recreates the terminals in the same tabs and folders.</p></div></li>
+      </ul>
     </div>
   </section>
 
   <section id="features" aria-labelledby="h-feat">
     <div class="wrap">
+      <p class="sec-label">04 / everything it does</p>
       <h2 class="title" id="h-feat">Features</h2>
-      <p class="sub">A terminal and the tools around it, in one program.</p>
-      <ul class="grid">
-        <li><article class="card"><h3>Update without killing terminals</h3><p>Reload the interface without restarting Studio and without touching the host. Terminals and agents stay alive.</p></article></li>
-        <li><article class="card"><h3>Built-in task manager</h3><p>CPU, memory, GPU and disk for the computer, plus what each terminal consumes. It helps you tell whether the weight is in the interface or in the programs you run.</p></article></li>
-        <li><article class="card"><h3>Paste an image or file into the terminal</h3><p>Copy a screenshot or a file in Explorer and paste: Studio saves a file and pastes its path so the agent can open it. In WSL, <code>C:\…</code> becomes <code>/mnt/c/…</code>.</p></article></li>
-        <li><article class="card"><h3>Mouse first</h3><p>New tab, split, theme, font and detach to a window: everything is done by clicking, with no config file and no shortcuts to memorize.</p></article></li>
-        <li><article class="card"><h3>Tabs, splits and search</h3><p>Tabs, draggable splits, search, and sidebar views by organization, type or folder.</p></article></li>
-        <li><article class="card"><h3>All terminals</h3><p>A grid with one card per terminal, showing a text preview of its screen, so you can find the one you want at a glance.</p></article></li>
-        <li><article class="card"><h3>Detached terminal</h3><p>Move a terminal to its own window, even on another monitor, and drag it back to the tabs. It keeps running the whole time.</p></article></li>
-        <li><article class="card"><h3>Agent waiting</h3><p>An amber dot tells you when an AI agent stopped and is waiting for you, on the tab, in the sidebar and in the tray. Notification and sound are optional.</p></article></li>
-        <li><article class="card"><h3>Voice dictation</h3><p>Speak, review the text and send it to the terminal, with optional correction by an AI model.</p><span class="tag">uses the AI provider you configure</span></article></li>
-        <li><article class="card"><h3>Database client</h3><p>Built-in client for PostgreSQL, MySQL/MariaDB, SQL Server and SQLite: object tree, SQL with autocomplete and saved queries.</p></article></li>
-        <li><article class="card"><h3>SSH, serial and SFTP</h3><p>Saved SSH hosts and serial ports, and an SFTP window with local and remote panes.</p></article></li>
-        <li><article class="card"><h3>Editor and notes</h3><p>Open and edit text and Markdown, with a formatted preview, and keep notes that save themselves.</p></article></li>
-        <li><article class="card"><h3>Browser and phone</h3><p>Use the full Studio in another computer's browser, or a dedicated phone page to talk to your agents. Off by default.</p><span class="tag">needs a server of your own</span></article></li>
-        <li><article class="card"><h3>Self-recovery</h3><p>If the host goes down, Studio starts it again and recreates the terminals in the same tabs and folders.</p></article></li>
-        <li><article class="card"><h3>WSL with smart startup</h3><p>A WSL terminal waits for the distro to respond and the folder to appear before opening, instead of closing right away or landing in the wrong folder.</p></article></li>
-        <li><article class="card"><h3>Themes and fonts</h3><p>Gogh and VS Code style themes, font choice, and theme and font per terminal.</p></article></li>
-      </ul>
+      <p class="sub">A terminal and the tools around it, in one program. Today Beth Studio runs on Windows only.</p>
+      <p class="legend"><span><span class="tag win">Windows only</span> relies on Windows features</span><span><span class="tag pc">PC only</span> not available on the phone or in Studio through the browser</span></p>
+
+      <div class="cat" id="f-terminals">
+        <div class="cat-head"><p class="idx">A</p><h3>Terminals and layout</h3><p>Everything is done with the mouse, no config file.</p></div>
+        <ul class="rows">
+          <li><h4>New terminals</h4><p>cmd, PowerShell 5.1 and 7, WSL (default and named distros) and Git Bash, with the starting folder picked via Browse…<br><span class="tag win">Windows only</span></p></li>
+          <li><h4>Tabs and splits</h4><p>Draggable splits (right, below, above, left), and tabs you can rename, reorder and reopen. Closing a tab does not end the terminal.</p></li>
+          <li><h4>Sidebar views and search</h4><p>Minha organização, Como no Beth Studio, Por tipo and Por pasta (my layout, as in Beth Studio, by type, by folder). Search by title, folder, tab and, if you want, screen text.</p></li>
+          <li><h4>All terminals</h4><p>A grid with one card per terminal and a preview of its screen, with the filters All, In tabs, No tab and Ended. It also exists on the phone page.</p></li>
+          <li><h4>Detached terminal</h4><p>Move a terminal to its own window, even on another monitor, and drag it back to the tabs. It keeps running.<br><span class="tag pc">PC only</span></p></li>
+          <li><h4>End with confirmation</h4><p>Only “Encerrar terminal…” ends the process, and it asks first, warning you if an agent is waiting.</p></li>
+          <li><h4>Repair view</h4><p>Rebuilds just that pane's screen in Studio, sends no reset to the terminal, and can be used while an agent runs.</p></li>
+          <li><h4>History, snapshot and links</h4><p>Copy or save the full scrollback, copy or save a screen snapshot. http(s) links open in the browser; .md, .txt, .log files and images open in a preview panel.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-appearance">
+        <div class="cat-head"><p class="idx">B</p><h3>Appearance</h3><p>From the interface theme to each terminal's own theme.</p></div>
+        <ul class="rows">
+          <li><h4>Themes</h4><p>Three built-in themes, Gogh-format themes (.json files in a folder) and the color themes of your installed VS Code.</p></li>
+          <li><h4>Font and size per terminal</h4><p>Pick theme, font and size for each terminal. A font missing on the machine is flagged in the panel.</p></li>
+          <li><h4>Favorites and defaults</h4><p>Save theme and font combinations as favorites, and set the default theme, font and size for new terminals.</p></li>
+          <li><h4>Right colors for programs</h4><p>The Studio theme is sent to the host, so programs that ask for the background color get it right on light themes. Text almost the color of the background is adjusted until it reads.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-files">
+        <div class="cat-head"><p class="idx">C</p><h3>Files, notes and paste</h3><p>Getting things into the terminal and writing without leaving it.</p></div>
+        <ul class="rows">
+          <li><h4>Paste an image or file</h4><p>Print Screen or a file copied in Explorer: Studio saves a copy and pastes its path for the agent to open (up to 8 files). In WSL, <code>C:\…</code> becomes <code>/mnt/c/…</code>.<br><span class="tag win">Windows only</span></p></li>
+          <li><h4>Drop a file on the terminal</h4><p>Drop up to 5 files of up to 25 MB each: images and other files become copies and the path goes to the terminal.</p></li>
+          <li><h4>Open, edit and save</h4><p>Edit .md, .txt and .log with a formatted Markdown preview. Before overwriting a file that changed on disk, Studio asks.</p></li>
+          <li><h4>New file and notes</h4><p>A blank editor to write right away. What you type becomes a note that saves itself, with a side list to reopen or delete.</p></li>
+          <li><h4>File panel window</h4><p>Drag, resize, maximize, or dock to the left or right edge. Position and size are remembered.</p></li>
+          <li><h4>Folder browser</h4><p>Inside the page, with shortcuts to the user folder, the drives and the WSL distros, and New folder.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-agents">
+        <div class="cat-head"><p class="idx">D</p><h3>Agents and voice</h3><p>Knowing when the agent is waiting, and talking to it.</p></div>
+        <ul class="rows">
+          <li><h4>Agent waiting</h4><p>Recognizes the terminal bell, the terminal notification (OSC 9) and status variables, so it works with any agent that sends one of those signals. The notice clears when you type in the terminal or dismiss it.</p></li>
+          <li><h4>Voice dictation</h4><p>Record, transcribe, correct if you want, review, and send to the terminal without Enter. See the section <a href="#voice">Talk instead of typing</a>.</p></li>
+          <li><h4>AI providers</h4><p>Several transcription and correction providers, including local ones. Keys are encrypted by Windows, or read from environment variables. Code sign-in with your account for Grok Build and Codex, for correction and the database assistant.<br><span class="tag win">Windows only</span></p></li>
+          <li><h4>AI usage and cost</h4><p>Each paid call becomes a local log line, with no audio or text, with totals, a per-day chart, filtering, CSV export and a monthly limit warning.</p></li>
+          <li><h4>Full voice test</h4><p>Runs the whole path (microphone, transcription, correction and final text) without sending anything to the terminal, showing time and cost for each step.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-resilience">
+        <div class="cat-head"><p class="idx">E</p><h3>Host, WSL and tray</h3><p>What keeps the terminals standing.</p></div>
+        <ul class="rows">
+          <li><h4>Persistent host</h4><p>One host per user owns every terminal. Closing the window, quitting the tray or updating the interface ends nothing.</p></li>
+          <li><h4>Automatic recovery</h4><p>If the host goes down, Studio starts it again and recreates the terminals in the same tabs, folders, names and themes. A banner shows progress and anything that did not come back.</p></li>
+          <li><h4>Update without killing terminals</h4><p>Reload the interface without restarting Studio and without touching the host.</p></li>
+          <li><h4>WSL with smart startup</h4><p>The WSL terminal waits for the distro to respond and the folder to appear before opening, and accepts an init command per distro.<br><span class="tag win">Windows only</span></p></li>
+          <li><h4>Windows tray</h4><p>Closing the window hides it in the tray. The menu has New terminal, System, Quit tray (terminals keep running) and End everything (asks first). The icon gets an amber dot when an agent is waiting.<br><span class="tag win">Windows only</span></p></li>
+          <li><h4>Host life log</h4><p>Every start, stop and who asked for it is written to <code>host-life.log</code>, so you can tell why a terminal vanished.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-connections">
+        <div class="cat-head"><p class="idx">F</p><h3>Connections and data</h3><p>SSH, serial, remote files and databases.</p></div>
+        <ul class="rows">
+          <li><h4>SSH and serial</h4><p>Saved SSH hosts and serial ports, with the password and key passphrase encrypted by Windows.<br><span class="tag pc">PC only</span></p></li>
+          <li><h4>SFTP</h4><p>A window of its own with local and remote panes and an upload and download queue.<br><span class="tag pc">PC only</span></p></li>
+          <li><h4>Agent login on a remote server</h4><p>If an SSH session prints a localhost link with a port, Studio opens that port on this PC through the SSH session already open.</p></li>
+          <li><h4>Database client</h4><p>For PostgreSQL, MySQL/MariaDB, SQL Server and SQLite: object tree, SQL editor with autocomplete, saved queries and a global history, export, and an optional read-only connection.<br><span class="tag pc">PC only</span></p></li>
+          <li><h4>Safe data editing</h4><p>Edit cells, insert, duplicate and delete rows. Changes stay pending and highlighted until Apply, which writes everything in one transaction: if anything fails, nothing is written.</p></li>
+          <li><h4>Database AI assistant</h4><p>Corrects SQL or answers about the open database, with a model chosen separately from the voice one. It does not run the SQL and does not send rows or passwords.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-remote">
+        <div class="cat-head"><p class="idx">G</p><h3>Phone, remote access and system</h3><p>Off by default: with nothing configured, Studio only listens on the computer itself.</p></div>
+        <ul class="rows">
+          <li><h4>Phone WebApp</h4><p>A page of its own, installable on the home screen. A list with waiting agents first, search and type filters, a large-text chat per terminal, quick keys, image attach, voice, nine themes and the All terminals grid. It does not reach the database, SSH, SFTP, files or settings.</p></li>
+          <li><h4>Full Studio in the browser</h4><p>The whole Studio in another computer's browser, with a password plus a code from an authenticator app. It lists open sessions and lets you end them, and the PC shows a notice while someone is connected.</p></li>
+          <li><h4>Your server, no ports opened at home</h4><p>Both use <code>bethstudio-proxy</code>, a Linux program that runs on a server of your own. The PC dials out and reconnects if it drops.</p></li>
+          <li><h4>System monitor</h4><p>CPU, memory, GPU and disk, plus what Studio, each terminal and the WSL distros use, including the WSL2 VM's memory.<br><span class="tag win">Windows only</span></p></li>
+        </ul>
+      </div>
     </div>
   </section>
 
   <section id="heavy-use" class="heavy" aria-labelledby="h-heavy">
     <div class="wrap">
+      <p class="sec-label">05 / real use</p>
       <h2 class="title" id="h-heavy">Built for heavy use</h2>
       <p class="quote">The author uses Beth Studio every day with about 35 terminals open at the same time.</p>
       <p>That means WSL2 and PowerShell sessions, several AI agents and long builds. <strong>In the author's experience</strong>, typing stays smooth in that setup, and the built-in monitor showed that the bottleneck was not WSL2.</p>
@@ -130,6 +304,7 @@
 
   <section id="download" aria-labelledby="h-download">
     <div class="wrap">
+      <p class="sec-label">06 / install</p>
       <h2 class="title" id="h-download">Download and install</h2>
       <p class="sub">From the repository's Releases page. Requires Windows 10 or 11.</p>
       <div class="dl">
@@ -158,9 +333,16 @@
       <li><a href="https://github.com/rodrigo-mcu/beth-studio/wiki">Manual (wiki)</a></li>
       <li><a href="https://github.com/rodrigo-mcu/beth-studio/releases/latest">Releases</a></li>
     </ul>
-    <p>Independent open source project. Beth Studio grew out of WezTerm; it is not affiliated with or endorsed by that project. This page uses no trackers, analytics or external resources.</p>
+    <p>Independent open source project. Beth Studio grew out of WezTerm; it is not affiliated with or endorsed by that project. This page uses no trackers, analytics or external resources. It stores only your theme choice, in your own browser.</p>
     <p>Note: the Beth Studio interface and its documentation (wiki) are in Brazilian Portuguese. An English version is still to come.</p>
   </div>
 </footer>
+<script>
+(function(){var b=document.getElementById('tema');if(!b){return;}var r=document.documentElement;
+function cur(){var t=r.getAttribute('data-theme');if(t){return t;}return (window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
+function lab(){var d=cur()==='dark';b.querySelector('span').textContent=d?'Light theme':'Dark theme';b.setAttribute('aria-label',d?'Switch to the light theme':'Switch to the dark theme');}
+b.hidden=false;lab();
+b.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('bs-theme',n);}catch(e){}lab();});})();
+</script>
 </body>
 </html>

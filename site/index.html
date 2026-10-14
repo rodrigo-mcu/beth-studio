@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beth Studio: terminais que sobrevivem à interface</title>
-<meta name="description" content="Beth Studio é um terminal para Windows feito para o mouse. Um host persistente guarda seus shells, agentes de IA e sessões WSL: se a interface travar, os terminais continuam rodando.">
+<title>Beth Studio: fale em vez de digitar, terminais que não caem</title>
+<meta name="description" content="Beth Studio é um terminal para Windows feito para o mouse, com ditado por voz no Studio e no celular. Um host persistente guarda seus shells, agentes de IA e sessões WSL: se a interface travar, os terminais continuam rodando.">
 <meta name="color-scheme" content="light dark">
 <link rel="alternate" hreflang="pt-BR" href="index.html">
 <link rel="alternate" hreflang="en" href="en/index.html">
 <link rel="alternate" hreflang="x-default" href="index.html">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1217'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23f5a524'/%3E%3C/svg%3E">
+<script>(function(){try{var t=localStorage.getItem('bs-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -20,28 +21,80 @@
     <a class="brand" href="index.html"><span class="dot" aria-hidden="true"></span>Beth Studio</a>
     <nav class="main" aria-label="Seções da página">
       <a href="#como-funciona">Como funciona</a>
+      <a href="#voz">Voz</a>
+      <a href="#dia-longo">Dia longo</a>
       <a href="#funcionalidades">Funcionalidades</a>
       <a href="#uso-pesado">Uso pesado</a>
       <a href="#baixar">Baixar</a>
     </nav>
-    <div class="lang" role="group" aria-label="Idioma">
-      <span aria-current="true" lang="pt-BR">PT</span>
-      <a href="en/index.html" lang="en" hreflang="en" aria-label="Read this page in English">EN</a>
+    <div class="ctl">
+      <button type="button" class="theme-btn" id="tema" hidden aria-label="Mudar o tema">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg><span>Tema</span>
+      </button>
+      <div class="lang" role="group" aria-label="Idioma">
+        <span aria-current="true" lang="pt-BR">PT</span>
+        <a href="en/index.html" lang="en" hreflang="en" aria-label="Read this page in English">EN</a>
+      </div>
     </div>
   </div>
 </header>
 
 <main id="conteudo">
   <div class="wrap hero">
-    <p class="eyebrow">Terminal para Windows, feito para o mouse</p>
-    <h1>Terminais que sobrevivem à interface.</h1>
-    <p class="lead">O <strong>Beth Studio</strong> separa os terminais da interface. Um <strong>host persistente</strong> é dono dos seus shells, agentes de IA e sessões WSL. Se a interface travar, ou você a reiniciar, tudo continua rodando.</p>
-    <div class="cta">
-      <a class="btn" href="#baixar">Baixar para Windows</a>
-      <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">Ver no GitHub</a>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Terminal para Windows, feito para o mouse</p>
+        <h1>Fale em vez de digitar. Terminais que <span class="hl">sobrevivem</span>.</h1>
+        <p class="lead">O <strong>Beth Studio</strong> dita por voz no Windows e no celular, avisa quando um agente de IA espera você e guarda seus terminais num <strong>host persistente</strong>. Se a interface travar, ou você a reiniciar, shells, agentes e sessões WSL continuam rodando.</p>
+        <div class="cta">
+          <a class="btn" href="#baixar">Baixar para Windows</a>
+          <a class="btn ghost" href="#voz">Ver a voz</a>
+          <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">GitHub</a>
+        </div>
+        <p class="note">Código aberto. Windows 10 ou 11. Linux e macOS: planejado, sem data.</p>
+        <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
+      </div>
+      <figure class="diagram">
+        <svg viewBox="0 0 400 420" role="img" aria-labelledby="dg-t dg-d">
+          <title id="dg-t">Diagrama: host persistente e interface</title>
+          <desc id="dg-d">Em cima, a interface conectada ao host persistente, que guarda os terminais. Embaixo, a interface caiu, mas o host continua com todos os terminais rodando.</desc>
+          <text class="d-state" x="40" y="18">NORMAL</text>
+          <rect class="d-ui" x="40" y="28" width="320" height="50" rx="6"/>
+          <text class="d-t" x="200" y="58" text-anchor="middle">Interface (Studio)</text>
+          <line class="d-link" x1="200" y1="82" x2="200" y2="114"/>
+          <polygon class="d-arrow" points="200,78 194,88 206,88"/>
+          <polygon class="d-arrow" points="200,118 194,108 206,108"/>
+          <rect class="d-host" x="40" y="118" width="320" height="86" rx="6"/>
+          <text class="d-t" x="200" y="141" text-anchor="middle">Host persistente</text>
+          <rect class="d-chip" x="52" y="158" width="64" height="30" rx="4"/><text class="d-m" x="84" y="177" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="126" y="158" width="64" height="30" rx="4"/><text class="d-m" x="158" y="177" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="200" y="158" width="64" height="30" rx="4"/><text class="d-m" x="232" y="177" text-anchor="middle">agente</text>
+          <rect class="d-chip" x="274" y="158" width="74" height="30" rx="4"/><text class="d-m" x="311" y="177" text-anchor="middle">build</text>
+
+          <text class="d-state" x="40" y="240">A INTERFACE CAIU</text>
+          <rect class="d-ui-dead" x="40" y="250" width="320" height="50" rx="6"/>
+          <text class="d-s" x="200" y="280" text-anchor="middle">Interface travada ou fechada</text>
+          <line class="d-x" x1="334" y1="262" x2="348" y2="288"/><line class="d-x" x1="348" y1="262" x2="334" y2="288"/>
+          <line class="d-link-dead" x1="200" y1="304" x2="200" y2="332"/>
+          <rect class="d-host" x="40" y="336" width="320" height="76" rx="6"/>
+          <text class="d-ok" x="200" y="357" text-anchor="middle">Host: os terminais seguem rodando</text>
+          <rect class="d-chip" x="52" y="368" width="64" height="30" rx="4"/><text class="d-m" x="84" y="387" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="126" y="368" width="64" height="30" rx="4"/><text class="d-m" x="158" y="387" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="200" y="368" width="64" height="30" rx="4"/><text class="d-m" x="232" y="387" text-anchor="middle">agente</text>
+          <rect class="d-chip" x="274" y="368" width="74" height="30" rx="4"/><text class="d-m" x="311" y="387" text-anchor="middle">build</text>
+        </svg>
+        <figcaption>Esquema simplificado, não é uma captura de tela.</figcaption>
+      </figure>
     </div>
-    <p class="note">Código aberto. Windows 10 ou 11. Linux e macOS: planejado, sem data.</p>
-    <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
+
+    <figure class="shot win hero-shot">
+      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
+      <div class="frame">
+        <img src="assets/shots/hero-studio.webp" width="1600" height="1000" loading="lazy" alt="Janela do Beth Studio com a barra lateral, as abas e dois terminais divididos." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+        <div class="ph"><strong>Espaço para captura de tela</strong><span>Esquema reservado, não é uma captura. Arquivo esperado:</span><code>assets/shots/hero-studio.webp</code><span>proporção 16:10</span></div>
+      </div>
+      <figcaption>O Studio no Windows: barra lateral, abas e terminais divididos.</figcaption>
+    </figure>
 
     <div class="problem">
       <h2>O problema</h2>
@@ -49,78 +102,199 @@
     </div>
   </div>
 
-  <section id="como-funciona" aria-labelledby="h-como">
-    <div class="wrap how">
-      <div>
-        <h2 class="title" id="h-como">Como funciona</h2>
-        <ol>
-          <li><strong>O host é o dono dos terminais.</strong> O <code>bethstudio-host.exe</code> (derivado do WezTerm) guarda cada shell, agente e sessão WSL.</li>
-          <li><strong>A interface é só uma camada.</strong> O Studio (Go + React em WebView2) se conecta ao host e mostra os terminais. Fechar, travar ou reiniciar a interface não toca neles.</li>
-          <li><strong>Atualize sem perder nada.</strong> Em <em>Configurações &gt; Sobre &gt; Recarregar interface</em> a interface nova entra e o host continua.</li>
-          <li><strong>Se o próprio host cair,</strong> o Studio sobe outro e recria os terminais nas mesmas abas e pastas. O que rodava dentro deles não é recuperado, só o shell, a pasta, o título e a posição.</li>
-        </ol>
-      </div>
-      <figure class="diagram">
-        <svg viewBox="0 0 400 420" role="img" aria-labelledby="dg-t dg-d">
-          <title id="dg-t">Diagrama: host persistente e interface</title>
-          <desc id="dg-d">Em cima, a interface conectada ao host persistente, que guarda os terminais. Embaixo, a interface caiu, mas o host continua com todos os terminais rodando.</desc>
-          <text class="d-state" x="40" y="18">NORMAL</text>
-          <rect class="d-ui" x="40" y="28" width="320" height="50" rx="10"/>
-          <text class="d-t" x="200" y="58" text-anchor="middle">Interface (Studio)</text>
-          <line class="d-link" x1="200" y1="82" x2="200" y2="114"/>
-          <polygon class="d-arrow" points="200,78 194,88 206,88"/>
-          <polygon class="d-arrow" points="200,118 194,108 206,108"/>
-          <rect class="d-host" x="40" y="118" width="320" height="86" rx="10"/>
-          <text class="d-t" x="200" y="141" text-anchor="middle">Host persistente</text>
-          <rect class="d-chip" x="52" y="158" width="64" height="30" rx="6"/><text class="d-m" x="84" y="177" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="158" width="64" height="30" rx="6"/><text class="d-m" x="158" y="177" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="158" width="64" height="30" rx="6"/><text class="d-m" x="232" y="177" text-anchor="middle">agente</text>
-          <rect class="d-chip" x="274" y="158" width="74" height="30" rx="6"/><text class="d-m" x="311" y="177" text-anchor="middle">build</text>
+  <section id="como-funciona" class="how" aria-labelledby="h-como">
+    <div class="wrap">
+      <p class="sec-label">01 / arquitetura</p>
+      <h2 class="title" id="h-como">Como funciona</h2>
+      <ol>
+        <li><div><strong>O host é o dono dos terminais.</strong> O <code>bethstudio-host.exe</code> (derivado do WezTerm) guarda cada shell, agente e sessão WSL.</div></li>
+        <li><div><strong>A interface é só uma camada.</strong> O Studio (Go + React em WebView2) se conecta ao host e mostra os terminais. Fechar, travar ou reiniciar a interface não toca neles.</div></li>
+        <li><div><strong>Atualize sem perder nada.</strong> Em <em>Configurações &gt; Sobre &gt; Recarregar interface</em> a interface nova entra e o host continua.</div></li>
+        <li><div><strong>Se o próprio host cair,</strong> o Studio sobe outro e recria os terminais nas mesmas abas e pastas. O que rodava dentro deles não é recuperado, só o shell, a pasta, o título e a posição.</div></li>
+      </ol>
+    </div>
+  </section>
 
-          <text class="d-state" x="40" y="240">A INTERFACE CAIU</text>
-          <rect class="d-ui-dead" x="40" y="250" width="320" height="50" rx="10"/>
-          <text class="d-s" x="200" y="280" text-anchor="middle">Interface travada ou fechada</text>
-          <line class="d-x" x1="334" y1="262" x2="348" y2="288"/><line class="d-x" x1="348" y1="262" x2="334" y2="288"/>
-          <line class="d-link-dead" x1="200" y1="304" x2="200" y2="332"/>
-          <rect class="d-host" x="40" y="336" width="320" height="76" rx="10"/>
-          <text class="d-ok" x="200" y="357" text-anchor="middle">Host: os terminais seguem rodando</text>
-          <rect class="d-chip" x="52" y="368" width="64" height="30" rx="6"/><text class="d-m" x="84" y="387" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="368" width="64" height="30" rx="6"/><text class="d-m" x="158" y="387" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="368" width="64" height="30" rx="6"/><text class="d-m" x="232" y="387" text-anchor="middle">agente</text>
-          <rect class="d-chip" x="274" y="368" width="74" height="30" rx="6"/><text class="d-m" x="311" y="387" text-anchor="middle">build</text>
-        </svg>
-        <figcaption>Esquema simplificado, não é uma captura de tela.</figcaption>
+  <section id="voz" class="voice" aria-labelledby="h-voz">
+    <div class="wrap">
+      <p class="sec-label">02 / voz</p>
+      <h2 class="title" id="h-voz">Fale em vez de digitar</h2>
+      <p class="sub">Grave, o texto é transcrito, você revisa e só então envia. Vale para o Studio no Windows e para a página do celular. Em nenhum dos dois o texto aperta Enter sozinho antes de você conferir.</p>
+
+      <div class="vgrid">
+        <article class="vblock" aria-labelledby="h-vwin">
+          <span class="badge">Windows</span>
+          <h3 id="h-vwin">No Studio do PC</h3>
+          <p>Você grava com o microfone, o áudio é transcrito e, se quiser, corrigido por um modelo de linguagem antes de ser colado no terminal.</p>
+          <svg class="wave" viewBox="0 0 240 36" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="14" width="5" height="8" rx="2"/><rect x="12" y="9" width="5" height="18" rx="2"/><rect x="22" y="4" width="5" height="28" rx="2"/><rect x="32" y="11" width="5" height="14" rx="2"/><rect x="42" y="2" width="5" height="32" rx="2"/><rect x="52" y="8" width="5" height="20" rx="2"/><rect x="62" y="13" width="5" height="10" rx="2"/><rect x="72" y="5" width="5" height="26" rx="2"/><rect x="82" y="10" width="5" height="16" rx="2"/><rect x="92" y="15" width="5" height="6" rx="2"/><rect x="102" y="7" width="5" height="22" rx="2"/><rect x="112" y="3" width="5" height="30" rx="2"/><rect x="122" y="12" width="5" height="12" rx="2"/><rect x="132" y="6" width="5" height="24" rx="2"/><rect x="142" y="14" width="5" height="8" rx="2"/><rect x="152" y="9" width="5" height="18" rx="2"/><rect x="162" y="4" width="5" height="28" rx="2"/><rect x="172" y="13" width="5" height="10" rx="2"/><rect x="182" y="8" width="5" height="20" rx="2"/><rect x="192" y="15" width="5" height="6" rx="2"/><rect x="202" y="10" width="5" height="16" rx="2"/><rect x="212" y="5" width="5" height="26" rx="2"/><rect x="222" y="14" width="5" height="8" rx="2"/><rect x="232" y="16" width="5" height="4" rx="2"/></svg>
+          <ol class="vsteps">
+            <li><b>Gravar</b><span>Clique em Falar. Uma barra mostra o nível do som e avisa se nenhum som for captado. A gravação vai até 10 minutos.</span></li>
+            <li><b>Transcrever</b><span>Em Parar e transcrever, o áudio vai ao provedor de transcrição que você escolheu.</span></li>
+            <li class="opt"><b>Corrigir, se quiser</b><span>Um modelo de linguagem corrige erros de reconhecimento. Vem desligado por padrão. Passou do prazo, o Studio usa o texto sem correção.</span></li>
+            <li><b>Revisar</b><span>Veja o que a correção mudou e alterne entre o texto original e o corrigido.</span></li>
+            <li><b>Enviar ao terminal</b><span>O texto é colado sem apertar Enter. Você confirma no próprio agente.</span></li>
+          </ol>
+          <ul class="facts">
+            <li>Na primeira vez, um aviso de privacidade diz para onde vão o áudio e o texto.</li>
+            <li>O custo de cada chamada fica registrado só neste computador, sem guardar áudio nem texto. Você pode definir um aviso de limite mensal.</li>
+            <li>O modelo de voz e o do banco de dados são configurados separadamente, em Configurações.</li>
+            <li>O painel de voz não fecha com um clique fora enquanto grava, transcreve, corrige ou revisa.</li>
+          </ul>
+        </article>
+
+        <article class="vblock" aria-labelledby="h-vcel">
+          <span class="badge">Celular</span>
+          <h3 id="h-vcel">No WebApp do celular</h3>
+          <p>Uma página própria, que abre no navegador do celular. O botão Falar grava com medidor de nível.</p>
+          <ol class="vsteps">
+            <li><b>Gravar</b><span>Toque em Falar e acompanhe o medidor de nível.</span></li>
+            <li><b>Transcrever</b><span>O áudio sobe para o seu PC, e o PC o envia ao provedor de transcrição que você configurou.</span></li>
+            <li class="opt"><b>Corrigir, se quiser</b><span>A correção por IA chega em streaming no próprio campo de mensagem.</span></li>
+            <li><b>Revisar</b><span>O texto cai no campo. Use Voltar ao que foi transcrito ou Apagar. Ditar de novo soma ao texto.</span></li>
+            <li><b>Enviar</b><span>Nada vai ao terminal antes de você tocar em Enviar, que cola o texto e aperta Enter.</span></li>
+          </ol>
+          <ul class="facts">
+            <li>O celular nunca recebe o endereço nem a chave do provedor de voz.</li>
+            <li>Exige o programa <code>bethstudio-proxy</code> num servidor seu. Vem desligado por padrão.</li>
+          </ul>
+          <figure class="shot r-phone" style="margin-top:1.25rem">
+            <div class="frame">
+              <img src="assets/shots/voz-celular.webp" width="900" height="1900" loading="lazy" alt="Tela do celular com o botão Falar e o texto transcrito no campo de mensagem." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+              <div class="ph"><strong>Espaço para captura</strong><span>Esquema reservado, não é uma captura.</span><code>assets/shots/voz-celular.webp</code><span>proporção 9:19</span></div>
+            </div>
+            <figcaption>Ditado no celular, com o texto no campo para revisar.</figcaption>
+          </figure>
+        </article>
+      </div>
+
+      <figure class="shot win" style="margin-top:clamp(1.25rem,3vw,2.5rem);max-width:56rem">
+        <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio: Falar</span></div>
+        <div class="frame">
+          <img src="assets/shots/voz-windows.webp" width="1600" height="1000" loading="lazy" alt="Painel de voz do Studio com o texto transcrito e a caixa com o que a correção mudou." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+          <div class="ph"><strong>Espaço para captura de tela</strong><span>Esquema reservado, não é uma captura. Arquivo esperado:</span><code>assets/shots/voz-windows.webp</code><span>proporção 16:10</span></div>
+        </div>
+        <figcaption>O painel de voz do Studio: revisão do texto antes de enviar.</figcaption>
       </figure>
+
+      <div class="where">
+        <h3>Para onde vão o áudio e o texto</h3>
+        <p>O áudio vai para o provedor de transcrição que você configurou, e o texto transcrito vai para o provedor de correção, se você ligou a correção. Com provedores locais, os dados ficam no endereço que você definiu, por padrão o próprio computador. No celular, o áudio chega primeiro ao seu PC.</p>
+        <p>O Beth Studio não guarda o áudio nem o texto: guarda só a configuração e o registro de custo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="dia-longo" aria-labelledby="h-dia">
+    <div class="wrap">
+      <p class="sec-label">03 / sessões longas</p>
+      <h2 class="title" id="h-dia">Para quem passa o dia no terminal</h2>
+      <p class="sub">Dia longo de terminal costuma ter o mesmo roteiro: textos grandes para o agente, esperas, travamentos e idas e vindas de arquivos. Cada item abaixo trata de uma dessas partes, e todos já existem no produto.</p>
+      <ul class="long-list">
+        <li><b>01</b><div><h3>Falar em vez de digitar textos longos</h3><p>Dite pelo microfone no PC ou pelo celular, revise e envie. Nada é enviado antes da sua confirmação.</p></div></li>
+        <li><b>02</b><div><h3>Aviso quando o agente espera você</h3><p>Um ponto âmbar aparece na aba, na barra lateral e na bandeja, com um resumo “N aguardando”. Notificação do Windows e som são opcionais.</p></div></li>
+        <li><b>03</b><div><h3>Acompanhe de longe pelo celular</h3><p>A lista mostra primeiro os agentes que esperam você, com o tempo de espera. Responda com letras grandes e teclas rápidas (1, 2, 3, setas, Enter, Esc).</p></div></li>
+        <li><b>04</b><div><h3>Host persistente</h3><p>Os terminais vivem num processo à parte. Se a interface travar, eles continuam rodando.</p></div></li>
+        <li><b>05</b><div><h3>Interface atualizável sem matar sessões</h3><p>Recarregue a interface em Configurações &gt; Sobre sem reiniciar o host. Terminais e agentes seguem vivos.</p></div></li>
+        <li><b>06</b><div><h3>Imagem ou arquivo para o agente</h3><p>Cole um print ou um arquivo copiado no Explorer: o Studio salva uma cópia e cola o caminho. No celular, anexe uma imagem à mensagem.</p></div></li>
+        <li><b>07</b><div><h3>Gerenciador de tarefas interno</h3><p>CPU, memória, GPU e disco, e o consumo de cada terminal, para ver se o peso está na interface ou nos programas que você roda.</p></div></li>
+        <li><b>08</b><div><h3>Terminais que voltam depois de uma queda</h3><p>Se o próprio host cair, o Studio o sobe de novo e recria os terminais nas mesmas abas e pastas.</p></div></li>
+      </ul>
     </div>
   </section>
 
   <section id="funcionalidades" aria-labelledby="h-func">
     <div class="wrap">
+      <p class="sec-label">04 / tudo o que tem</p>
       <h2 class="title" id="h-func">Funcionalidades</h2>
-      <p class="sub">Um terminal e as ferramentas em volta dele, no mesmo programa.</p>
-      <ul class="grid">
-        <li><article class="card"><h3>Atualizar sem matar terminais</h3><p>Recarregue a interface sem reiniciar o Studio e sem encostar no host. Terminais e agentes seguem vivos.</p></article></li>
-        <li><article class="card"><h3>Gerenciador de tarefas interno</h3><p>CPU, memória, GPU e disco do computador, e o consumo de cada terminal. Ajuda a ver se o peso está na interface ou nos programas que você roda.</p></article></li>
-        <li><article class="card"><h3>Cole imagem ou arquivo no terminal</h3><p>Copie um print ou um arquivo do Explorer e cole: o Studio salva um arquivo e cola o caminho para o agente abrir. No WSL, <code>C:\…</code> vira <code>/mnt/c/…</code>.</p></article></li>
-        <li><article class="card"><h3>Mouse primeiro</h3><p>Nova aba, divisão, tema, fonte e destacar em janela: tudo se faz clicando, sem arquivo de configuração e sem atalho para decorar.</p></article></li>
-        <li><article class="card"><h3>Abas, divisões e busca</h3><p>Abas, divisões arrastáveis, busca e vistas da barra lateral por organização, tipo ou pasta.</p></article></li>
-        <li><article class="card"><h3>Todos os terminais</h3><p>Uma grade com um cartão por terminal, mostrando uma prévia do texto da tela, para achar o que você procura de relance.</p></article></li>
-        <li><article class="card"><h3>Terminal destacado</h3><p>Leve um terminal para uma janela própria, inclusive em outro monitor, e arraste de volta para as abas. Ele continua rodando.</p></article></li>
-        <li><article class="card"><h3>Agente esperando</h3><p>Um ponto âmbar avisa quando um agente de IA parou esperando você, na aba, na barra lateral e na bandeja. Notificação e som são opcionais.</p></article></li>
-        <li><article class="card"><h3>Ditado por voz</h3><p>Fale, revise o texto e envie ao terminal, com correção opcional por modelo de IA.</p><span class="tag">usa o provedor de IA que você configurar</span></article></li>
-        <li><article class="card"><h3>Banco de dados</h3><p>Cliente embutido para PostgreSQL, MySQL/MariaDB, SQL Server e SQLite: árvore de objetos, SQL com autocompletar e consultas salvas.</p></article></li>
-        <li><article class="card"><h3>SSH, serial e SFTP</h3><p>Hosts SSH e portas seriais salvos, e uma janela SFTP com painéis local e remoto.</p></article></li>
-        <li><article class="card"><h3>Editor e notas</h3><p>Abra e edite texto e Markdown, com prévia formatada, e guarde notas que se salvam sozinhas.</p></article></li>
-        <li><article class="card"><h3>Navegador e celular</h3><p>Use o Studio completo no navegador de outro computador, ou uma página própria para o celular conversar com seus agentes. Desligado por padrão.</p><span class="tag">requer um servidor seu</span></article></li>
-        <li><article class="card"><h3>Recupera sozinho</h3><p>Se o host cair, o Studio o sobe de novo e recria os terminais nas mesmas abas e pastas.</p></article></li>
-        <li><article class="card"><h3>WSL com início inteligente</h3><p>O terminal WSL espera a distro responder e a pasta aparecer antes de abrir, em vez de fechar logo ou cair na pasta errada.</p></article></li>
-        <li><article class="card"><h3>Temas e fontes</h3><p>Temas no estilo Gogh e VS Code, escolha de fonte, e tema e fonte por terminal.</p></article></li>
-      </ul>
+      <p class="sub">Um terminal e as ferramentas em volta dele, no mesmo programa. Hoje o Beth Studio roda só no Windows.</p>
+      <p class="legend"><span><span class="tag win">Só Windows</span> depende de recursos do Windows</span><span><span class="tag pc">Só no PC</span> não existe no celular nem no Studio pelo navegador</span></p>
+
+      <div class="cat" id="f-terminais">
+        <div class="cat-head"><p class="idx">A</p><h3>Terminais e organização</h3><p>Tudo se faz com o mouse, sem arquivo de configuração.</p></div>
+        <ul class="rows">
+          <li><h4>Novos terminais</h4><p>cmd, PowerShell 5.1 e 7, WSL (padrão e distros nomeadas) e Git Bash, com pasta inicial escolhida em Procurar…<br><span class="tag win">Só Windows</span></p></li>
+          <li><h4>Abas e divisões</h4><p>Divisões arrastáveis (à direita, abaixo, acima, à esquerda), abas que se renomeiam, reordenam e reabrem. Fechar uma aba não encerra o terminal.</p></li>
+          <li><h4>Vistas da barra lateral e busca</h4><p>Minha organização, Como no Beth Studio, Por tipo e Por pasta. Busca por título, pasta, aba e, se quiser, pelo texto da tela.</p></li>
+          <li><h4>Todos os terminais</h4><p>Uma grade com um cartão por terminal e uma prévia do texto da tela, com filtros Todos, Em abas, Sem aba e Encerrados. Também existe na página do celular.</p></li>
+          <li><h4>Terminal destacado</h4><p>Leve um terminal para uma janela própria, inclusive em outro monitor, e arraste de volta para as abas. Ele continua rodando.<br><span class="tag pc">Só no PC</span></p></li>
+          <li><h4>Encerrar com confirmação</h4><p>Só Encerrar terminal… encerra o processo, e antes pergunta, avisando se há um agente esperando.</p></li>
+          <li><h4>Reparar visualização</h4><p>Reconstrói só a tela daquele painel no Studio, sem enviar reset ao terminal, e pode ser usado com um agente em execução.</p></li>
+          <li><h4>Histórico, print e links</h4><p>Copie ou salve o histórico completo, copie ou salve um print da tela. Links http(s) abrem no navegador; arquivos .md, .txt, .log e imagens abrem num painel de prévia.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-aparencia">
+        <div class="cat-head"><p class="idx">B</p><h3>Aparência</h3><p>Do tema da interface ao tema de cada terminal.</p></div>
+        <ul class="rows">
+          <li><h4>Temas</h4><p>Três temas embutidos, temas no formato Gogh (arquivos .json numa pasta) e os temas de cores do VS Code instalado.</p></li>
+          <li><h4>Fonte e tamanho por terminal</h4><p>Escolha tema, fonte e tamanho de cada terminal. O que falta na máquina é avisado no painel.</p></li>
+          <li><h4>Favoritos e padrões</h4><p>Guarde combinações de tema e fonte como favoritos e defina o tema, a fonte e o tamanho padrão para terminais novos.</p></li>
+          <li><h4>Cores certas para os programas</h4><p>O tema do Studio é enviado ao host, para que programas que perguntam a cor do fundo acertem em temas claros. Texto quase da cor do fundo é ajustado até ficar legível.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-arquivos">
+        <div class="cat-head"><p class="idx">C</p><h3>Arquivos, notas e colar</h3><p>Levar coisas para o terminal e escrever sem sair dele.</p></div>
+        <ul class="rows">
+          <li><h4>Colar imagem ou arquivo</h4><p>Print Screen ou arquivo copiado no Explorer: o Studio salva uma cópia e cola o caminho para o agente abrir (até 8 arquivos). No WSL, <code>C:\…</code> vira <code>/mnt/c/…</code>.<br><span class="tag win">Só Windows</span></p></li>
+          <li><h4>Soltar arquivo sobre o terminal</h4><p>Solte até 5 arquivos de até 25 MB: imagens e outros arquivos viram cópias e o caminho vai para o terminal.</p></li>
+          <li><h4>Abrir, editar e salvar</h4><p>Edite .md, .txt e .log com prévia formatada do Markdown. Antes de sobrescrever um arquivo que mudou no disco, o Studio pergunta.</p></li>
+          <li><h4>Novo arquivo e notas</h4><p>Um editor em branco para escrever na hora. O que você digita vira uma nota que se salva sozinha, com lista lateral para reabrir ou apagar.</p></li>
+          <li><h4>Janela do painel de arquivo</h4><p>Arraste, redimensione, maximize ou encaixe à esquerda ou à direita. Posição e tamanho são lembrados.</p></li>
+          <li><h4>Navegador de pastas</h4><p>Dentro da página, com atalhos para a pasta do usuário, os discos e as distros WSL, e Nova pasta.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-agentes">
+        <div class="cat-head"><p class="idx">D</p><h3>Agentes e voz</h3><p>Saber quando o agente espera e falar com ele.</p></div>
+        <ul class="rows">
+          <li><h4>Agente aguardando</h4><p>Reconhece o sino, a notificação de terminal (OSC 9) e variáveis de status, então funciona com qualquer agente que envie um desses sinais. O aviso sai quando você digita no terminal ou o dispensa.</p></li>
+          <li><h4>Ditado por voz</h4><p>Gravar, transcrever, corrigir se quiser, revisar e enviar ao terminal sem Enter. Veja a seção <a href="#voz">Fale em vez de digitar</a>.</p></li>
+          <li><h4>Provedores de IA</h4><p>Vários provedores de transcrição e de correção, inclusive locais. Chaves cifradas pelo Windows, ou lidas de variáveis de ambiente. Login por código com conta para Grok Build e Codex, na correção e no assistente do banco.<br><span class="tag win">Só Windows</span></p></li>
+          <li><h4>Uso e custos de IA</h4><p>Cada chamada paga vira uma linha de registro local, sem áudio nem texto, com totais, gráfico por dia, filtro, exportação em CSV e aviso de limite mensal.</p></li>
+          <li><h4>Teste completo da voz</h4><p>Roda o caminho inteiro (microfone, transcrição, correção e texto final) sem enviar nada ao terminal, mostrando tempo e custo de cada etapa.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-resiliencia">
+        <div class="cat-head"><p class="idx">E</p><h3>Host, WSL e bandeja</h3><p>O que mantém os terminais de pé.</p></div>
+        <ul class="rows">
+          <li><h4>Host persistente</h4><p>Um host por usuário é dono de todos os terminais. Fechar a janela, sair da bandeja ou atualizar a interface não encerra nada.</p></li>
+          <li><h4>Recuperação automática</h4><p>Se o host cair, o Studio o sobe de novo e recria os terminais nas mesmas abas, pastas, nomes e temas. Uma faixa mostra o andamento e o que não voltou.</p></li>
+          <li><h4>Atualizar sem matar terminais</h4><p>Recarregue a interface sem reiniciar o Studio e sem encostar no host.</p></li>
+          <li><h4>WSL com início inteligente</h4><p>O terminal WSL espera a distro responder e a pasta aparecer antes de abrir, e aceita um comando de inicialização por distro.<br><span class="tag win">Só Windows</span></p></li>
+          <li><h4>Bandeja do Windows</h4><p>Fechar a janela esconde na bandeja. O menu tem Novo terminal, Sistema, Sair da bandeja (terminais continuam) e Encerrar tudo (pede confirmação). O ícone ganha um ponto âmbar quando um agente espera.<br><span class="tag win">Só Windows</span></p></li>
+          <li><h4>Registro de vida do host</h4><p>Cada início, parada e quem pediu fica anotado em <code>host-life.log</code>, para saber por que um terminal sumiu.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-conexoes">
+        <div class="cat-head"><p class="idx">F</p><h3>Conexões e dados</h3><p>SSH, serial, arquivos remotos e bancos.</p></div>
+        <ul class="rows">
+          <li><h4>SSH e serial</h4><p>Hosts SSH e portas seriais salvos, com senha e frase-senha da chave cifradas pelo Windows.<br><span class="tag pc">Só no PC</span></p></li>
+          <li><h4>SFTP</h4><p>Janela própria com painéis local e remoto e uma fila de envio e download.<br><span class="tag pc">Só no PC</span></p></li>
+          <li><h4>Login de agente em servidor remoto</h4><p>Se uma sessão SSH imprime um link de localhost com porta, o Studio abre essa porta neste PC pela sessão SSH já aberta.</p></li>
+          <li><h4>Banco de dados</h4><p>Cliente para PostgreSQL, MySQL/MariaDB, SQL Server e SQLite: árvore de objetos, editor SQL com autocompletar, consultas salvas e histórico geral, exportação e conexão opcional somente leitura.<br><span class="tag pc">Só no PC</span></p></li>
+          <li><h4>Editar dados com segurança</h4><p>Edite células, insira, duplique e apague linhas. As mudanças ficam pendentes e destacadas até Aplicar, que grava tudo numa transação: se algo falhar, nada é gravado.</p></li>
+          <li><h4>Assistente de IA do banco</h4><p>Corrige SQL ou responde sobre o banco aberto, com um modelo escolhido à parte do da voz. Não executa o SQL e não envia linhas nem senhas.</p></li>
+        </ul>
+      </div>
+
+      <div class="cat" id="f-remoto">
+        <div class="cat-head"><p class="idx">G</p><h3>Celular, acesso remoto e sistema</h3><p>Desligados por padrão: sem configurar, o Studio só escuta no próprio computador.</p></div>
+        <ul class="rows">
+          <li><h4>WebApp do celular</h4><p>Página própria, instalável na tela inicial. Lista com os agentes que esperam primeiro, busca e filtros por tipo, conversa por terminal em letras grandes, teclas rápidas, anexar imagem, voz, nove temas e a grade Todos os terminais. Não acessa banco, SSH, SFTP, arquivos nem configurações.</p></li>
+          <li><h4>Studio completo pelo navegador</h4><p>O Studio inteiro no navegador de outro computador, com senha mais código de um app autenticador. Mostra as sessões abertas e permite encerrá-las, e o PC avisa quando alguém está conectado.</p></li>
+          <li><h4>Seu servidor, sem abrir portas em casa</h4><p>Os dois usam o <code>bethstudio-proxy</code>, um programa Linux que roda num servidor seu. O PC liga para fora e reconecta se cair.</p></li>
+          <li><h4>Monitor do sistema</h4><p>CPU, memória, GPU e disco, o consumo do Studio, de cada terminal e das distros WSL, incluindo a memória da VM do WSL2.<br><span class="tag win">Só Windows</span></p></li>
+        </ul>
+      </div>
     </div>
   </section>
 
   <section id="uso-pesado" class="heavy" aria-labelledby="h-pesado">
     <div class="wrap">
+      <p class="sec-label">05 / uso real</p>
       <h2 class="title" id="h-pesado">Feito para uso pesado</h2>
       <p class="quote">O autor usa o Beth Studio todo dia com cerca de 35 terminais abertos ao mesmo tempo.</p>
       <p>São sessões em WSL2 e PowerShell, vários agentes de IA e builds longos. <strong>Na experiência do autor</strong>, a digitação continua fluida nesse cenário, e o monitor interno mostrou que o gargalo não era o WSL2.</p>
@@ -130,6 +304,7 @@
 
   <section id="baixar" aria-labelledby="h-baixar">
     <div class="wrap">
+      <p class="sec-label">06 / instalar</p>
       <h2 class="title" id="h-baixar">Baixar e instalar</h2>
       <p class="sub">Na página de Releases do repositório. Requer Windows 10 ou 11.</p>
       <div class="dl">
@@ -158,9 +333,16 @@
       <li><a href="https://github.com/rodrigo-mcu/beth-studio/wiki">Manual (wiki)</a></li>
       <li><a href="https://github.com/rodrigo-mcu/beth-studio/releases/latest">Releases</a></li>
     </ul>
-    <p>Projeto de código aberto e independente. O Beth Studio nasceu do WezTerm; não é afiliado nem endossado por esse projeto. Esta página não usa rastreadores, analytics nem recursos externos.</p>
+    <p>Projeto de código aberto e independente. O Beth Studio nasceu do WezTerm; não é afiliado nem endossado por esse projeto. Esta página não usa rastreadores, analytics nem recursos externos. Ela guarda só a sua escolha de tema, no próprio navegador.</p>
     <p>A interface e a documentação do Beth Studio estão em português do Brasil.</p>
   </div>
 </footer>
+<script>
+(function(){var b=document.getElementById('tema');if(!b){return;}var r=document.documentElement;
+function cur(){var t=r.getAttribute('data-theme');if(t){return t;}return (window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
+function lab(){var d=cur()==='dark';b.querySelector('span').textContent=d?'Tema claro':'Tema escuro';b.setAttribute('aria-label',d?'Mudar para o tema claro':'Mudar para o tema escuro');}
+b.hidden=false;lab();
+b.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('bs-theme',n);}catch(e){}lab();});})();
+</script>
 </body>
 </html>

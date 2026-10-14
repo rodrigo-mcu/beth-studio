@@ -18,3 +18,15 @@ Isto é só uma instrução; nada foi ativado.
 4. Salve e espere a publicação. As duas versões ficam em `/` (português) e `/en/` (inglês).
 
 Todos os links internos são relativos, então funcionam tanto na raiz do domínio quanto em subcaminho.
+
+## Capturas de tela (espaços reservados)
+
+A página reserva espaços de proporção fixa para capturas reais. Enquanto o arquivo não existir, aparece um esquema rotulado; quando a imagem carrega, o esquema some. Basta colocar os arquivos em `assets/shots/`:
+
+| Arquivo | Proporção | O que mostrar |
+|---|---|---|
+| `hero-studio.webp` | 16:10 (ex.: 1600x1000) | Janela do Studio com barra lateral, abas e dois terminais divididos |
+| `voz-windows.webp` | 16:10 (ex.: 1600x1000) | Painel de voz do Studio com o texto transcrito e a caixa "O que a correção mudou" |
+| `voz-celular.webp` | 9:19 (ex.: 900x1900) | WebApp do celular com o texto ditado no campo de mensagem |
+
+Tema claro/escuro: segue o sistema e tem botão no cabeçalho; a escolha fica em `localStorage` (a página funciona sem ele).
