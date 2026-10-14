@@ -56,7 +56,11 @@ Na página **[Releases](../../releases/latest)** do repositório, baixe:
 - **`BethStudio-Setup.exe`**: instalador de um arquivo só (recomendado).
 - **`BethStudio-<versão>-windows-x64.zip`**: versão portátil; descompacte e abra `bethstudio-web.exe`.
 
-Confira o arquivo com `SHA256SUMS.txt`. Requer Windows 10 ou 11. Ajuda e limites do projeto: [`SUPPORT.md`](SUPPORT.md). Para gerar um release você mesmo: [`RELEASING.md`](RELEASING.md).
+Confira o arquivo com `SHA256SUMS.txt`. Requer Windows 10 ou 11.
+
+> **Linux e macOS.** Hoje o Beth Studio só roda no Windows. Há planos de portá-lo para Linux e para macOS (sem WSL, que é do Windows), começando pelo Linux e por uma interface aberta no navegador. Ainda não há data nem compromisso de entrega. Detalhes em [Perguntas frequentes](wiki/Perguntas-frequentes.md).
+
+Ajuda e limites do projeto: [`SUPPORT.md`](SUPPORT.md). Para gerar um release você mesmo: [`RELEASING.md`](RELEASING.md).
 
 ## Instalação
 

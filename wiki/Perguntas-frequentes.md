@@ -16,7 +16,7 @@ Pela bandeja, em **Encerrar tudo**. O Studio pergunta antes e diz quantos termin
 
 ## Posso usar em macOS ou Linux?
 
-Hoje, não. O Beth Studio só roda no Windows: usa ConPTY, WebView2, a bandeja do Windows e um instalador Win32. O WezTerm de origem é multiplataforma, mas o Beth Studio não foi portado. Portabilidade é um plano futuro, sem data. O único programa para Linux é o `bethstudio-proxy`, o relé opcional do acesso pelo celular (veja [Celular e acesso remoto](Celular-e-acesso-remoto)).
+Hoje, não. O Beth Studio só roda no Windows: usa ConPTY, WebView2, a bandeja do Windows e um instalador Win32. O WezTerm de origem é multiplataforma, mas o Beth Studio não foi portado. Há planos de portar para **Linux** e **macOS** (sem WSL, que só existe no Windows), mas sem data e sem compromisso de entrega. A ordem prevista é Linux primeiro, com a interface aberta no navegador, e depois macOS, que ainda exige assinatura e notarização da Apple. O que falta trocar: a janela (WebView2), os terminais do lado Go (ConPTY por PTY comum), o cofre de senhas (DPAPI), a bandeja, o início com o sistema, a área de transferência e o seletor de pasta, além dos instaladores. O host persistente, a interface web e a página do celular já são portáveis em princípio. Quer ajudar? Abra uma issue antes de enviar código. O único programa para Linux é o `bethstudio-proxy`, o relé opcional do acesso pelo celular (veja [Celular e acesso remoto](Celular-e-acesso-remoto)).
 
 ## Tem janela nativa?
 
