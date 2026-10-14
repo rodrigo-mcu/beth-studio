@@ -24,8 +24,9 @@ const uiManifestName = "ui.json"
 
 // uiManifest: o que o deploy grava ao lado dos arquivos da interface.
 type uiManifest struct {
-	Version     string `json:"version"`
-	RequiresAPI int    `json:"requires_api"`
+	Version     string            `json:"version"`
+	RequiresAPI int               `json:"requires_api"`
+	Files       map[string]string `json:"files,omitempty"`
 }
 
 // uiSource é de onde a interface está sendo servida agora.
@@ -88,7 +89,7 @@ func loadOverride(dir, mpath string) uiSource {
 		return fallback("manifesto ilegível")
 	}
 	var m uiManifest
-	if err := json.Unmarshal(b, &m); err != nil || strings.TrimSpace(m.Version) == "" {
+	if err := json.Unmarshal(stripBOM(b), &m); err != nil || strings.TrimSpace(m.Version) == "" {
 		return fallback("manifesto inválido")
 	}
 	if m.RequiresAPI > apiLevel {
@@ -98,4 +99,13 @@ func loadOverride(dir, mpath string) uiSource {
 		return fallback("index.html ausente no pacote")
 	}
 	return uiSource{FS: os.DirFS(dir), Version: m.Version, Override: true}
+}
+
+// invalidateUICache faz a próxima leitura de currentUI olhar o disco de novo.
+func invalidateUICache() {
+	uiMu.Lock()
+	uiCache = uiSource{}
+	uiCacheKey = ""
+	uiCacheAt = time.Time{}
+	uiMu.Unlock()
 }

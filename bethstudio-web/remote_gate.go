@@ -46,7 +46,11 @@ func remoteBlocked(sub, method string) bool {
 		return true
 	}
 	// GET /api/about lista os arquivos; POST abre o Explorer no PC.
-	return sub == "/api/about" && method != http.MethodGet && method != http.MethodHead
+	if sub == "/api/about" && method != http.MethodGet && method != http.MethodHead {
+		return true
+	}
+	// Consultar release pelo navegador remoto pode; instalar, não.
+	return strings.HasPrefix(sub, "/api/update/") && method != http.MethodGet && method != http.MethodHead
 }
 
 func remoteHeaders(w http.ResponseWriter) {

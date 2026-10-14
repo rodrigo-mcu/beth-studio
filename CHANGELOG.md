@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-14
+
 ### Fixed
 - The installer, the wiki install page and the phone page use Brazilian Portuguese ("arquivo", "Registro", "Área de Trabalho", "conexão") instead of European Portuguese.
 - Clicking a file path in terminal output opens more than preview types: PDF, Office documents, archives and other existing files open in the Windows default program. Text and images still open in the preview panel. Programs and scripts are shown in Explorer instead of being launched.
@@ -13,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 - Site (`site/`, Portuguese and English) with real screenshots of the Studio on Windows 11, and a `Pages` workflow that publishes it to GitHub Pages.
+- Settings → About → **Verificar atualização** checks the latest published GitHub release. You can install only the interface (the Studio and the host keep running) or download the installer for the Studio and the host. Nothing is installed until you choose. Read-only mode and the remote browser only report that a newer version exists. The phone page does not offer this.
+- README links to the site (GitHub Pages), in Portuguese and English.
 
 ## [0.2.0] - 2026-10-14
 

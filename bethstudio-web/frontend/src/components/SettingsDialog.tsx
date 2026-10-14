@@ -13,6 +13,7 @@ import { AIUsageSection } from "./AIUsage";
 import { DbAssistSettings } from "./DbAssistSettings";
 import { PhoneRemoteSection } from "./PhoneRemoteSection";
 import { RemoteStudioSection } from "./RemoteStudioSection";
+import { UpdateSection } from "./UpdateSection";
 import { isRemote } from "@/lib/remote";
 
 export type SettingsSection = "aparencia" | "terminais" | "celular" | "voz" | "provedores" | "banco" | "uso" | "barra" | "sobre";
@@ -342,6 +343,7 @@ function AboutSection({ conn, onMessage }: { conn: Connection; onMessage: (m: st
           <span className="break-all font-mono text-[11px] text-text-1">{a.data_dir}</span>
         </div>
       </section>
+      <UpdateSection conn={conn} readOnly={a.read_only} />
       <section>
         <H>Arquivos</H>
         <ul className="space-y-1">

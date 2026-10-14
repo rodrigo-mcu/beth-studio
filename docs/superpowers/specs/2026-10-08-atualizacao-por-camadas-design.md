@@ -1,6 +1,17 @@
 # Atualização por camadas (interface / Studio / host)
 
-Data: 2026-10-08. Estado: **plano, nada implementado**.
+Data: 2026-10-08. Atualizado em 2026-10-14.
+
+## O que existe em 2026-10-14
+
+- **Interface sem reiniciar** — já existia: pasta `<dados>\ui\current`, `ui.json` com `requires_api`, fallback para a interface embutida, `deploy-ui.ps1` e o botão **Recarregar interface**.
+- **Verificar atualização** — passou a existir. Em **Configurações → Sobre**, o botão consulta os releases publicados de `https://github.com/rodrigo-mcu/beth-studio` (GET anônimo, com ETag e cache de alguns minutos). Rascunho e pré-lançamento não contam. Se houver versão mais nova, a pessoa escolhe:
+  1. **Só a interface.** O Studio baixa `BethStudio-ui-<versão>.zip`, confere o SHA-256 com o `SHA256SUMS.txt` do mesmo release, extrai, valida `ui.json` (inclusive `requires_api` e os hashes dos arquivos) e troca `current` de forma atômica, guardando `previous`. Não reinicia nada. Se a interface pedir um Studio mais novo, não aplica e avisa.
+  2. **Studio e host.** O Studio baixa e confere o `BethStudio-Setup.exe` e mostra o caminho. Só abre o instalador depois de uma segunda confirmação, **sem argumentos**. A opção **Encerrar tudo** do instalador nasce desmarcada; o Studio não a marca. Motivo: o host guarda os terminais, e o próprio instalador já é o lugar em que a pessoa decide se eles param. O Studio não para, não reinicia e não sinaliza o host.
+- Nada disso aparece na página do celular. No modo somente leitura e no Studio aberto pelo navegador remoto, a tela só diz que há versão nova.
+- **Não feito:** trocar o `bethstudio-web.exe` sozinho (a fase 4 abaixo) e publicar pelo branch órfão `release`. O canal de consumo é o release do GitHub, não o git. O `release.ps1` grava no zip da interface o `ui.json` com versão, `requires_api` e o SHA-256 de cada arquivo.
+
+O texto abaixo é o plano original de 2026-10-08. Onde ele fala em branch `release` ou em aplicar o host sozinho, vale a decisão de 2026-10-14 acima.
 
 ## Problema
 

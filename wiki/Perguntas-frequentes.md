@@ -28,11 +28,11 @@ Em `%APPDATA%\bethstudio\`: sessão, temas baixados, favoritos, configurações 
 
 ## Funciona offline?
 
-Sim, para o uso local: terminais, abas, notas, editor e temas já gravados na pasta de temas não precisam de internet. Precisam de rede só as funções que, por natureza, saem da máquina: voz e IA (provedor escolhido por você), conexões SSH e bancos de dados remotos, e o acesso pelo celular. Não há verificação automática de atualização. Veja [Segurança e privacidade](Seguranca-e-privacidade).
+Sim, para o uso local: terminais, abas, notas, editor e temas já gravados na pasta de temas não precisam de internet. Precisam de rede só as funções que, por natureza, saem da máquina: voz e IA (provedor escolhido por você), conexões SSH e bancos de dados remotos, o acesso pelo celular, e **Verificar atualização** quando você clica nesse botão. O Studio não consulta o GitHub sozinho. Veja [Instalação](Instalacao) e [Segurança e privacidade](Seguranca-e-privacidade).
 
 ## O Beth Studio envia dados sobre mim?
 
-Não. O projeto não tem telemetria, relatório de falhas nem estatísticas, e não usa SDKs de análise de terceiros. As únicas chamadas de rede feitas por ele são as que você aciona, como baixar temas ou usar voz e IA. Veja [Segurança e privacidade](Seguranca-e-privacidade).
+Não. O projeto não tem telemetria, relatório de falhas nem estatísticas, e não usa SDKs de análise de terceiros. As chamadas de rede feitas por ele são as que você aciona, como usar voz e IA, ou **Verificar atualização** em Configurações → Sobre (um pedido anônimo ao GitHub, sem conta). Veja [Segurança e privacidade](Seguranca-e-privacidade).
 
 ## É seguro abrir pelo celular?
 

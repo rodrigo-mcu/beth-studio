@@ -65,6 +65,19 @@ Os terminais, os agentes e as sessões WSL vivem no `bethstudio-host.exe`. Parar
 
 Resumo: nada encerra seus terminais sem você pedir. Só a opção **Encerrar tudo** (no instalador ou na bandeja) faz isso, e sempre depois de uma confirmação.
 
+## Verificar atualização
+
+Em **Configurações → Sobre**, o botão **Verificar atualização** olha o último release publicado no GitHub. A consulta é manual: o Studio não fica perguntando sozinho. Se não houver versão mais nova, ele diz isso. Se a internet falhar ou o GitHub limitar a consulta, a mensagem aparece na mesma tela e o resto do Studio continua igual.
+
+Quando há uma versão mais nova, você escolhe o que fazer. Nada é instalado antes dessa escolha.
+
+- **Instalar só a interface** baixa o pacote da tela, confere a soma SHA-256 publicada junto com o release e troca a interface. O Studio, o host e os terminais continuam. Depois, **Recarregar interface** (ou F5) mostra a tela nova. Se essa interface precisar de um Studio mais novo, ela não é aplicada e o aviso diz isso.
+- **Baixar o instalador (Studio e host)** guarda o `BethStudio-Setup.exe` numa pasta sua, depois de conferir a soma. O Beth Studio mostra o caminho. **Mostrar na pasta** abre essa pasta. **Abrir o instalador** só roda depois de você confirmar de novo. O Studio não marca **Encerrar tudo**: essa caixa nasce desmarcada. Se você marcá-la no instalador, o host encerra e os terminais abertos serão perdidos.
+
+No modo somente leitura e quando o Studio está aberto pelo navegador remoto, a tela só avisa que há versão nova. Não há botão de instalar. A página do celular não tem essa verificação.
+
+A consulta não envia conta, nome nem o que você digita. É um pedido anônimo ao repositório público do Beth Studio.
+
 ## Desinstalar
 
 Não há desinstalador. Como a instalação é portátil, remova à mão:

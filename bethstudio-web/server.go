@@ -15,7 +15,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 )
 
 const (
@@ -174,6 +173,14 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		s.serveSysmon(w, r)
 	case "/api/about":
 		s.serveAbout(w, r)
+	case "/api/update/check":
+		s.serveUpdateCheck(w, r, remoteKey)
+	case "/api/update/apply-ui":
+		s.serveUpdateApplyUI(w, r, remoteKey)
+	case "/api/update/prepare-setup":
+		s.serveUpdatePrepareSetup(w, r, remoteKey)
+	case "/api/update/open-setup":
+		s.serveUpdateOpenSetup(w, r, remoteKey)
 	case "/api/diag":
 		// diagnostico da UI (--diag): so' vai para o log
 		b, _ := io.ReadAll(http.MaxBytesReader(w, r.Body, 16<<10))
@@ -237,8 +244,8 @@ type clientRequest struct {
 	ReqID   string  `json:"request_id"`
 	Cols    *int    `json:"cols"`
 	Rows    *int    `json:"rows"`
-	Kind    string  `json:"kind"` // spawn_tool: ssh | serial
-	ID      string  `json:"id"`   // spawn_tool: id do host/perfil salvo
+	Kind    string  `json:"kind"`   // spawn_tool: ssh | serial
+	ID      string  `json:"id"`     // spawn_tool: id do host/perfil salvo
 	Distro  string  `json:"distro"` // spawn: distro WSL (so' para shells wsl.*)
 }
 

@@ -18,6 +18,13 @@ import (
 
 // TestMain: nenhum teste grava na pasta real do usuario (%APPDATA%\bethstudio).
 func TestMain(m *testing.M) {
+	// Só o binário de teste lê isto. O bethstudio-web.exe ignora a variável.
+	if v := strings.TrimSpace(os.Getenv("BETHSTUDIO_UPDATE_BASE")); v != "" {
+		if err := setUpdateTestBase(v); err != nil {
+			fmt.Fprintln(os.Stderr, "BETHSTUDIO_UPDATE_BASE:", err)
+			os.Exit(2)
+		}
+	}
 	if os.Getenv("BETHSTUDIO_DATA_DIR") == "" {
 		d, err := os.MkdirTemp("", "bethstudio-web-test-data")
 		if err == nil {

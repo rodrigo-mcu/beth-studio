@@ -65,6 +65,7 @@ Status legend: 🟢 shipped · ⚪ planned.
 ---
 
 - 🟢 **Interface atualizável sem reiniciar** — the Beth Studio screen can be replaced on its own: `bethstudio-web\deploy-ui.ps1` installs a new interface package under `%APPDATA%\bethstudio\ui\current`, and **Configurações > Sobre > Recarregar interface** (or F5) applies it. The Studio process, the host and the terminals are not restarted. The previous package is kept for `-Rollback`. A package that needs a newer Studio, or a broken one, is ignored and the interface built into the executable is used.
+- 🟢 **Verificar atualização** — **Configurações > Sobre > Verificar atualização** compares the running version with the latest published GitHub release. If a newer one exists, you choose: install only the interface (no restart) or download the installer for the Studio and the host. Nothing is installed until you confirm. Read-only mode and the remote browser only say that a newer version exists. The phone page does not have this.
 - 🟢 **Painel de voz não fecha por clique fora** — while recording, transcribing, correcting or reviewing text, a click outside the voice panel no longer cancels it; only the buttons or Esc do.
 
 ## 1. Removed in Phase B (native window)
@@ -337,7 +338,9 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   scaled to the largest row.
 - 🟢 Settings: Aparência, Terminais, Voz e IA, Provedores de IA, Banco de
   dados, Uso e custos, Barra lateral, Sobre. Provedores de IA has a search
-  box at the top; it filters by name, id, notes, and model.
+  box at the top; it filters by name, id, notes, and model. Sobre has
+  **Verificar atualização** (GitHub releases; install the interface or
+  download the installer only after you confirm).
 - 🟢 A new terminal or SSH/serial session opens with the Beth Studio
   theme: the terminal default theme if one is set, otherwise the
   interface theme (Claro uses VS Code Light; Escuro and Azul-marinho use
