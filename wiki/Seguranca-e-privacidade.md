@@ -43,8 +43,9 @@ Nada, por padrão. Estas são as exceções, todas por ação sua:
 | Temas | Nada: o Studio não baixa temas, só lê os arquivos da pasta `%APPDATA%\bethstudio\themes` | Não sai do seu computador |
 | SSH, serial, banco de dados | O tráfego da conexão que você configurou | O host ou banco que você escolheu |
 | Acesso remoto (celular e Studio no navegador) | O conteúdo dos terminais e o que você digita, pelo túnel | O seu servidor e o domínio que você configurou; ver abaixo |
+| Verificar atualização | Nada seu: um pedido anônimo, sem conta, só quando você clica em **Configurações → Sobre → Verificar atualização** | A API pública de releases do repositório do Beth Studio no GitHub. O Studio não consulta sozinho |
 
-Não há verificação automática de atualização nem bibliotecas de análise de uso de terceiros.
+A verificação de atualização não é automática e não é telemetria. No modo somente leitura e no Studio aberto pelo navegador, a tela só avisa que há versão nova. A página do celular não tem esse botão.
 
 ### Telemetria
 

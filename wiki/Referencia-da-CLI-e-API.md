@@ -131,6 +131,8 @@ O Studio escuta só na interface local (loopback), em uma porta aleatória. Toda
 | `/ws` | WebSocket: o Studio recebe eventos da ponte e envia os pedidos permitidos. |
 | `/healthz` | Responde `ok`. |
 | `/api/about` | Sobre: executáveis, datas de build e arquivos de log. |
+| `/api/update/check` | Há versão mais nova no GitHub? Não instala nada. |
+| `/api/update/apply-ui`, `/api/update/prepare-setup`, `/api/update/open-setup` | Instalar só a interface, ou baixar e abrir o instalador. Só no Studio deste computador, depois de confirmar. |
 | `/api/host/state`, `/api/host/retry` | Estado do host e "Tentar de novo". |
 | `/api/term/list`, `detach`, `focus`, `close`, `drag` | Janelas de terminal destacadas. |
 | `/api/themes`, `/api/fonts` | Catálogos de temas e fontes. |

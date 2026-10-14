@@ -8,7 +8,7 @@ O que sai em cada release (página **Releases** do GitHub):
 | --- | --- |
 | `BethStudio-Setup.exe` | A maioria: um arquivo, dois cliques, instala numa pasta visível |
 | `BethStudio-<versão>-windows-x64.zip` | Quem prefere portátil: descompacta e abre `bethstudio-web.exe` |
-| `BethStudio-ui-<versão>.zip` | Só a interface (atualização sem reiniciar o host, veja `bethstudio-web/deploy-ui.ps1`) |
+| `BethStudio-ui-<versão>.zip` | Só a interface. Dentro, `ui.json` traz a versão, `requires_api` e o SHA-256 de cada arquivo. O Studio confere o zip com `SHA256SUMS.txt` antes de trocar a interface, sem reiniciar o host |
 | `SHA256SUMS.txt` | Conferir o download |
 
 Cada pacote já leva `LICENSE.md`, `NOTICE.md`, `THIRD-PARTY-NOTICES.md` e os textos de licença das dependências (exigência da MIT/BSD/LGPL).

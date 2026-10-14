@@ -8,8 +8,8 @@
 # Saida em dist\release\:
 #   BethStudio-Setup.exe                    instalador de um arquivo so' (o que a maioria baixa)
 #   BethStudio-<ver>-windows-x64.zip        versao portatil: descompacte e use
-#   BethStudio-ui-<ver>.zip                 so' a interface (para o deploy-ui.ps1 / atualizacao sem reiniciar)
-#   SHA256SUMS.txt                          somas de verificacao
+#   BethStudio-ui-<ver>.zip                 so' a interface; ui.json traz version, requires_api e o SHA-256 de cada arquivo
+#   SHA256SUMS.txt                          somas de verificacao (o Studio confere isto antes de instalar)
 #   RELEASE_NOTES.md                        texto do release (a partir do CHANGELOG.md)
 #
 # Nada aqui envia coisa para a internet. Publicar e' o passo final do RELEASING.md.
@@ -106,7 +106,14 @@ $uiStage = Join-Path $out 'ui-stage'
 New-Item -ItemType Directory -Force $uiStage | Out-Null
 Copy-Item -Recurse (Join-Path $web 'frontend\dist\*') $uiStage
 $apiLevel = [int](Select-String -Path (Join-Path $web 'uiroot.go') -Pattern '^const apiLevel = (\d+)').Matches[0].Groups[1].Value
-[ordered]@{ version = $Version; requires_api = $apiLevel; commit = $commit } | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $uiStage 'ui.json')
+$files = [ordered]@{}
+Get-ChildItem -Recurse -File $uiStage | Sort-Object FullName | ForEach-Object {
+    $rel = $_.FullName.Substring($uiStage.Length + 1).Replace('\', '/')
+    $files[$rel] = (Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLower()
+}
+$manifest = [ordered]@{ version = $Version; requires_api = $apiLevel; commit = $commit; files = $files }
+$utf8 = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText((Join-Path $uiStage 'ui.json'), (($manifest | ConvertTo-Json -Depth 6) + "`n"), $utf8)
 Compress-Archive -Path (Join-Path $uiStage '*') -DestinationPath (Join-Path $out "BethStudio-ui-$Version.zip") -CompressionLevel Optimal
 Remove-Item -Recurse -Force $uiStage
 

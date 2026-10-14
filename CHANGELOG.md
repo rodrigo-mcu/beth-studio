@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- Settings → About → **Verificar atualização** checks the latest published GitHub release. You can install only the interface (the Studio and the host keep running) or download the installer for the Studio and the host. Nothing is installed until you choose. Read-only mode and the remote browser only report that a newer version exists. The phone page does not offer this.
+
 ## [0.2.0] - 2026-10-14
 
 ### Changed
