@@ -129,7 +129,8 @@ func (c *conpty) waitFor(substr string, d time.Duration) {
 	c.t.Helper()
 	deadline := time.Now().Add(d)
 	for time.Now().Before(deadline) {
-		if strings.Contains(strings.ReplaceAll(c.text(), "\r\n", "\n"), substr) {
+		// Compara sem quebras de linha: o ConPTY pode partir uma frase na margem da tela.
+		if strings.Contains(strings.Join(strings.Fields(c.text()), " "), strings.Join(strings.Fields(substr), " ")) {
 			return
 		}
 		time.Sleep(30 * time.Millisecond)
