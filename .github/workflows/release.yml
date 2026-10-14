@@ -49,7 +49,16 @@ jobs:
         shell: pwsh
         run: |
           $version = '${{ github.ref_name }}'.TrimStart('v')
-          ./release.ps1 -Version $version
+          $failed = $false
+          try { ./release.ps1 -Version $version *>&1 | Tee-Object -FilePath release.log } catch { $failed = $true; ($_ | Out-String) | Add-Content release.log }
+          if ($failed -or -not $?) {
+            # TEMPORARIO: mostra o fim do log como anotacao (visivel sem login).
+            $t = Get-Content release.log -Raw
+            if ($t.Length -gt 3500) { $t = $t.Substring($t.Length - 3500) }
+            $t = $t -replace "`e\[[0-9;?]*[A-Za-z]", '' -replace "`r", '' -replace "`n", '%0A'
+            Write-Host "::error::release=$t"
+            exit 1
+          }
 
       - name: Draft GitHub release
         uses: softprops/action-gh-release@v2
