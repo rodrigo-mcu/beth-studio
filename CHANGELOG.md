@@ -6,10 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-14
+
 ### Changed
 - Docs: the README and the FAQ say that Linux and macOS ports are planned (no date, no commitment).
-
-## [0.2.0] - 2026-10-14
 
 ### Added
 - Database connection form: a **Selecionar** button next to **Banco inicial** connects with the form's data and lists the databases to pick from (PostgreSQL and SQL Server).

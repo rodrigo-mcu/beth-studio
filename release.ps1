@@ -38,7 +38,8 @@ if ($Version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') { throw "Versao '$Ver
 Step "Conferindo o repositorio"
 $dirty = git -C $Root status --porcelain
 if ($dirty -and -not $AllowDirty) { throw "Ha alteracoes nao commitadas. Commite (ou use -AllowDirty para um teste):`n$dirty" }
-if (git -C $Root tag --list "v$Version") { throw "A tag v$Version ja' existe." }
+# No GitHub Actions o build e' disparado pela propria tag: ela precisa existir.
+if (-not $env:GITHUB_ACTIONS -and (git -C $Root tag --list "v$Version")) { throw "A tag v$Version ja' existe." }
 $commit = (git -C $Root rev-parse --short HEAD).Trim()
 
 $perl = 'C:\Strawberry\perl\bin'
