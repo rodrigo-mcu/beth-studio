@@ -82,11 +82,14 @@ Clique com o botão direito no terminal:
 
 ### Links clicáveis
 
-Links na saída do terminal ficam sublinhados e podem ser clicados:
+Links e caminhos na saída do terminal ficam sublinhados. Ao passar o mouse, uma dica diz o que o clique faz.
 
 - Links `http` e `https` abrem no navegador padrão, nunca dentro do Studio.
-- Caminhos de arquivos locais `.md`, `.txt`, `.log` e imagens abrem no painel de arquivo, com a pasta do terminal como referência (inclusive no WSL).
-- Hiperlinks que o próprio programa envia (OSC 8) valem pelo destino real, não pelo texto mostrado.
+- Caminhos de `.md`, `.txt`, `.log` e imagens abrem no painel de arquivo, com a pasta do terminal como referência (inclusive no WSL).
+- Qualquer outro arquivo que exista (PDF, documento, planilha, arquivo compactado e o restante) abre no programa padrão do Windows.
+- Programa e script (`.exe`, `.bat`, `.cmd`, `.ps1`, `.lnk`, `.js`, `.vbs`, `.msi`, `.scr` e similares) não são executados: o clique mostra o arquivo na pasta.
+- Hiperlinks que o próprio programa envia (OSC 8) valem pelo destino real, não pelo texto mostrado. Um texto curto como "here" abre a URL de verdade.
+- Com um programa em tela cheia que usa o mouse, o clique puro continua no programa. A dica passa a dizer **Ctrl+clique para abrir**. Segure Ctrl e clique no link.
 
 ## Detalhes e limites
 

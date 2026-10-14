@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- Clicking a file path in terminal output opens more than preview types: PDF, Office documents, archives and other existing files open in the Windows default program. Text and images still open in the preview panel. Programs and scripts are shown in Explorer instead of being launched.
+- With mouse tracking on, Ctrl+click (or Cmd+click) opens the link and the hover hint says so; a plain click still goes to the program. OSC 8 hyperlinks open their real http(s) target in the default browser.
+
 ## [0.2.0] - 2026-10-14
 
 ### Changed
