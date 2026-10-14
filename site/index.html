@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beth Studio: fale em vez de digitar, terminais que não caem</title>
-<meta name="description" content="Beth Studio é um terminal para Windows feito para o mouse, com ditado por voz no Studio e no celular. Um host persistente guarda seus shells, agentes de IA e sessões WSL: se a interface travar, os terminais continuam rodando.">
+<title>Beth Studio: a interface pode travar, os terminais continuam</title>
+<meta name="description" content="A interface do Beth Studio pode travar ou fechar sem levar seus terminais. Dite por voz sem ferramenta externa, organize abas e divisões do seu jeito e acompanhe os agentes de IA pelo celular.">
 <meta name="color-scheme" content="light dark">
 <link rel="alternate" hreflang="pt-BR" href="index.html">
 <link rel="alternate" hreflang="en" href="en/index.html">
@@ -44,66 +44,150 @@
 
 <main id="conteudo">
   <div class="wrap hero">
-    <div class="hero-grid">
-      <div>
-        <p class="eyebrow">Terminal para Windows, feito para o mouse</p>
-        <h1>Fale em vez de digitar. Terminais que <span class="hl">sobrevivem</span>.</h1>
-        <p class="lead">O <strong>Beth Studio</strong> dita por voz no Windows e no celular, avisa quando um agente de IA espera você e guarda seus terminais num <strong>host persistente</strong>. Se a interface travar, ou você a reiniciar, shells, agentes e sessões WSL continuam rodando.</p>
-        <div class="cta">
-          <a class="btn" href="#baixar">Baixar para Windows</a>
-          <a class="btn ghost" href="#voz">Ver a voz</a>
-          <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">GitHub</a>
-        </div>
-        <p class="note">Código aberto. Windows 10 ou 11. Linux e macOS: planejado, sem data.</p>
-        <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
-      </div>
-      <figure class="diagram">
-        <svg viewBox="0 0 400 420" role="img" aria-labelledby="dg-t dg-d">
-          <title id="dg-t">Diagrama: host persistente e interface</title>
-          <desc id="dg-d">Em cima, a interface conectada ao host persistente, que guarda os terminais. Embaixo, a interface caiu, mas o host continua com todos os terminais rodando.</desc>
-          <text class="d-state" x="40" y="18">NORMAL</text>
-          <rect class="d-ui" x="40" y="28" width="320" height="50" rx="6"/>
-          <text class="d-t" x="200" y="58" text-anchor="middle">Interface (Studio)</text>
-          <line class="d-link" x1="200" y1="82" x2="200" y2="114"/>
-          <polygon class="d-arrow" points="200,78 194,88 206,88"/>
-          <polygon class="d-arrow" points="200,118 194,108 206,108"/>
-          <rect class="d-host" x="40" y="118" width="320" height="86" rx="6"/>
-          <text class="d-t" x="200" y="141" text-anchor="middle">Host persistente</text>
-          <rect class="d-chip" x="52" y="158" width="64" height="30" rx="4"/><text class="d-m" x="84" y="177" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="158" width="64" height="30" rx="4"/><text class="d-m" x="158" y="177" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="158" width="64" height="30" rx="4"/><text class="d-m" x="232" y="177" text-anchor="middle">agente</text>
-          <rect class="d-chip" x="274" y="158" width="74" height="30" rx="4"/><text class="d-m" x="311" y="177" text-anchor="middle">build</text>
+    <p class="eyebrow">Terminal para Windows, mouse e toque primeiro</p>
+    <h1>A interface travou? <span class="hl">Os terminais continuam</span>.</h1>
+    <p class="lead">Dite por voz sem ferramenta externa e revise antes de enviar. Acompanhe terminais e agentes de IA também pelo celular.</p>
+    <div class="cta">
+      <a class="btn" href="#baixar">Baixar para Windows</a>
+      <a class="btn ghost" href="#como-funciona">Ver como funciona</a>
+      <a class="btn ghost" href="https://github.com/rodrigo-mcu/beth-studio">GitHub</a>
+    </div>
+    <p class="note">Código aberto, MIT. Windows 10 ou 11. Linux e macOS: planejado, sem data.</p>
+    <p class="prompt" aria-hidden="true">$ <span class="caret"></span></p>
 
-          <text class="d-state" x="40" y="240">A INTERFACE CAIU</text>
-          <rect class="d-ui-dead" x="40" y="250" width="320" height="50" rx="6"/>
-          <text class="d-s" x="200" y="280" text-anchor="middle">Interface travada ou fechada</text>
-          <line class="d-x" x1="334" y1="262" x2="348" y2="288"/><line class="d-x" x1="348" y1="262" x2="334" y2="288"/>
-          <line class="d-link-dead" x1="200" y1="304" x2="200" y2="332"/>
-          <rect class="d-host" x="40" y="336" width="320" height="76" rx="6"/>
-          <text class="d-ok" x="200" y="357" text-anchor="middle">Host: os terminais seguem rodando</text>
-          <rect class="d-chip" x="52" y="368" width="64" height="30" rx="4"/><text class="d-m" x="84" y="387" text-anchor="middle">WSL2</text>
-          <rect class="d-chip" x="126" y="368" width="64" height="30" rx="4"/><text class="d-m" x="158" y="387" text-anchor="middle">pwsh</text>
-          <rect class="d-chip" x="200" y="368" width="64" height="30" rx="4"/><text class="d-m" x="232" y="387" text-anchor="middle">agente</text>
-          <rect class="d-chip" x="274" y="368" width="74" height="30" rx="4"/><text class="d-m" x="311" y="387" text-anchor="middle">build</text>
-        </svg>
-        <figcaption>Esquema simplificado, não é uma captura de tela.</figcaption>
-      </figure>
+    <ul class="pillars" aria-label="Os quatro pontos fortes do Beth Studio">
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="22" height="9" rx="2"/><path d="M9 7l4 4M13 7l-4 4"/><line x1="14" y1="12" x2="14" y2="17"/><rect x="3" y="18" width="22" height="7" rx="2"/><circle cx="21" cy="21.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+        <h3>Interface travou? Os terminais seguem.</h3>
+        <p>Shells, agentes de IA e sessões WSL vivem num host separado da interface. Reabra e está tudo lá, com o histórico.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="18" height="13" rx="2"/><path d="M5 17l-2 6h22l-2-6"/><line x1="9" y1="9" x2="19" y2="9"/></svg>
+        <h3>Feche a aba. A tarefa continua.</h3>
+        <p>Fechar a aba não encerra o terminal: ele segue no host. Reabra pela lista de terminais ou acompanhe pelo celular.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="22" rx="1.5"/><rect x="15" y="3" width="10" height="9" rx="1.5"/><rect x="15" y="16" width="10" height="9" rx="1.5"/></svg>
+        <h3>Quantas abas quiser, do seu jeito.</h3>
+        <p>Abas, divisões em qualquer direção, terminal destacado em janela própria e uma grade com busca. Você escolhe como organizar.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="3" width="8" height="14" rx="4"/><path d="M6 13a8 8 0 0 0 16 0"/><line x1="14" y1="21" x2="14" y2="25"/><line x1="9" y1="25" x2="19" y2="25"/></svg>
+        <h3>Dite em vez de digitar.</h3>
+        <p>Grave a voz, transcreva, revise e envie ao terminal, sem copiar e colar de outro programa.</p>
+      </li>
+    </ul>
+
+    <ul class="pillars-secondary" aria-label="Mais dois pontos fortes">
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="14" height="24" rx="3"/><line x1="12" y1="22" x2="16" y2="22"/></svg>
+        <h3>Continue pelo celular.</h3>
+        <p>Veja os terminais e os agentes esperando por você, e responda por texto ou voz pelo navegador do celular.</p>
+        <p class="fine">Requer o relé <code>bethstudio-proxy</code>, hospedado por você; vem desligado por padrão.</p>
+      </li>
+      <li>
+        <svg class="pillar-ic" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="4"/><path d="M10 6v2M10 20v2M3 14h2M15 14h2"/><rect x="18" y="4" width="7" height="20" rx="2"/></svg>
+        <h3>Mouse e toque primeiro.</h3>
+        <p>Tudo se faz clicando. Sem arquivo de configuração, sem atalho para decorar.</p>
+      </li>
+    </ul>
+
+    <div class="also">
+      <p class="also-label">também vem com</p>
+      <ul class="facts">
+        <li>Avisa quando o agente espera você</li>
+        <li>Gerenciador de tarefas com o WSL2 em camadas</li>
+        <li>Banco de dados e SSH/SFTP integrados</li>
+      </ul>
     </div>
 
-    <figure class="shot win hero-shot">
-      <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
-      <div class="frame">
-        <img src="assets/shots/hero-studio.webp" width="1044" height="788" loading="lazy" alt="Janela do Beth Studio com a barra lateral, as abas e dois terminais divididos." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
-        <div class="ph"><strong>Espaço para captura de tela</strong><span>Esquema reservado, não é uma captura. Arquivo esperado:</span><code>assets/shots/hero-studio.webp</code><span>proporção 4:3</span></div>
-      </div>
-      <figcaption>O Studio no Windows: barra lateral, abas e terminais divididos.</figcaption>
-    </figure>
+    <div class="proof">
+      <figure class="diagram host-sketch">
+        <svg viewBox="0 0 320 320" role="img" aria-labelledby="dgA-t dgA-d">
+          <title id="dgA-t">Diagrama: host persistente e interface</title>
+          <desc id="dgA-d">Em cima, a interface conectada ao host persistente, que guarda os terminais. Embaixo, a interface travou, mas o host continua com os mesmos terminais rodando.</desc>
+          <text class="d-state" x="18" y="14">NORMAL</text>
+          <rect class="d-ui" x="16" y="22" width="288" height="46" rx="6"/>
+          <text class="d-t" x="160" y="49" text-anchor="middle">Interface (Studio)</text>
+          <line class="d-link" x1="160" y1="68" x2="160" y2="96"/>
+          <polygon class="d-arrow" points="160,64 154,74 166,74"/>
+          <polygon class="d-arrow" points="160,100 154,90 166,90"/>
+          <rect class="d-host" x="16" y="96" width="288" height="70" rx="6"/>
+          <text class="d-t" x="160" y="116" text-anchor="middle">Host persistente</text>
+          <rect class="d-chip" x="22" y="128" width="84" height="26" rx="4"/><text class="d-m" x="64" y="145" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="118" y="128" width="84" height="26" rx="4"/><text class="d-m" x="160" y="145" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="214" y="128" width="84" height="26" rx="4"/><text class="d-m" x="256" y="145" text-anchor="middle">agente</text>
 
-    <div class="problem">
-      <h2>O problema</h2>
-      <p>Em terminais comuns, o terminal e a interface gráfica vivem no mesmo processo. Quando a interface trava ou fica lenta, os terminais morrem junto e você perde o que estava rodando. O problema quase sempre está na interface, não no console.</p>
+          <text class="d-state d-bad" x="18" y="182">A INTERFACE TRAVOU</text>
+          <rect class="d-ui-dead" x="16" y="190" width="288" height="46" rx="6"/>
+          <text class="d-s" x="160" y="217" text-anchor="middle">Travou ou foi fechada</text>
+          <line class="d-x" x1="270" y1="200" x2="294" y2="224"/><line class="d-x" x1="294" y1="200" x2="270" y2="224"/>
+          <line class="d-link-dead" x1="160" y1="236" x2="160" y2="250"/>
+          <rect class="d-host" x="16" y="250" width="288" height="66" rx="6"/>
+          <text class="d-ok" x="160" y="270" text-anchor="middle">Terminais seguem rodando</text>
+          <rect class="d-chip" x="22" y="282" width="84" height="26" rx="4"/><text class="d-m" x="64" y="299" text-anchor="middle">pwsh</text>
+          <rect class="d-chip" x="118" y="282" width="84" height="26" rx="4"/><text class="d-m" x="160" y="299" text-anchor="middle">WSL2</text>
+          <rect class="d-chip" x="214" y="282" width="84" height="26" rx="4"/><text class="d-m" x="256" y="299" text-anchor="middle">agente</text>
+        </svg>
+        <figcaption>Diagrama simplificado, não é uma captura de tela.</figcaption>
+      </figure>
+      <div class="proof-secondary">
+        <figure class="shot win proof-shot">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Beth Studio</span></div>
+          <div class="frame">
+            <img src="assets/shots/hero-studio.webp" width="1044" height="788" loading="lazy" alt="Janela do Beth Studio com a barra lateral, as abas e dois terminais divididos." onload="this.parentNode.parentNode.classList.add('ok')" onerror="this.remove()">
+            <div class="ph"><strong>Captura de tela</strong><code>assets/shots/hero-studio.webp</code></div>
+          </div>
+          <figcaption>Abas e divisões, de verdade: captura real do Studio.</figcaption>
+        </figure>
+        <figure class="diagram phone-sketch">
+          <svg viewBox="0 0 200 320" role="img" aria-labelledby="dgB-t dgB-d">
+            <title id="dgB-t">Esquema do WebApp do celular</title>
+            <desc id="dgB-d">Contorno de um celular com uma lista de terminais. Um deles, o agente, aparece destacado em âmbar como aguardando. Um botão de microfone fica abaixo da lista.</desc>
+            <rect class="d-phone-body" x="14" y="10" width="172" height="300" rx="26"/>
+            <rect class="d-phone-notch" x="86" y="22" width="28" height="6" rx="3"/>
+            <text class="d-phone-h" x="100" y="50" text-anchor="middle">Terminais</text>
+            <line class="d-phone-div" x1="28" y1="58" x2="172" y2="58"/>
+            <rect class="d-chip" x="28" y="70" width="144" height="28" rx="5"/><text class="d-m" x="100" y="88" text-anchor="middle">pwsh</text>
+            <rect class="d-chip" x="28" y="104" width="144" height="28" rx="5"/><text class="d-m" x="100" y="122" text-anchor="middle">WSL2</text>
+            <rect class="d-wait" x="28" y="138" width="144" height="28" rx="5"/><text class="d-wait-text" x="100" y="156" text-anchor="middle">agente, aguardando</text>
+            <rect class="d-chip" x="28" y="172" width="144" height="28" rx="5"/><text class="d-m" x="100" y="190" text-anchor="middle">ssh</text>
+            <circle class="d-mic-bg" cx="100" cy="250" r="26"/>
+            <rect class="d-mic-cap" x="94" y="234" width="12" height="20" rx="6"/>
+            <path class="d-mic-ico" d="M90 250a10 10 0 0 0 20 0"/>
+            <line class="d-mic-ico" x1="100" y1="260" x2="100" y2="266"/>
+            <line class="d-mic-ico" x1="92" y1="268" x2="108" y2="268"/>
+          </svg>
+          <figcaption>Esquema, não é uma captura de tela: ainda não há print do WebApp do celular.</figcaption>
+        </figure>
+      </div>
     </div>
   </div>
+
+  <section id="por-que-existe" aria-labelledby="h-porque">
+    <div class="wrap">
+      <p class="sec-label">por que existe</p>
+      <h2 class="title" id="h-porque">Por que o Beth Studio existe</h2>
+      <p class="sub">Três coisas incomodavam na rotina de terminal, dia após dia. Cada uma virou uma resposta direta no produto.</p>
+      <ul class="why-pairs">
+        <li>
+          <div class="why-pain"><b>Dor</b><p>O terminal travava, e às vezes derrubava a aplicação inteira, com tudo que estava aberto.</p></div>
+          <span class="why-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span>
+          <div class="why-answer"><b>Resposta</b><p>Aqui a interface e os terminais são processos separados. Se a interface cair, os terminais continuam de pé.</p></div>
+        </li>
+        <li>
+          <div class="why-pain"><b>Dor</b><p>Tinha que usar o teclado para tudo, numa época em que já existem mouse e toque.</p></div>
+          <span class="why-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span>
+          <div class="why-answer"><b>Resposta</b><p>Aqui tudo se faz clicando. Nenhum atalho é obrigatório.</p></div>
+        </li>
+        <li>
+          <div class="why-pain"><b>Dor</b><p>Falar costuma ser mais rápido que digitar, mas as ferramentas de ditado eram externas: gravar, copiar, colar.</p></div>
+          <span class="why-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span>
+          <div class="why-answer"><b>Resposta</b><p>Aqui o ditado é parte do terminal. Grava, transcreve, revisa e envia, sem sair do programa.</p></div>
+        </li>
+      </ul>
+    </div>
+  </section>
 
   <section id="nao-cai" aria-labelledby="h-nao-cai">
     <div class="wrap">
