@@ -38,3 +38,4 @@ Tema claro/escuro: segue o sistema e tem botão no cabeçalho; a escolha fica em
 ## Como as capturas foram feitas
 
 Todas vêm de um PC Windows 11 de teste com o Beth Studio instalado a partir do release, em pastas e com prompt neutros (`C:\demo\…`). Antes de publicar uma captura nova, confira que ela não mostra nome de usuário do Windows, nome do computador, caminhos pessoais, senhas nem nomes de clientes ou da empresa.
+
