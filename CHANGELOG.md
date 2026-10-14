@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 - Docs: the README and the FAQ say that Linux and macOS ports are planned (no date, no commitment).
+- Docs: `LICENSE.md` now says which folders are BSD-3-Clause (`bethstudio-web/`, `bethstudio-mobile/`) and which are MIT.
 - Docs: the README now opens with the problem it solves (terminals dying when the interface hangs) and highlights the persistent host, interface reload without stopping the hosts, daily use with about 35 terminals (the author's experience, not a benchmark), the built-in task manager, and image and file paste for agents.
 
 ### Added
