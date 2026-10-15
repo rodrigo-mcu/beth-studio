@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Tray icon menu: **Reiniciar interface** reloads the Studio page without touching the host, the terminals or the Studio process.
 
 ### Fixed
+- A terminal saved in two tabs (a corrupt layout) used to vanish from one of them silently, which looked like two terminals side by side in the wrong tab. The Studio now keeps it in the tab where it is alone (else the first), saves the fixed layout and shows a notice saying where it stayed.
 - Text that reaches a terminal without a key press (Windows voice typing, touch keyboard, emoji picker, some input methods) was silently dropped when the terminal had been idle for 1.5 s. It now counts as user input.
 
 ### Changed

@@ -22,6 +22,7 @@ import {
   sanitize,
   setActive,
   setSizes,
+  type DuplicatePane,
   type Layout,
   type LayoutNode,
 } from "../src/lib/layout.ts";
@@ -350,4 +351,36 @@ test("destacar o único terminal da única aba deixa uma aba vazia", () => {
   const out = detachPaneClosingEmpty(l, 1);
   assert.equal(out.tabs.length, 1);
   assert.equal(out.tabs[0].root, null);
+});
+
+test("sanitize: terminal em duas abas fica na aba onde está sozinho e é relatado", () => {
+  const raw = {
+    active: "m",
+    tabs: [
+      { id: "m", name: "MANUAIS", root: { type: "split", dir: "row", sizes: [1, 1], children: [{ type: "leaf", pane: 9 }, { type: "leaf", pane: 0 }] } },
+      { id: "x", name: "", root: { type: "leaf", pane: 0 } },
+    ],
+  };
+  const rep: DuplicatePane[] = [];
+  const s = sanitize(raw, rep)!;
+  assert.equal(show(s.tabs[0].root), "9");
+  assert.equal(show(s.tabs[1].root), "0");
+  assert.deepEqual(rep, [{ pane: 0, kept: "x", dropped: ["m"] }]);
+  // nenhuma aba só com ele: fica a primeira
+  const raw2 = {
+    active: "a",
+    tabs: [
+      { id: "a", name: "", root: { type: "split", dir: "row", sizes: [1, 1], children: [{ type: "leaf", pane: 1 }, { type: "leaf", pane: 2 }] } },
+      { id: "b", name: "", root: { type: "split", dir: "row", sizes: [1, 1], children: [{ type: "leaf", pane: 2 }, { type: "leaf", pane: 3 }] } },
+    ],
+  };
+  const rep2: DuplicatePane[] = [];
+  const s2 = sanitize(raw2, rep2)!;
+  assert.equal(show(s2.tabs[0].root), "row(1,2)");
+  assert.equal(show(s2.tabs[1].root), "3");
+  assert.deepEqual(rep2, [{ pane: 2, kept: "a", dropped: ["b"] }]);
+  // sem duplicata, sem relatório
+  const rep3: DuplicatePane[] = [];
+  sanitize({ active: "a", tabs: [{ id: "a", name: "", root: { type: "leaf", pane: 5 } }] }, rep3);
+  assert.deepEqual(rep3, []);
 });

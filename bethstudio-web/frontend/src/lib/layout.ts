@@ -498,11 +498,56 @@ export function nextTabName(layout: Layout): string {
 }
 
 /** Valida/limpa um layout vindo de fora (localStorage, servidor antigo). */
-export function sanitize(input: unknown): Layout | null {
+/** Terminal que o arquivo trazia em mais de uma aba: `kept` é onde ficou, `dropped` de onde saiu. */
+export interface DuplicatePane {
+  pane: number;
+  kept: string;
+  dropped: string[];
+}
+
+/**
+ * Terminais vivos que aparecem em mais de uma aba. Fica a aba onde ele está
+ * sozinho (a mais provável de ser a escolha do usuário; o ladear por engano
+ * é o defeito mais comum); sem isso, a primeira. Duplicata dentro da mesma
+ * aba não entra aqui: o sanitize já mantém a primeira folha.
+ */
+function findDuplicatePanes(tabs: unknown[]): Map<number, DuplicatePane> {
+  const where = new Map<number, string[]>();
+  const live = new Map<string, number>();
+  const ids = new Set<string>();
+  const walk = (n: unknown, tab: string, depth: number) => {
+    if (!n || typeof n !== "object" || depth > 8) return;
+    const x = n as { type?: string; pane?: number; gone?: boolean; children?: unknown[] };
+    if (x.type === "leaf") {
+      if (x.gone || !Number.isInteger(x.pane) || (x.pane as number) < 0) return;
+      live.set(tab, (live.get(tab) ?? 0) + 1);
+      const w = where.get(x.pane as number) ?? [];
+      if (!w.includes(tab)) w.push(tab);
+      where.set(x.pane as number, w);
+    } else if (x.type === "split" && Array.isArray(x.children)) x.children.forEach((c) => walk(c, tab, depth + 1));
+  };
+  for (const t of tabs) {
+    const tt = t as { id?: unknown; root?: unknown } | null;
+    if (!tt || typeof tt.id !== "string" || !tt.id || ids.has(tt.id)) continue;
+    ids.add(tt.id);
+    walk(tt.root, tt.id, 0);
+  }
+  const out = new Map<number, DuplicatePane>();
+  for (const [pane, w] of where) {
+    if (w.length < 2) continue;
+    const kept = w.find((id) => live.get(id) === 1) ?? w[0];
+    out.set(pane, { pane, kept, dropped: w.filter((id) => id !== kept) });
+  }
+  return out;
+}
+
+export function sanitize(input: unknown, report?: DuplicatePane[]): Layout | null {
   if (!input || typeof input !== "object") return null;
   const l = input as Partial<Layout>;
   if (!Array.isArray(l.tabs)) return null;
   const seen = new Set<number>();
+  const dups = findDuplicatePanes(l.tabs);
+  let curTab = "";
   const node = (n: unknown, depth: number): LayoutNode | null => {
     if (!n || typeof n !== "object" || depth > 8) return null;
     const x = n as {
@@ -516,6 +561,8 @@ export function sanitize(input: unknown): Layout | null {
     if (x.type === "leaf") {
       if (!Number.isInteger(x.pane) || (x.pane as number) < 0) return null;
       if (!x.gone) {
+        const d = dups.get(x.pane!);
+        if (d && d.kept !== curTab) return null;
         if (seen.has(x.pane!)) return null;
         seen.add(x.pane!);
       }
@@ -540,6 +587,7 @@ export function sanitize(input: unknown): Layout | null {
   for (const t of l.tabs) {
     if (!t || typeof t.id !== "string" || !t.id || ids.has(t.id)) continue;
     ids.add(t.id);
+    curTab = t.id;
     tabs.push({
       id: t.id,
       name: typeof t.name === "string" ? t.name.trim().slice(0, 60) : "",
@@ -547,6 +595,8 @@ export function sanitize(input: unknown): Layout | null {
     });
   }
   if (tabs.length === 0) return null;
+  curTab = "";
+  if (report) report.push(...dups.values());
   const active = tabs.some((t) => t.id === l.active) ? (l.active as string) : tabs[0].id;
   // Migracao para v2: nomes automaticos antigos viram "acompanha o terminal".
   if ((l as Layout).v !== 2) for (const t of tabs) if (isAutoTabName(t.name)) t.name = "";

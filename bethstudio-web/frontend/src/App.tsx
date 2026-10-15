@@ -89,13 +89,14 @@ function oldViews(): number[] {
  * Mudancas locais valem na hora; o que vem do servidor so' substitui o
  * local quando nao ha' gravacao pendente (evita "voltar" uma mudanca).
  */
-function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, onError: (m: string) => void) {
+function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, onError: (m: string) => void, onNotice: (m: string) => void) {
   const [layout, setLayout] = useState<L.Layout | null>(null);
   const localJSON = useRef("");
   const pending = useRef(0);
   const localOnly = useRef(false); // mudanca local ainda nao enviada (arrastando divisoria)
   const timer = useRef<number | undefined>(undefined);
   const openedParam = useRef(false);
+  const repairedDups = useRef("");
 
   const save = useCallback(
     (l: L.Layout) => {
@@ -137,7 +138,8 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
 
   useEffect(() => {
     if (!settings || !panes) return;
-    const server = settings.layout ? L.sanitize(settings.layout) : null;
+    const dups: L.DuplicatePane[] = [];
+    const server = settings.layout ? L.sanitize(settings.layout, dups) : null;
     if (!server) {
       if (layout) return;
       // Primeira vez (ou arquivo da versao anterior): monta a aba
@@ -151,6 +153,26 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
       return;
     }
     let next = server;
+    const dupKey = dups.map((d) => `${d.pane}:${d.kept}`).join(",");
+    if (dups.length && pending.current === 0 && repairedDups.current !== dupKey) {
+      repairedDups.current = dupKey; // uma vez por defeito, mesmo que a gravação falhe
+      // O arquivo trazia terminal em duas abas. Conserta e grava; sem isso o
+      // terminal sumia de uma das abas sem aviso.
+      const nameOf = (id: string) => {
+        const i = server.tabs.findIndex((t) => t.id === id);
+        return i < 0 ? "" : server.tabs[i].name.trim() || `Aba ${i + 1}`;
+      };
+      const d = dups[0];
+      const titleOf = panes.find((p) => p.pane_id === d.pane);
+      const what = titleOf ? `“${paneLabel(titleOf)}”` : `#${d.pane}`;
+      onNotice(
+        dups.length === 1
+          ? `O terminal ${what} estava em duas abas; ficou só em “${nameOf(d.kept)}”`
+          : `${dups.length} terminais estavam em mais de uma aba; cada um ficou numa só`,
+      );
+      commit(server);
+      return;
+    }
     if (!openedParam.current) {
       openedParam.current = true;
       const alive = new Set(panes.map((p) => p.pane_id));
@@ -165,7 +187,7 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
       localJSON.current = js;
       setLayout(server);
     }
-  }, [settings, panes, layout, commit]);
+  }, [settings, panes, layout, commit, onNotice]);
 
   const getLayout = useCallback(() => current.current, []);
   return { layout, commit, getLayout };
@@ -176,7 +198,10 @@ export function App() {
   const drag = useDrag();
   const [error, setError] = useState<string | null>(null);
   const onError = useCallback((m: string) => setError(m), []);
-  const { layout, commit: rawCommit, getLayout } = useWebLayout(snap.settings, snap.panes, onError);
+  // o aviso curto (notice) é declarado mais abaixo; a ref liga os dois
+  const noticeRef = useRef<(m: string) => void>(() => undefined);
+  const onNotice = useCallback((m: string) => noticeRef.current(m), []);
+  const { layout, commit: rawCommit, getLayout } = useWebLayout(snap.settings, snap.panes, onError, onNotice);
   // Toda mudanca de organizacao: terminal que foi para uma aba sai dos
   // grupos fechados (e grupo vazio some).
   const commit = useCallback((l: L.Layout, delay?: number) => rawCommit(L.pruneClosed(l), delay), [rawCommit]);
@@ -242,6 +267,7 @@ export function App() {
   useAgentAlerts(snap.agents, snap.panes, notifyPrefs);
   const [uiPreview, setUIPreview] = useState<UIColors | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  noticeRef.current = setNotice;
   const catalog = useCatalog();
   // "Tema padrao dos terminais" escolhido pelo usuario ("" = nenhum). Nao
   // usa effectiveFor: ele ja' cai no tema da interface, e o modo "follow"
