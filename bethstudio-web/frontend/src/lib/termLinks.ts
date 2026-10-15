@@ -205,6 +205,40 @@ export function extractFileCandidates(visibleText: string): RowSpan[] {
   return out;
 }
 
+// Pasta solta no texto: caminho absoluto SEM extensão (POSIX, ~ ou unidade).
+// Só vale com 2 segmentos ou mais (ou barra no fim): "/compact", "/model" e
+// "e/ou" ficam de fora. O pane decide depois, em routeTermLink, se o caminho
+// é resolvível (POSIX só em pane WSL).
+const FOLDER_RE = /(?:[A-Za-z]:[\/]|~[\/]|\/(?!\/))[^\s"'`<>|*?[\](){}:,;]+/g;
+const FOLDER_SEG_RE = /^[\w.@+%~-]+$/u;
+
+/** Pastas soltas no texto visível (sem pisar nas faixas já tomadas por arquivo). */
+export function extractFolderCandidates(visibleText: string, taken: Array<{ start: number; end: number }> = []): RowSpan[] {
+  const out: RowSpan[] = [];
+  for (const m of visibleText.matchAll(FOLDER_RE)) {
+    const start = m.index!;
+    const raw = m[0];
+    const uri = raw.replace(/[.!?'"`]+$/u, "");
+    if (!uri) continue;
+    const end = start + uri.length;
+    if (insideHttpUrl(visibleText, start)) continue;
+    // "a/b/c" no meio de uma palavra, data "10/15/2026", "x.y/z": não começa pasta
+    if (start > 0 && /[\w.:~\/\\]/.test(visibleText[start - 1])) continue;
+    if (taken.some((r) => start < r.end && end > r.start)) continue;
+    const body = uri.replace(/^(?:[A-Za-z]:[\/]|~[\/]|\/)/, "");
+    const segs = body.split(/[\/]/).filter(Boolean);
+    const trailing = /[\/]$/.test(uri);
+    const posix = uri.startsWith("/");
+    if (segs.length === 0) continue;
+    if (posix && segs.length < 2 && !trailing) continue;
+    if (!segs.every((s) => FOLDER_SEG_RE.test(s))) continue;
+    // com ponto no último segmento é arquivo (ou versão), não pasta
+    if (!trailing && /\.[A-Za-z0-9]{1,12}$/.test(segs[segs.length - 1])) continue;
+    out.push({ start, end, uri });
+  }
+  return out;
+}
+
 function fileExtOf(path: string): string {
   const base = path.split(/[/\\]/).pop() ?? path;
   const i = base.lastIndexOf(".");
@@ -260,7 +294,9 @@ export function rowLinkCandidates(row: string): { start: number; end: number; ur
 
 /** Só o fallback (texto solto), sem pisar nas faixas já cobertas por OSC 8. */
 export function fallbackSpans(visible: string, osc8: Array<{ start: number; end: number }>): { start: number; end: number; uri: string; kind: "file" | "url" }[] {
-  const files = extractFileCandidates(visible).filter((f) => !overlaps(f, osc8));
+  const found = extractFileCandidates(visible).filter((f) => !overlaps(f, osc8));
+  const folders = extractFolderCandidates(visible, [...found, ...osc8]);
+  const files = [...found, ...folders].sort((a, b) => a.start - b.start);
   const urls = extractUrlCandidates(visible).filter((u) => !overlaps(u, osc8) && !overlaps(u, files));
   return [...files.map((s) => ({ ...s, kind: "file" as const })), ...urls.map((s) => ({ ...s, kind: "url" as const }))];
 }
@@ -270,7 +306,8 @@ export type LinkRoute =
   | { kind: "http"; url: string }
   | { kind: "file"; path: string }
   | { kind: "open"; path: string }
-  | { kind: "reveal"; path: string };
+  | { kind: "reveal"; path: string }
+  | { kind: "folder"; path: string };
 
 /**
  * Roteia pelo ALVO: http(s) -> navegador; texto/imagem -> painel de preview;
@@ -283,8 +320,10 @@ export function routeTermLink(target: string, ctx: PaneLinkCtx): LinkRoute | nul
   if (!t) return null;
   if (/^https?:/i.test(t)) return isHttpUrl(t) ? { kind: "http", url: t } : null;
   const path = resolveLinkPath(t, ctx);
-  if (!path || /[\\/]$/.test(path)) return null;
-  if (!fileExtOf(path)) return null;
+  if (!path) return null;
+  // Pasta (barra no fim ou sem extensao): abre no Explorer. Num pane WSL o
+  // caminho ja' vem como UNC do WSL (wsl.localhost, a distro e a pasta).
+  if (/[\\/]$/.test(path) || !fileExtOf(path)) return { kind: "folder", path: path.length > 3 ? path.replace(/[\\/]+$/, "") : path };
   if (localFileKind(path)) return { kind: "file", path };
   if (isDangerousFilePath(path)) return { kind: "reveal", path };
   return { kind: "open", path };
@@ -317,6 +356,7 @@ export function linkHoverHint(mouseTracking: boolean, kind: LinkRoute["kind"]): 
   const how = mouseTracking ? "Ctrl+clique" : "Clique";
   if (kind === "http") return `${how} para abrir no navegador`;
   if (kind === "reveal") return `${how} para mostrar na pasta`;
+  if (kind === "folder") return `${how} para abrir a pasta no Explorer`;
   return `${how} para abrir`;
 }
 

@@ -279,6 +279,10 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   `.js` and the like) are shown in Explorer and are not launched. While a
   fullscreen program has mouse tracking on, a plain click still goes to
   that program; the hover hint says **Ctrl+click** to open the link.
+  A folder path in the output (absolute, no extension: `/mnt/data/dir/`,
+  `~/dir`, `C:\dir`) opens that folder in Explorer; in a WSL terminal it
+  opens the WSL folder on Windows. The folder path in the terminal header
+  does the same (2026-10-15).
 - 🟢 **Colar arquivo do Explorer** (Ctrl+V or Colar, 2026-10-01). A file
   copied in Explorer — PDF, video, or anything else — is copied into
   `C:\tmp\bethstudio\clipboard-images` (or `%TEMP%\bethstudio\clipboard-images`

@@ -14,6 +14,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -120,6 +121,14 @@ func (s *server) serveLocalFS(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
+		if openFolder, _ := body["open_folder"].(bool); openFolder {
+			if err := openFolderInExplorer(str("path")); err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+			return
+		}
 		if _, err := os.Stat(p); err != nil {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "arquivo não encontrado"})
 			return
@@ -178,4 +187,39 @@ func localFSRoots() []string {
 		}
 	}
 	return out
+}
+
+// openFolderInExplorer abre a PASTA no Explorer (e não a seleciona dentro da
+// pasta pai). Aceita "~" + separador (pasta do usuário) e o UNC do WSL (a
+// distro em wsl.localhost). Só abre o que existe e é pasta.
+var openFolderLocal = func(dir string) error {
+	cmd := exec.Command("explorer.exe", dir)
+	hideChildWindow(&cmd.SysProcAttr)
+	return cmd.Start()
+}
+
+func openFolderInExplorer(raw string) error {
+	p := strings.TrimSpace(raw)
+	if rest, ok := strings.CutPrefix(p, "~"); ok && (rest == "" || rest[0] == '/' || rest[0] == os.PathSeparator) {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return errors.New("não achei a pasta do usuário")
+		}
+		p = filepath.Join(home, rest)
+	}
+	p, err := localFSClean(p)
+	if err != nil {
+		return err
+	}
+	st, err := os.Stat(p)
+	if err != nil {
+		return errors.New("pasta não encontrada")
+	}
+	if !st.IsDir() {
+		return errors.New("não é uma pasta")
+	}
+	if err := openFolderLocal(p); err != nil {
+		return errors.New("não foi possível abrir a pasta")
+	}
+	return nil
 }

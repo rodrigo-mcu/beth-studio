@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { extractFileCandidates, extractUrlCandidates, parseOsc8Spans, rowLinkCandidates, stripEscapes } from "../src/lib/termLinks.ts";
+import { extractFileCandidates, extractFolderCandidates, extractUrlCandidates, parseOsc8Spans, rowLinkCandidates, stripEscapes } from "../src/lib/termLinks.ts";
 
 const ESC = "\x1b";
 const BEL = "\x07";
@@ -138,7 +138,7 @@ test("routeTermLink: http vai pro navegador; esquema estranho ou pasta não é c
     kind: "reveal",
     path: "\\\\wsl.localhost\\Debian\\mnt\\data\\app.exe",
   });
-  assert.equal(routeTermLink("file:///mnt/data/repo/", ctx), null);
+  assert.deepEqual(routeTermLink("file:///mnt/data/repo/", ctx), { kind: "folder", path: ["", "", "wsl.localhost", "Debian", "mnt", "data", "repo"].join(String.fromCharCode(92)) });
   assert.equal(routeTermLink(WSL_PATH, { paneKind: "powershell" }), null); // Linux num pane Windows
   assert.deepEqual(routeTermLink("/mnt/c/Users/u/notes.md", ctx), { kind: "file", path: "C:\\Users\\u\\notes.md" });
 });
@@ -301,4 +301,32 @@ test("TerminalView: Ctrl+clique abre, a dica aparece e o clique puro segue para 
   assert.match(src, /xterm-hover/);
   assert.match(src, /\/api\/local-file\/open-default/);
   assert.match(src, /\/api\/local-file\/reveal/);
+});
+
+test("pasta solta: caminho absoluto sem extensão vira link de pasta; falsos positivos ficam de fora", () => {
+  const got = (s: string) => extractFolderCandidates(s).map((c) => c.uri);
+  assert.deepEqual(got("estão em /mcut-video-data/lpr/50-controle/conferencia-2026-10-15/"), ["/mcut-video-data/lpr/50-controle/conferencia-2026-10-15/"]);
+  assert.deepEqual(got("veja (/mnt/data/repo)."), ["/mnt/data/repo"]);
+  assert.deepEqual(got("em ~/projetos/app"), ["~/projetos/app"]);
+  assert.deepEqual(got("pasta C:/dados/export agora"), ["C:/dados/export"]);
+  // uma barra só, sem barra no fim: comando de barra, não pasta
+  assert.deepEqual(got("use /compact e /model"), []);
+  assert.deepEqual(got("e/ou a/b/c e 10/15/2026"), []);
+  assert.deepEqual(got("https://example.com/a/b/c"), []);
+  assert.deepEqual(got("arquivo /mnt/data/x.md"), []); // com extensão é arquivo
+  assert.deepEqual(got("raiz /mnt/"), ["/mnt/"]);
+  // o fallback junta arquivos e pastas na mesma linha
+  const row = "veja /mnt/data/x.md e /mnt/data/pasta/";
+  const kinds = rowLinkCandidates(row).map((c) => c.uri);
+  assert.deepEqual(kinds, ["/mnt/data/x.md", "/mnt/data/pasta/"]);
+});
+
+test("pasta: no pane WSL abre a pasta do WSL no Windows; no pane Windows, Linux não é clicável", () => {
+  const ctx = { paneKind: "wsl", paneWsl: true, paneDistro: "Ubuntu" };
+  const unc = ["", "", "wsl.localhost", "Ubuntu", "mnt", "data", "lpr"].join(String.fromCharCode(92));
+  assert.deepEqual(routeTermLink("/mnt/data/lpr/", ctx), { kind: "folder", path: unc });
+  assert.deepEqual(routeTermLink("/mnt/data/lpr", ctx), { kind: "folder", path: unc });
+  assert.equal(routeTermLink("/mnt/data/lpr/", { paneKind: "powershell" }), null);
+  assert.deepEqual(routeTermLink("C:/dados/export", { paneKind: "powershell" }), { kind: "folder", path: "C:" + String.fromCharCode(92) + "dados" + String.fromCharCode(92) + "export" });
+  assert.match(linkHoverHint(false, "folder"), /abrir a pasta no Explorer/);
 });

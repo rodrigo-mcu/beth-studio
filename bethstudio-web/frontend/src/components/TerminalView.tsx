@@ -39,7 +39,7 @@ import { PasteDialog } from "./PasteDialog";
 import { ScrollBar } from "./ScrollBar";
 import { screenWrite } from "@/lib/screen";
 import { openExternal } from "@/lib/links";
-import type { PaneLinkCtx } from "@/lib/localFile";
+import { resolveLinkPath, type PaneLinkCtx } from "@/lib/localFile";
 import { markScreen } from "@/lib/startup";
 import { fallbackLinksTouching, linkHoverHint, routeTermLink, shouldActivateLink, suppressAppMouseDown, type CellLike, type LinkRow } from "@/lib/termLinks";
 import { reasonLabel, type AgentInfo } from "@/lib/agents";
@@ -523,6 +523,10 @@ export function TerminalView({
       }
       if (r.kind === "file") {
         onOpenFileRef.current?.(r.path);
+        return;
+      }
+      if (r.kind === "folder") {
+        void conn.api("/api/local-fs/reveal", { path: r.path, open_folder: true }).catch((e: Error) => flash(e.message));
         return;
       }
       const req =
@@ -1045,7 +1049,20 @@ Arraste para outra aba ou para a borda de outro terminal`
           {onHeaderDragStart && <GripVertical size={14} className="shrink-0 text-text-3" />}
           {pane && <KindIcon pane={pane} />}
           <div className="min-w-0 truncate text-[13px] font-semibold text-text-1">{title}</div>
-          {cwd && <div className="hidden min-w-0 shrink-[2] truncate font-mono text-[11px] text-text-3 xl:block">{cwd}</div>}
+          {cwd && (
+            <button
+              type="button"
+              className="hidden min-w-0 shrink-[2] truncate text-left font-mono text-[11px] text-text-3 hover:text-text-1 hover:underline xl:block"
+              title="Abrir esta pasta no Explorer (no WSL, a pasta do WSL no Windows)"
+              onClick={() => {
+                const p = pane?.cwd ? resolveLinkPath(pane.cwd, paneCtxRef.current) : null;
+                if (!p) return flash("Não sei abrir esta pasta no Windows");
+                void conn.api("/api/local-fs/reveal", { path: p, open_folder: true }).catch((e: Error) => flash(e.message));
+              }}
+            >
+              {cwd}
+            </button>
+          )}
         </div>
         {agent && (
           <span
