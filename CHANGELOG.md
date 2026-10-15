@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-15
+
 ### Added
 - Terminal: a folder path in the output (absolute and without extension, such as `/mnt/data/dir/` or `~/dir`) is now a link that opens the folder in Explorer. In a WSL terminal it opens the WSL folder on Windows. The folder path in the terminal header opens the terminal's current folder the same way. Slash commands, dates and `and/or` are not links.
 - Tray icon menu: **Reiniciar interface** reloads the Studio page without touching the host, the terminals or the Studio process.
