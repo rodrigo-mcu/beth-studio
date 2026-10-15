@@ -36,12 +36,14 @@ export function buildCards(panes: PaneInfo[], layout: Layout): GridCard[] {
   };
   const cards: GridCard[] = [];
   const seen = new Set<number>();
-  const push = (p: PaneInfo, state: CardState, where: string, tabId?: string) => {
+  // Terminal sozinho numa aba (ou aba fechada): o cartao leva o nome da aba,
+  // o mesmo que a barra de abas mostra. Em abas divididas vale o titulo do terminal.
+  const push = (p: PaneInfo, state: CardState, where: string, tabId?: string, tabName?: string) => {
     seen.add(p.pane_id);
     cards.push({
       pane: p.pane_id,
       state,
-      title: paneLabel(p),
+      title: tabName || paneLabel(p),
       path: shortCwd(p.cwd, 99),
       kindLabel: p.kind_label || "",
       where,
@@ -55,7 +57,7 @@ export function buildCards(panes: PaneInfo[], layout: Layout): GridCard[] {
     const name = tabDisplayName(t, i, titleOf);
     for (const { leaf } of leaves(t.root)) {
       const p = byId.get(leaf.pane);
-      if (!leaf.gone && p && !seen.has(p.pane_id) && findPane(layout, p.pane_id)?.tabId === t.id) push(p, "tab", `Aba “${name}”`, t.id);
+      if (!leaf.gone && p && !seen.has(p.pane_id) && findPane(layout, p.pane_id)?.tabId === t.id) push(p, "tab", `Aba “${name}”`, t.id, leaves(t.root).filter((l) => !l.leaf.gone).length === 1 ? name : undefined);
     }
   });
   // 2) vivos fora das abas: em aba fechada ou soltos
@@ -64,7 +66,8 @@ export function buildCards(panes: PaneInfo[], layout: Layout): GridCard[] {
     const g = closedGroupOf(layout, p.pane_id);
     if (g >= 0) {
       const c = layout.closed![g];
-      push(p, "closed", `Aba fechada “${tabDisplayName(c, g, titleOf)}”`);
+      const cname = tabDisplayName(c, g, titleOf);
+      push(p, "closed", `Aba fechada “${cname}”`, undefined, leaves(c.root).filter((l) => !l.leaf.gone).length === 1 ? cname : undefined);
     } else push(p, "loose", "Não organizado");
   }
   // 3) encerrados que ainda aparecem numa aba
@@ -104,7 +107,7 @@ function inFilter(c: GridCard, f: GridFilter): boolean {
 
 /** Texto onde a busca procura (minusculo): titulo, pasta, caminho, tipo, aba, id e, se houver, a tela. */
 function haystack(c: GridCard, screen?: string): string {
-  return [c.title, lastFolder(c.path), c.path, c.kindLabel, c.where, c.info?.ssh_host ?? "", `#${c.pane} pane ${c.pane}`, screen ?? ""]
+  return [c.title, c.info ? paneLabel(c.info) : "", lastFolder(c.path), c.path, c.kindLabel, c.where, c.info?.ssh_host ?? "", `#${c.pane} pane ${c.pane}`, screen ?? ""]
     .join("\n")
     .toLowerCase();
 }

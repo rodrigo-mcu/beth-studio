@@ -607,6 +607,13 @@ export function TerminalView({
     const markInput = () => {
       lastUserInput.current = Date.now();
     };
+    // Texto que chega sem keydown (ditado do Windows, teclado de toque, seletor
+    // de emoji, alguns métodos de entrada) vem como beforeinput/input do
+    // textarea do xterm. É entrada do usuário (as respostas automáticas do
+    // xterm não passam por aí), então também abre a janela do onData.
+    const markTrustedInput = (e: Event) => {
+      if (e.isTrusted) markInput();
+    };
     const onPaste = (e: ClipboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -628,6 +635,8 @@ export function TerminalView({
       })();
     };
     el.addEventListener("compositionend", markInput, true);
+    el.addEventListener("beforeinput", markTrustedInput, true);
+    el.addEventListener("input", markTrustedInput, true);
     el.addEventListener("paste", onPaste, true);
 
     // --- rolagem -----------------------------------------------------
@@ -887,6 +896,8 @@ export function TerminalView({
       ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
       el.removeEventListener("compositionend", markInput, true);
+      el.removeEventListener("beforeinput", markTrustedInput, true);
+      el.removeEventListener("input", markTrustedInput, true);
       el.removeEventListener("paste", onPaste, true);
       dataSub.dispose();
       selSub.dispose();

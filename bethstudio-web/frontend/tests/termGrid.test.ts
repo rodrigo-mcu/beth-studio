@@ -169,3 +169,18 @@ test("previewLines: ultimas linhas com texto, sem escapes", () => {
   assert.deepEqual(previewLines(undefined), []);
   assert.equal(previewLines("x".repeat(200), 1, 10)[0].length, 10);
 });
+
+test("terminal sozinho na aba leva o nome da aba; em aba dividida vale o título do terminal", () => {
+  const panes = [typed(1, "wsl", { title: "claude" }), typed(2, "cmd", { title: "vite" }), typed(3, "cmd", { title: "npm" })];
+  const lay: Layout = {
+    tabs: [
+      { id: "a", name: "CLIENTE", root: leaf(1) },
+      { id: "b", name: "dupla", root: { type: "split", dir: "row", sizes: [1, 1], children: [leaf(2), leaf(3)] } },
+    ],
+    active: "a",
+  };
+  const cards = buildCards(panes, lay);
+  assert.deepEqual(cards.map((c) => c.title), ["CLIENTE", "vite", "npm"]);
+  // a busca ainda acha pelo título do terminal
+  assert.deepEqual(filterCards(cards, "all", "claude").map((c) => c.pane), [1]);
+});

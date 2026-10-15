@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- Tray icon menu: **Reiniciar interface** reloads the Studio page without touching the host, the terminals or the Studio process.
+
+### Fixed
+- Text that reaches a terminal without a key press (Windows voice typing, touch keyboard, emoji picker, some input methods) was silently dropped when the terminal had been idle for 1.5 s. It now counts as user input.
+
+### Changed
+- **Todos os terminais**: a terminal alone in a tab (or in a closed tab) is shown with the tab's name, the same one the tab bar shows. Search still matches the terminal's own title.
+
 ## [0.2.2] - 2026-10-14
 
 ### Added

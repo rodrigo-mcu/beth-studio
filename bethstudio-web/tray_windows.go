@@ -352,6 +352,11 @@ func handleTrayCommand(id int) {
 	case id == trayTasks:
 		showStudioWindow()
 		trayCtx.hub.broadcast(map[string]any{"ev": "ui_open", "what": "tasks"})
+	case id == trayReload:
+		// recarrega a página do Studio (WebView2); o host, os terminais e o processo do Studio seguem
+		lifeLog("interface recarregada pelo menu da bandeja")
+		showStudioWindow()
+		trayCtx.hub.broadcast(map[string]any{"ev": "ui_open", "what": "reload"})
 	case id == trayQuitTray:
 		lifeLog("saindo da bandeja; o host e os terminais continuam")
 		quitStudio()

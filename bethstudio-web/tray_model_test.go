@@ -18,7 +18,7 @@ func TestTrayMenuOrderAndDefaultItem(t *testing.T) {
 			labels = append(labels, it.Label)
 		}
 	}
-	want := []string{"Beth Studio", "Novo terminal", "Sistema (CPU, memória, disco)", "---", "Sair da bandeja (terminais continuam)", "Encerrar tudo (fecha os terminais)"}
+	want := []string{"Beth Studio", "Novo terminal", "Sistema (CPU, memória, disco)", "Reiniciar interface (terminais continuam)", "---", "Sair da bandeja (terminais continuam)", "Encerrar tudo (fecha os terminais)"}
 	if strings.Join(labels, "|") != strings.Join(want, "|") {
 		t.Fatalf("itens = %v, quero %v", labels, want)
 	}

@@ -219,6 +219,10 @@ export class Connection {
           this.patch({ restore: ev, restoreFinishedAt: ev.stage === "finished" ? Date.now() : 0 });
           break;
         case "ui_open":
+          if (ev.what === "reload") {
+            window.location.reload();
+            break;
+          }
           this.uiOpenListeners.forEach((fn) => fn(ev.what));
           break;
         case "term_drag":

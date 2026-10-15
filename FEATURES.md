@@ -151,7 +151,7 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   host crashes it is restarted, at most 3 times in 10 minutes; after that a
   banner says **Host indisponível** with **Tentar de novo**. Closing the window
   hides it to the tray. The tray menu has **Beth Studio**, **Novo terminal**,
-  **Sistema**, **Sair da bandeja** (terminals keep running) and **Encerrar
+  **Sistema**, **Reiniciar interface** (reloads the page; terminals and host untouched), **Sair da bandeja** (terminals keep running) and **Encerrar
   tudo** (asks first, then closes every terminal). The icon gets an amber dot
   while an agent waits for you.
 - 🟢 **Terminals come back after a host crash** (2026-10-03). The Studio keeps a recipe
