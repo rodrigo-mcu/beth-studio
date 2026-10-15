@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { PaneInfo, ScreenEvent, SettingsEvent } from "@/lib/types";
+import { withVisibleCursor } from "@/lib/uiTheme";
 import { DEFAULT_TERM_THEME, colorsFor, cssFamily, effectiveFor, fontAvailable, resolveFamily, setPane, useCatalog } from "@/lib/appearance";
 
 const DIAG = new URLSearchParams(window.location.search).get("diag") === "1";
@@ -445,7 +446,7 @@ export function TerminalView({
       fontFamily: '"Cascadia Mono", Consolas, "Courier New", monospace',
       fontSize: 14,
       lineHeight: 1,
-      theme: DEFAULT_TERM_THEME,
+      theme: withVisibleCursor(DEFAULT_TERM_THEME),
       // Cor sem contraste com o fundo e' escurecida/clareada pelo xterm. Ex.:
       // o Claude Code manda negrito como SGR 97 (branco brilhante) mesmo com
       // tema claro, e no fundo branco o texto sumia.
@@ -916,7 +917,7 @@ export function TerminalView({
   useEffect(() => {
     const term = termRef.current;
     if (!term) return;
-    term.options.theme = colors;
+    term.options.theme = withVisibleCursor(colors);
     term.options.fontFamily = cssFamily(family);
     // peso: a GUI usa font_bold do default-theme.json; o web herda (ou o do pane)
     term.options.fontWeight = eff.bold ? "bold" : "normal";

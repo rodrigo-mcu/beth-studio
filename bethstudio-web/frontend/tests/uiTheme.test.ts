@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contrast, deriveUI, ensureContrast, MIN_CONTRAST, normalizeUIMode, over, STUDIO_LIGHT_TERM_THEME, studioTermTheme, VSCODE_DARK, type ThemeLike, type UIColors } from "../src/lib/uiTheme.ts";
+import { contrast, deriveUI, ensureContrast, MIN_CONTRAST, normalizeUIMode, over, STUDIO_LIGHT_TERM_THEME, studioTermTheme, VSCODE_DARK, withVisibleCursor, type ThemeLike, type UIColors } from "../src/lib/uiTheme.ts";
+import type { XtermColors } from "../src/lib/types.ts";
 
 const ansi = {
   blue: "#0070dd",
@@ -116,4 +117,15 @@ test("terminal novo segue o tema do Beth Studio", () => {
   assert.equal(studioTermTheme({ mode: "follow" }), "");
   assert.equal(studioTermTheme({ mode: "light" }), STUDIO_LIGHT_TERM_THEME);
   assert.equal(studioTermTheme({ mode: "theme", theme_id: "apple-system-colors-light" }), "apple-system-colors-light");
+});
+
+test("cursor do terminal: sem contraste com o fundo vira legível; com contraste não muda", () => {
+  const claro = { background: "#FFFFFF", foreground: "#333333", cursor: "#AEAFAD" } as XtermColors;
+  const v = withVisibleCursor(claro);
+  assert.ok(contrast(v.cursor, v.background) >= 4.5, v.cursor);
+  assert.equal(v.cursorAccent, "#FFFFFF");
+  const escuro = { background: "#1E1E1E", foreground: "#D4D4D4", cursor: "#AEAFAD", cursorAccent: "#1E1E1E" } as XtermColors;
+  assert.equal(withVisibleCursor(escuro), escuro);
+  const semCursor = { background: "#FFFFFF", foreground: "#222222", cursor: "" } as XtermColors;
+  assert.ok(contrast(withVisibleCursor(semCursor).cursor, "#FFFFFF") >= 4.5);
 });

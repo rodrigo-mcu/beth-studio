@@ -52,6 +52,11 @@ body {
 .xterm {
   padding: 0;
 }
+/* O cursor sobre texto "dim" (placeholder do Grok, por exemplo) herdava a
+   meia opacidade e quase sumia; o bloco do cursor fica sempre cheio. */
+.xterm .xterm-cursor.xterm-dim {
+  opacity: 1 !important;
+}
 
 ::-webkit-scrollbar {
   width: 10px;

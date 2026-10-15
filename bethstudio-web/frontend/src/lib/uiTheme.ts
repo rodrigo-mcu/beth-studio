@@ -4,6 +4,8 @@
 //
 // Funcoes puras (testadas em tests/uiTheme.test.ts), exceto applyUI().
 
+import type { XtermColors } from "./types.ts";
+
 export type UIToken =
   | "bg-body"
   | "bg-panel"
@@ -296,4 +298,16 @@ export function studioTermTheme(ui: { mode?: string; theme_id?: string } | null 
   if (mode === "theme") return ui?.theme_id?.trim() ?? "";
   if (mode === "light") return STUDIO_LIGHT_TERM_THEME;
   return "";
+}
+
+/**
+ * Garante um cursor visível: tema com cursor de pouco contraste com o fundo
+ * (cinza claro em tema claro, por exemplo) deixava o cursor invisível. Abaixo
+ * de 4,5:1 o cursor é empurrado para preto ou branco até contrastar.
+ */
+export function withVisibleCursor(c: XtermColors): XtermColors {
+  const cur = c.cursor || c.foreground;
+  const fixed = ensureContrast(cur, c.background, 4.5);
+  if (fixed === c.cursor) return c;
+  return { ...c, cursor: fixed, cursorAccent: c.cursorAccent || c.background };
 }
