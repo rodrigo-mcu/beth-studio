@@ -84,7 +84,8 @@ func TestPaneCommandsFileAndPriority(t *testing.T) {
 	doc := map[string]any{"panes": map[string][]string{
 		"bethstudio-host#10":      {"powershell.exe", "-NoLogo"},
 		"bethstudio-host#12":      {"wsl.exe", "-d", "Ubuntu"},
-		"bethstudio-host-w1-2#12": {"cmd.exe"}, // outro dominio: o host unico vence
+		"bethstudio-host-w1-2#12": {"cmd.exe"}, // outro dominio: ignorado
+		"bethterm-host#24":        {"powershell.exe"}, // dominio de antes do renomeio: ids reaproveitados, ignorado
 		"lixo":                  {"x"},
 		"bethstudio-host#abc":     {"x"},
 	}}
@@ -94,10 +95,19 @@ func TestPaneCommandsFileAndPriority(t *testing.T) {
 	if len(got) != 2 || got[10][0] != "powershell.exe" || got[12][0] != "wsl.exe" {
 		t.Fatalf("parsed => %v", got)
 	}
-	// prioridade: GUI > web (spawn) > heuristica; agente e' etiqueta a' parte
-	spawned := map[int]string{12: "cmd", 40: "wsl.ubuntu"}
-	if k := classifyPane(12, "✳ Claude", "", got, spawned); k.Kind != "wsl" || k.Source != "gui" || !k.Agent || k.Distro != "Ubuntu" {
-		t.Fatalf("pane 12 => %+v", k)
+	// prioridade: web (spawn, conferido contra o host) > GUI > heuristica; agente e' etiqueta a' parte
+	spawned := map[int]string{12: "cmd", 40: "wsl.ubuntu", 24: "wsl.default"}
+	if k := classifyPane(12, "✳ Claude", "", got, spawned); k.Kind != "cmd" || k.Source != "web" || !k.Agent {
+		t.Fatalf("pane 12 (spawn vence o arquivo) => %+v", k)
+	}
+	if k := classifyPane(10, "x", "", got, spawned); k.Kind != "powershell" || k.Source != "gui" {
+		t.Fatalf("pane 10 (so' no arquivo) => %+v", k)
+	}
+	if k := classifyPane(24, "wslhost.exe", "", got, spawned); k.Kind != "wsl" || k.Source != "web" {
+		t.Fatalf("pane 24 (entrada do dominio antigo nao vale) => %+v", k)
+	}
+	if k := classifyPane(11, "x", "", map[int][]string{11: {"wsl.exe", "-d", "Ubuntu"}}, spawned); k.Kind != "wsl" || k.Source != "gui" || k.Distro != "Ubuntu" {
+		t.Fatalf("pane 11 (arquivo, sem spawn) => %+v", k)
 	}
 	if k := classifyPane(40, "x", "", got, spawned); k.Label != "WSL · Ubuntu" || k.Source != "web" {
 		t.Fatalf("pane 40 => %+v", k)

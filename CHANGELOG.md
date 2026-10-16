@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- WSL init on restore: when the folder of a WSL terminal does not exist after a restart (the WSL has not mounted its disks), the banner asks whether to run the distro's init command; it runs in a visible WSL terminal and the Studio waits for it before opening that distro's terminals. Terminals whose folder still does not exist wait in the banner (**Continuar tentando**, **Guardar**, **Abrir na pasta padrão**, **Descartar**) instead of opening in the home folder, and their recipe is kept. Configured in **Configurações > Terminais > WSL** (per distro, with **Testar agora**). (Studio update needed.)
+- The **Falar** window floats without dimming or blocking the screen and is dragged by its title bar, so it no longer covers the text you are reading. It remembers where you left it.
+- Diagnostic log lines `layout: …` record every time a terminal moves from one tab to another (and which action did it), what the interface saved, and what it loaded at startup. They go to `bethstudio-web.log`, and also to `host-life.log` once the Studio is updated.
+
+### Changed
+- The silent init command of `wsl-distros.json` no longer runs before every WSL terminal; the file is imported once into Configurações > Terminais > WSL and renamed `wsl-distros.json.migrado`. (Studio update needed.)
+- Grid: a terminal that is in no tab now says "Sem aba — clique para abrir" instead of "Não organizado".
+
+### Fixed
+- Terminals appeared as PowerShell when they were WSL (and the reverse) in the grid and in the restore recipe: an old `pane-commands.json` from before the rename (domain `bethterm-host`) overrode the real type of terminals that reused those ids. Entries of other domains are now ignored, and the Studio's own record of what it spawned takes priority over that file. (Studio update needed.)
+- The restore recipe no longer forgets the work folder of a WSL terminal that opened broken (`wslhost.exe`, folder `/`): it keeps the folder the recipe had until the shell really starts. (Studio update needed.)
+- Opening the Studio with `--open <ids>` no longer pulls a terminal out of the tab it was already in and splits it next to the focused one on every page load; the `open=` parameter is applied once and removed from the address.
+
 ## [0.2.3] - 2026-10-15
 
 ### Added

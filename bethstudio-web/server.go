@@ -186,6 +186,20 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		b, _ := io.ReadAll(http.MaxBytesReader(w, r.Body, 16<<10))
 		log.Printf("diag: %s", b)
 		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	case "/api/restore/pending":
+		restorePendingHandler(s.hub, s.hub.readOnly, s.hub.pendingDeps).ServeHTTP(w, r)
+	case "/api/restore/answer":
+		restoreAnswerHandler(s.hub, s.hub.readOnly).ServeHTTP(w, r)
+	case "/api/wsl-init/test":
+		wslInitTestHandler(settings, s.hub.readOnly, func(distro string, cfg WSLInitCfg) {
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+				defer cancel()
+				(&hubRestoreEnv{h: s.hub}).TestInit(ctx, distro, cfg)
+			}()
+		}).ServeHTTP(w, r)
+	case "/api/wsl-init":
+		wslInitHandler(settings, listWSLDistros, s.hub.readOnly).ServeHTTP(w, r)
 	case "/api/content":
 		s.serveContent(w, r)
 	case "/api/themes", "/api/fonts", "/api/settings", "/api/settings/default", "/api/settings/pane",
@@ -520,7 +534,7 @@ func (s *server) handle(c *client, req clientRequest, sendErr func(string)) {
 				defer cancel()
 				distro := wslDistroForShell(req.ShellID, req.Distro, listWSLDistros(), defaultWSLDistro())
 				if distro != "" {
-					if _, err := gate.Ensure(ctx, distro); err != nil {
+					if err := gate.Ensure(ctx, distro); err != nil {
 						sendErr(spawnErrorWithRequest(req.ReqID, err))
 						return
 					}

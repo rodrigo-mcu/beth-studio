@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -83,12 +85,29 @@ func (h *hub) setRestore(ev map[string]any) {
 type hubRestoreEnv struct {
 	h   *hub
 	seq atomic.Int64
+
+	lastMu sync.Mutex
+	last   restoreProgress // o último progresso, para o relógio do init repetir total e feitos
+}
+
+func (e *hubRestoreEnv) lastProgress() restoreProgress {
+	e.lastMu.Lock()
+	defer e.lastMu.Unlock()
+	return e.last
 }
 
 func (e *hubRestoreEnv) Progress(p restoreProgress) {
+	e.lastMu.Lock()
+	e.last = p
+	e.lastMu.Unlock()
 	e.h.setRestore(map[string]any{
-		"stage": p.Stage, "total": p.Total, "done": p.Done, "distro": p.Distro, "message": p.Message,
+		"stage": p.Stage, "total": p.Total, "done": p.Done, "distro": p.Distro, "message": p.Message, "missing": p.Missing,
 	})
+}
+
+// InitConfig: o init que o usuário configurou para a distro (Configurações > Terminais > WSL).
+func (e *hubRestoreEnv) InitConfig(distro string) (WSLInitCfg, bool) {
+	return settings.wslInitFor(distro)
 }
 
 func (e *hubRestoreEnv) Spawn(ctx context.Context, s paneSpec, cwd string) (int, error) {
@@ -160,6 +179,7 @@ func newHubRestore(h *hub) *restoreCoordinator {
 		start: func(file specsFile) { h.runRestoreJob(file, c) },
 	}
 	c = newRestoreCoordinator(d)
+	h.pendingRetry.kick = h.startPendingRetry // "Continuar tentando" recomeça a retentativa automática
 	return c
 }
 
@@ -168,13 +188,31 @@ func newHubRestore(h *hub) *restoreCoordinator {
 func (h *hub) runRestoreJob(file specsFile, c *restoreCoordinator) {
 	defer c.finished()
 	defer settings.setFrozen(false)
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	// uma hora: a pergunta do init espera o usuário (que pode estar longe do PC) e o init tem até 30 min
+	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
 	defer cancel()
 	log.Printf("restore: recriando %d terminais depois da queda do host", len(file.Specs))
 	lifeLog(fmt.Sprintf("host novo e vazio; recriando %d terminais da receita", len(file.Specs)))
 	// copia ANTES de recriar: recordSpawn apaga a aparencia do terminal antigo cujo id coincide com o novo
 	base := settings.captureRemapBase()
 	res := runRestore(ctx, file.Specs, &hubRestoreEnv{h: h}, h.wslGate, 3)
+	// o que o terminal pendente perde com o id antigo (nome de aba, aparência) fica guardado até ele abrir
+	for i := range res.Pending {
+		p := &res.Pending[i]
+		p.OldHost = file.HostID
+		if n := base.names[strconv.Itoa(p.PaneID)]; n != nil {
+			c := *n
+			p.Name = &c
+		}
+		if a := base.panes[strconv.Itoa(p.PaneID)]; a != nil {
+			c := *a
+			p.Look = &c
+		}
+		p.useOrigin() // segundo reinício: volta a ser o terminal original (id, host, nome, aparência)
+	}
+	c.holds.set(res.Pending)
+	// um terminal WSL que abrir quebrado informa "/": a receita guarda a pasta de antes
+	c.setCarry(carryCwds(file.Specs, res.Map))
 
 	// o reconcile só pode voltar quando a lista já mostra os terminais novos
 	ids := make([]int, 0, len(res.Map))
@@ -186,10 +224,86 @@ func (h *hub) runRestoreJob(file specsFile, c *restoreCoordinator) {
 		time.Sleep(200 * time.Millisecond)
 	}
 	settings.remapPanesFrom(base, res.Map, settings.hostID())
+	settings.parkPending(res.Pending) // a folha do pendente vai para um grupo fechado, onde o reconcile não a apaga
 
-	lifeLog(fmt.Sprintf("restauração terminou: %d recriados, %d falharam, %d abriram na home", len(res.Map), len(res.Failed), len(res.Fallbacks)))
+	lifeLog(fmt.Sprintf("restauração terminou: %d recriados, %d falharam, %d aguardando a pasta", len(res.Map), len(res.Failed), len(res.Pending)))
 	h.setRestore(map[string]any{
 		"stage": "finished", "total": len(file.Specs), "done": len(res.Map),
-		"failed": res.Failed, "fallbacks": res.Fallbacks, "warnings": res.Warnings,
+		"failed": res.Failed, "pending": res.Pending, "warnings": res.Warnings,
 	})
+	if len(res.Pending) > 0 {
+		h.startPendingRetry()
+	}
+}
+
+// pendingDeps: o que as ações sobre terminais pendentes usam, ligado ao hub e ao Studio de verdade.
+func (h *hub) pendingDeps() pendingDeps {
+	env := &hubRestoreEnv{h: h}
+	return pendingDeps{
+		dirExists: func(ctx context.Context, distro, path string) bool {
+			return h.wslGate != nil && h.wslGate.DirExists(ctx, distro, path)
+		},
+		open: env.Spawn,
+		revive: func(p restorePending, newPane int) {
+			host := settings.hostID()
+			settings.reviveLeaf(p.PaneID, newPane, p.OldHost, host)
+			settings.adoptIdentity(newPane, p.Name, p.Look, host)
+			lifeLog(fmt.Sprintf("terminal pendente #%d aberto como #%d (%s)", p.PaneID, newPane, p.Cwd))
+		},
+		discard: func(p restorePending) {
+			settings.removeGoneLeaf(p.PaneID, p.OldHost)
+			lifeLog(fmt.Sprintf("terminal pendente #%d descartado (%s)", p.PaneID, p.Cwd))
+		},
+		defaultDir: func(distro string) string {
+			c, _ := settings.wslInitFor(distro)
+			return c.DefaultDir
+		},
+		publish: h.publishPending,
+	}
+}
+
+// publishPending reenvia o último evento `restore` com a lista de pendentes nova.
+func (h *hub) publishPending(list []restorePending) {
+	h.mu.Lock()
+	raw := h.restoreMsg
+	h.mu.Unlock()
+	ev := map[string]any{"stage": "finished"}
+	if raw != nil {
+		_ = json.Unmarshal(raw, &ev)
+	}
+	if list == nil {
+		list = []restorePending{}
+	}
+	ev["pending"] = list
+	h.setRestore(ev)
+}
+
+// startPendingRetry reconfere os pendentes a cada 15 s por 5 min (renovado a cada chamada).
+func (h *hub) startPendingRetry() {
+	st := &h.pendingRetry
+	st.until.Store(time.Now().Add(pendingRetryWindow).UnixNano())
+	if !st.running.CompareAndSwap(false, true) {
+		return
+	}
+	go func() {
+		defer st.running.Store(false)
+		for {
+			time.Sleep(pendingRetryEvery)
+			if h.restore == nil || time.Now().UnixNano() > st.until.Load() {
+				return
+			}
+			active := false
+			for _, p := range h.restore.holds.list() {
+				if !p.Keep {
+					active = true
+				}
+			}
+			if !active {
+				return
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			h.restore.holds.retryAll(ctx, h.pendingDeps())
+			cancel()
+		}
+	}()
 }

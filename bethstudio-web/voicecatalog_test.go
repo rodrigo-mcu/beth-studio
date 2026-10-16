@@ -6,6 +6,8 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -94,6 +96,34 @@ func TestUILogEndpoint(t *testing.T) {
 	serveUILog(rr, bad)
 	if rr.Code == http.StatusOK {
 		t.Fatal("GET aceito")
+	}
+}
+
+func TestUILogLayoutGoesToHostLife(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("BETHSTUDIO_DATA_DIR", dir)
+	post := func(msg string) {
+		body, _ := json.Marshal(map[string]string{"msg": msg})
+		req := httptest.NewRequest("POST", "/api/log", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		serveUILog(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status %d", rr.Code)
+		}
+	}
+	post("mic: nada a ver com o layout")
+	post("layout: terminal 0 saiu da aba \"a\" para \"b\"; origem: teste")
+	b, err := os.ReadFile(filepath.Join(dir, "host-life.log"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(b)
+	if !strings.Contains(got, "layout: terminal 0 saiu da aba") {
+		t.Fatalf("linha de layout não foi para o host-life.log: %q", got)
+	}
+	if strings.Contains(got, "mic:") {
+		t.Fatalf("linha de microfone não deveria ir para o host-life.log: %q", got)
 	}
 }
 

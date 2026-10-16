@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { Loader2, Mic, Settings2, Square, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { PaneInfo } from "@/lib/types";
 import { paneLabel } from "@/lib/panes";
+import { loadPref, savePref } from "@/lib/filePreview";
+import { SPEAK_POS_KEY, initialPos, isPos, keepInside, type Pos } from "@/lib/speakPos";
 import {
   MAX_RECORD_MS,
   composeMessage,
@@ -39,6 +41,9 @@ interface Props {
  * render (a tela atualiza o tempo todo): ficam em refs, para que isso nao
  * reinicie a gravacao — era o bug de "clico e nada chega": cada render
  * cancelava a gravacao e pedia o microfone de novo.
+ *
+ * A janela flutua, sem escurecer nem bloquear a tela, e se arrasta pelo
+ * titulo: quem grava costuma estar lendo o que vai responder.
  */
 export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent }: Props) {
   const [phase, setPhase] = useState<Phase>("loading");
@@ -75,6 +80,56 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
   const log = useCallback((m: string) => micLog(conn, m), [conn]);
   const propsRef = useRef({ onClose, onSent });
   propsRef.current = { onClose, onSent };
+
+  // --- posição da janela (arrastar pelo título; lembra onde foi deixada) ------
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const posRef = useRef<Pos | null>(null);
+  const [pos, setPos] = useState<Pos | null>(null);
+  /** Põe a janela no lugar certo (salvo, ou o padrão) e a mantém dentro da tela. */
+  const place = useCallback(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const next = posRef.current
+      ? keepInside(posRef.current, r.width, r.height, vw, vh)
+      : initialPos(loadPref<Pos | null>(SPEAK_POS_KEY, null, (v): v is Pos => isPos(v)), r.width, r.height, vw, vh);
+    posRef.current = next;
+    setPos(next);
+  }, []);
+  // a altura muda a cada fase (gravando, revisando…): reencaixa antes de pintar
+  useLayoutEffect(place, [place, phase]);
+  useEffect(() => {
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [place]);
+  const startMove = (e: RPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || (e.target as Element).closest("button")) return; // botões do título não arrastam
+    const el = boxRef.current;
+    const start = posRef.current;
+    if (!el || !start) return;
+    e.preventDefault();
+    const { width, height } = el.getBoundingClientRect();
+    const sx = e.clientX;
+    const sy = e.clientY;
+    const head = e.currentTarget;
+    head.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => {
+      const n = keepInside({ x: start.x + ev.clientX - sx, y: start.y + ev.clientY - sy }, width, height, window.innerWidth, window.innerHeight);
+      posRef.current = n;
+      setPos(n);
+    };
+    const up = () => {
+      head.removeEventListener("pointermove", move);
+      head.removeEventListener("pointerup", up);
+      head.removeEventListener("pointercancel", up);
+      if (posRef.current) savePref(SPEAK_POS_KEY, posRef.current);
+    };
+    head.addEventListener("pointermove", move);
+    head.addEventListener("pointerup", up);
+    head.addEventListener("pointercancel", up);
+  };
 
   const stopTracks = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -426,16 +481,22 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
   const llmName = snap?.settings.llm_enabled ? snap?.providers.find((p) => p.id === snap.settings.llm_provider)?.name : undefined;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 pt-[8vh]">
+    <div className="pointer-events-none fixed inset-0 z-[60]">
       <div
-        className="flex max-h-[84vh] w-[min(640px,94vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        ref={boxRef}
+        style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, visibility: pos ? "visible" : "hidden" }}
+        className="pointer-events-auto absolute flex max-h-[84vh] w-[min(640px,94vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Escape") cancel();
           if (e.key === "Enter" && e.ctrlKey && phase === "review") send(text, prefixOn, prefix);
         }}
       >
-        <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+        <div
+          className="flex cursor-move touch-none select-none items-center gap-2 border-b border-border px-4 py-2.5"
+          onPointerDown={startMove}
+          title="Arraste para mover a janela"
+        >
           <Mic size={16} className="text-accent-text" />
           <div className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-1">Falar para {info ? paneLabel(info) : `terminal ${pane}`}</div>
           <button className="rounded p-1 text-text-2 hover:bg-bg-hover hover:text-text-1" title="Configurar voz e provedores" onClick={() => onOpenSettings()}>

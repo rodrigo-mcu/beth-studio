@@ -257,3 +257,25 @@ func TestCoordinatorNoFreezeWithoutUsableSpecsWhileIdentityUnknown(t *testing.T)
 		t.Fatalf("sem receita não há por que congelar o reconcile: %v", h.frozen)
 	}
 }
+
+func TestCoordinatorKeepsTheFolderOfABrokenWSLTerminal(t *testing.T) {
+	h := newCoordHarness()
+	h.built = []paneSpec{{PaneID: 7, Kind: "wsl", ShellID: "wsl.default", Cwd: "/", Title: "wslhost.exe"}}
+	c := newTestCoordinator(h)
+	c.setCarry(map[int]string{7: "/mnt/kingston/mcu/repo/rxppro"})
+	c.onList([]byte(listTwo))
+	c.waitIdle()
+	if len(h.saved) != 1 || h.saved[0].Specs[0].Cwd != "/mnt/kingston/mcu/repo/rxppro" {
+		t.Fatalf("a receita perdeu a pasta de trabalho: %+v", h.saved)
+	}
+	// o shell subiu: a pasta viva vale
+	h.mu.Lock()
+	h.built = []paneSpec{{PaneID: 7, Kind: "wsl", ShellID: "wsl.default", Cwd: "/home/r", Title: "r@pc: ~"}}
+	h.mu.Unlock()
+	c.onList([]byte(listTwo))
+	c.waitIdle()
+	last := h.saved[len(h.saved)-1]
+	if last.Specs[0].Cwd != "/home/r" {
+		t.Fatalf("receita = %+v", last)
+	}
+}

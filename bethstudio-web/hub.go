@@ -47,6 +47,12 @@ type hub struct {
 	// restoreMsg: ultimo {"ev":"restore",...}; spawnWait: request_id -> espera pelo `spawned`
 	restoreMsg []byte
 	spawnWait  map[string]chan spawnResult
+	// initAsk: pergunta "executar o init do WSL?" aberta por distro; initSkip: init em
+	// andamento por distro, para "continuar assim mesmo" (restore_init.go)
+	initAsk  map[string]chan bool
+	initSkip map[string]chan struct{}
+	// pendingRetry: retentativa automática dos terminais pendentes (restore_pending.go)
+	pendingRetry pendingRetryState
 	// rawList: ultima lista da ponte SEM os tipos (para reclassificar
 	// quando pane-commands.json muda). spawnReq: request_id -> shell_id.
 	rawList  []byte

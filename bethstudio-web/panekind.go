@@ -183,8 +183,14 @@ func (pc *paneCommands) get(dir string) map[int][]string {
 	return pc.byPane
 }
 
-// parsePaneCommands: arquivo ausente/corrompido => vazio. Se o mesmo id
-// aparece em varios dominios, "bethstudio-host" (o host unico) vence.
+// paneCommandsDomain: o unico dominio de host que vale. Entradas de outros
+// dominios (o "bethterm-host" de antes do renomeio, os "-w<N>-" do patch 0159
+// revertido) sao de ids que o host de hoje ja reaproveitou: davam o tipo
+// errado a terminais novos (WSL aparecendo como PowerShell e vice-versa).
+const paneCommandsDomain = "bethstudio-host"
+
+// parsePaneCommands: arquivo ausente/corrompido => vazio. So' entradas do
+// dominio paneCommandsDomain valem.
 func parsePaneCommands(path string) map[int][]string {
 	out := map[int][]string{}
 	b, err := os.ReadFile(path)
@@ -197,7 +203,6 @@ func parsePaneCommands(path string) map[int][]string {
 	if json.Unmarshal(b, &doc) != nil {
 		return out
 	}
-	preferred := map[int]bool{}
 	for k, argv := range doc.Panes {
 		i := strings.LastIndexByte(k, '#')
 		if i < 0 {
@@ -207,25 +212,25 @@ func parsePaneCommands(path string) map[int][]string {
 		if err != nil || id < 0 {
 			continue
 		}
-		isMain := k[:i] == "bethstudio-host"
-		if _, have := out[id]; have && preferred[id] && !isMain {
+		if k[:i] != paneCommandsDomain {
 			continue
 		}
 		out[id] = argv
-		preferred[id] = isMain
 	}
 	return out
 }
 
-// classifyPane: GUI > web (spawn) > heuristica; + etiqueta de agente.
+// classifyPane: web (spawn) > GUI > heuristica; + etiqueta de agente.
+// O spawn do web vem conferido contra o host em execucao (spawnedMap); o
+// pane-commands.json nao tem essa conferencia, entao nao pode sobrepor.
 func classifyPane(id int, title, cwd string, gui map[int][]string, spawned map[int]string) PaneKind {
 	var k PaneKind
-	if argv, ok := gui[id]; ok && len(argv) > 0 {
-		k = classifyArgv(argv)
-		k.Source = "gui"
-	} else if sh, ok := spawned[id]; ok {
+	if sh, ok := spawned[id]; ok {
 		k = classifyShellID(sh)
 		k.Source = "web"
+	} else if argv, ok := gui[id]; ok && len(argv) > 0 {
+		k = classifyArgv(argv)
+		k.Source = "gui"
 	} else {
 		k = classifyHeuristic(title, cwd)
 		k.Source = "heuristic"

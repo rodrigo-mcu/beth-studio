@@ -35,6 +35,12 @@ type paneSpec struct {
 	Title   string    `json:"title,omitempty"`
 	Tool    *toolSpec `json:"tool,omitempty"`
 	Order   int       `json:"order"`
+	// Só em terminal pendente (restore_pending.go): quem ele era antes de a receita deslocar o
+	// id. Sem isso, um segundo reinício perde a folha do layout, o nome de aba e a aparência.
+	OrigPane int             `json:"orig_pane,omitempty"`
+	OrigHost string          `json:"orig_host,omitempty"`
+	OrigName *PaneName       `json:"orig_name,omitempty"`
+	OrigLook *PaneAppearance `json:"orig_look,omitempty"`
 }
 
 type specsFile struct {
@@ -220,4 +226,43 @@ func shouldRestore(f specsFile, hostID string, panes int, now time.Time) bool {
 		return false
 	}
 	return true
+}
+
+// brokenWSLStart: terminal WSL cujo processo ainda e' o "wslhost.exe" do relay:
+// o shell nunca subiu (a pasta nao existia, o disco nao estava montado) e a
+// pasta que ele informa ("/") nao e' a de trabalho do usuario.
+func brokenWSLStart(s paneSpec) bool {
+	return s.Kind == "wsl" && strings.EqualFold(strings.TrimSpace(s.Title), "wslhost.exe")
+}
+
+// carryCwds: a pasta de trabalho que a receita antiga tinha para cada terminal
+// WSL restaurado (chave = id novo), para a receita nova nao a perder se o
+// terminal abrir quebrado.
+func carryCwds(old []paneSpec, idMap map[int]int) map[int]string {
+	out := map[int]string{}
+	for _, s := range old {
+		nid, ok := idMap[s.PaneID]
+		if !ok || s.Kind != "wsl" || s.Cwd == "" || s.Cwd == "/" || s.Cwd == "~" {
+			continue
+		}
+		out[nid] = s.Cwd
+	}
+	return out
+}
+
+// applyCarry: enquanto o terminal continua quebrado, a receita guarda a pasta
+// de antes (em vez do "/" que ele informa). Quando o shell sobe de verdade, a
+// pasta viva volta a valer e a lembranca some.
+func applyCarry(specs []paneSpec, carry map[int]string) {
+	for i := range specs {
+		keep, ok := carry[specs[i].PaneID]
+		if !ok {
+			continue
+		}
+		if brokenWSLStart(specs[i]) {
+			specs[i].Cwd = keep
+		} else {
+			delete(carry, specs[i].PaneID)
+		}
+	}
 }

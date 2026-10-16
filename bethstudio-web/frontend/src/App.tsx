@@ -64,15 +64,42 @@ const requestShells = () => conn.requestShells();
 const OLD_VIEWS_KEY = "bethstudio-web.views"; // organizacao antiga (so' migracao)
 const MODE_KEY = "bethstudio-web.sidebar";
 
-function openParam(): number[] {
-  const q = new URLSearchParams(window.location.search).get("open");
-  return (q ?? "")
-    .split(",")
-    .map((s) => Number(s.trim()))
-    .filter((n) => s(n));
-  function s(n: number) {
-    return Number.isInteger(n) && n >= 0;
+/** Tira o open= da URL depois do primeiro uso: um F5 não deve repetir o pedido. */
+function clearOpenParam() {
+  try {
+    const u = new URL(window.location.href);
+    if (!u.searchParams.has("open")) return;
+    u.searchParams.delete("open");
+    window.history.replaceState(null, "", u.pathname + u.search + u.hash);
+  } catch {
+    /* sem history: o open= só se repetiria no próximo F5 */
   }
+}
+
+/** Quem pediu a próxima mudança de layout (para o registro de terminal que muda de aba). */
+let moveWhy = "";
+const why = (s: string) => {
+  moveWhy = s;
+};
+
+/** Diagnóstico: uma linha "layout: …" no log do Studio (e no host-life.log nas versões novas). */
+function logLayout(conn: Connection, text: string) {
+  const msg = `layout: ${text}`;
+  console.info(msg);
+  void conn.api("/api/log", { msg }).catch(() => undefined);
+}
+
+/** Diagnóstico (vai para o host-life.log): terminal que saiu de uma aba para outra, e por quê. */
+function logMoves(conn: Connection, prev: L.Layout, next: L.Layout) {
+  const reason = moveWhy || "não identificada";
+  moveWhy = "";
+  for (const m of L.movedPanes(prev, next)) {
+    logLayout(conn, `terminal ${m.pane} saiu da aba “${m.from}” para “${m.to}”${m.fromEmpty ? " (a aba de origem ficou vazia)" : ""}; origem: ${reason}`);
+  }
+}
+
+function openParam(): number[] {
+  return L.parseOpenParam(new URLSearchParams(window.location.search).get("open"));
 }
 
 function oldViews(): number[] {
@@ -98,8 +125,15 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
   const openedParam = useRef(false);
   const repairedDups = useRef("");
 
+  const lastSaved = useRef(""); // resumo do último layout gravado (registro de diagnóstico)
+  const loadLogged = useRef(false);
   const save = useCallback(
     (l: L.Layout) => {
+      const sum = L.layoutSummary(L.stripPlaceholders(l));
+      if (sum !== lastSaved.current) {
+        lastSaved.current = sum;
+        logLayout(conn, `gravado: ${sum}`);
+      }
       localOnly.current = false;
       pending.current++;
       conn
@@ -113,7 +147,7 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
           onError(`Não foi possível salvar a organização: ${e.message}`);
         });
     },
-    [onError],
+    [onError, conn],
   );
 
   /** delay: 0 = grava ja'; >0 = agrupa (arrastar divisoria); -1 = so' local */
@@ -121,6 +155,8 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
   current.current = layout;
   const commit = useCallback(
     (l: L.Layout, delay = 0) => {
+      if (current.current) logMoves(conn, current.current, l);
+      moveWhy = "";
       // compara com o que o servidor devolve (sem os marcadores "abrindo…")
       localJSON.current = JSON.stringify(L.stripPlaceholders(l));
       current.current = l;
@@ -133,7 +169,7 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
       if (delay === 0) save(l);
       else timer.current = window.setTimeout(() => save(l), delay);
     },
-    [save],
+    [save, conn],
   );
 
   useEffect(() => {
@@ -149,8 +185,15 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
       const ids = openParam().length ? openParam() : oldViews();
       for (const id of ids) if (alive.has(id)) l = L.movePaneToTab(l, id, l.active);
       openedParam.current = true;
+      clearOpenParam();
       commit(l);
       return;
+    }
+    if (!loadLogged.current) {
+      loadLogged.current = true;
+      // o endereço (sem o token) mostra se a página abriu com open=; o resumo, o que o servidor tinha guardado
+      const where = `${window.location.pathname}${window.location.search.replace(/([?&])t=[^&]*/, "$1t=…")}`;
+      logLayout(conn, `carregado do servidor: ${L.layoutSummary(server)}; endereço: ${where}; open=[${openParam().join(",")}]`);
     }
     let next = server;
     const dupKey = dups.map((d) => `${d.pane}:${d.kept}`).join(",");
@@ -176,8 +219,11 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
     if (!openedParam.current) {
       openedParam.current = true;
       const alive = new Set(panes.map((p) => p.pane_id));
-      for (const id of openParam()) if (alive.has(id)) next = L.movePaneToTab(next, id, next.active);
+      next = L.applyOpenParam(next, openParam(), alive);
+      clearOpenParam();
       if (next !== server) {
+        why("open= da URL");
+        current.current ??= server; // carga da página: ainda não há layout em memória para comparar
         commit(next);
         return;
       }
@@ -185,9 +231,13 @@ function useWebLayout(settings: SettingsEvent | null, panes: PaneInfo[] | null, 
     const js = JSON.stringify(server);
     if (pending.current === 0 && !localOnly.current && js !== localJSON.current) {
       localJSON.current = js;
+      if (current.current) {
+        why("layout vindo do servidor (outra cópia da interface, ou outra janela)");
+        logMoves(conn, current.current, server);
+      }
       setLayout(server);
     }
-  }, [settings, panes, layout, commit, onNotice]);
+  }, [settings, panes, layout, commit, onNotice, conn]);
 
   const getLayout = useCallback(() => current.current, []);
   return { layout, commit, getLayout };
@@ -437,6 +487,10 @@ export function App() {
   const act = useMemo(() => {
     if (!layout) return null;
     const ensureIn = (l: L.Layout, pane: number) => (L.findPane(l, pane) ? l : L.movePaneToTab(l, pane, l.active));
+    const open = (what: string, l: L.Layout) => {
+      why(what);
+      commit(l);
+    };
     const a = {
       open(pane: number) {
         // Em janela destacada: so' traz a janela para a frente.
@@ -452,18 +506,18 @@ export function App() {
       },
       openBeside(pane: number) {
         const next = focusedPane !== null ? L.dropOnPane(layout, pane, focusedPane, "right") : L.movePaneToTab(layout, pane, layout.active);
-        commit(next);
+        open("Abrir ao lado", next);
         focusPane(layout.active, pane);
       },
       moveToTab(pane: number, tabId: string) {
-        commit(L.movePaneToTab(layout, pane, tabId));
+        open("menu: mover para a aba", L.movePaneToTab(layout, pane, tabId));
       },
       moveToNewTab(pane: number) {
-        commit(L.addTab(layout, storedName(pane), pane));
+        open("menu: mover para nova aba", L.addTab(layout, storedName(pane), pane));
       },
       splitWith(target: number, other: number, zone: Exclude<L.Zone, "center">) {
         const l = ensureIn(layout, target);
-        commit(L.dropOnPane(l, other, target, zone));
+        open("dividir com outro terminal", L.dropOnPane(l, other, target, zone));
       },
       unorganize(pane: number) {
         commit(L.detachPane(layout, pane));
@@ -477,13 +531,13 @@ export function App() {
         });
       },
       dropOnPane(pane: number, target: number, zone: L.Zone) {
-        commit(L.dropOnPane(layout, pane, target, zone));
+        open("arrastar para dentro de um terminal", L.dropOnPane(layout, pane, target, zone));
         const at = L.findPane(layout, target);
         if (at) focusPane(at.tabId, pane);
       },
       dropOnTab(pane: number, tabId: string | null) {
-        if (tabId === null) commit(L.addTab(layout, "", pane));
-        else commit(L.movePaneToTab(layout, pane, tabId));
+        if (tabId === null) open("arrastar para o +", L.addTab(layout, "", pane));
+        else open("arrastar para a aba", L.movePaneToTab(layout, pane, tabId));
       },
     };
     return a;
@@ -503,6 +557,7 @@ export function App() {
         if (e.attach) {
           // botao "Encaixar" da janela: vai para a aba ativa
           if (!l) return;
+          why("Encaixar janela destacada");
           commit(L.movePaneToTab(l, e.pane, l.active));
           focusPane(l.active, e.pane);
           closeWindow();
@@ -830,7 +885,7 @@ export function App() {
             />
           )}
           {hostBanner(snap.host) && <HostBanner conn={conn} info={hostBanner(snap.host)!} />}
-          {!restoreDismissed && restoreInfo && <RestoreBanner info={restoreInfo} onDismiss={() => setRestoreDismissed(true)} />}
+          {!restoreDismissed && restoreInfo && <RestoreBanner conn={conn} info={restoreInfo} onDismiss={() => setRestoreDismissed(true)} />}
           <div className="flex min-h-0 flex-1 p-2">
             {!layout || !act ? (
               <div className="flex flex-1 items-center justify-center text-text-2">Carregando…</div>

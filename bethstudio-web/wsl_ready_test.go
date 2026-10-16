@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -67,9 +65,9 @@ func (f *fakeWSL) count(sub string) int {
 	return n
 }
 
-func newTestGate(f *fakeWSL, cfg map[string]wslDistroCfg) *wslGate {
+func newTestGate(f *fakeWSL) *wslGate {
 	f.clk = time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
-	g := newWSLGate(f.run, cfg)
+	g := newWSLGate(f.run)
 	g.now = func() time.Time { return f.clk }
 	g.sleep = func(d time.Duration) { f.clk = f.clk.Add(d) }
 	return g
@@ -77,8 +75,8 @@ func newTestGate(f *fakeWSL, cfg map[string]wslDistroCfg) *wslGate {
 
 func TestEnsureAlreadyRunningDoesNotStartIt(t *testing.T) {
 	f := &fakeWSL{running: map[string]bool{"Debian": true}, bootID: "b1"}
-	g := newTestGate(f, nil)
-	if _, err := g.Ensure(context.Background(), "Debian"); err != nil {
+	g := newTestGate(f)
+	if err := g.Ensure(context.Background(), "Debian"); err != nil {
 		t.Fatal(err)
 	}
 	if f.count("--exec true") != 0 {
@@ -88,8 +86,8 @@ func TestEnsureAlreadyRunningDoesNotStartIt(t *testing.T) {
 
 func TestEnsureStartsAStoppedDistro(t *testing.T) {
 	f := &fakeWSL{running: map[string]bool{}, bootID: "b1"}
-	g := newTestGate(f, nil)
-	if _, err := g.Ensure(context.Background(), "Debian"); err != nil {
+	g := newTestGate(f)
+	if err := g.Ensure(context.Background(), "Debian"); err != nil {
 		t.Fatal(err)
 	}
 	if f.count("wsl.exe -d Debian --exec true") != 1 {
@@ -99,8 +97,8 @@ func TestEnsureStartsAStoppedDistro(t *testing.T) {
 
 func TestEnsureRetriesUntilTheDistroStarts(t *testing.T) {
 	f := &fakeWSL{running: map[string]bool{}, startOK: 2, bootID: "b1"}
-	g := newTestGate(f, nil)
-	if _, err := g.Ensure(context.Background(), "Debian"); err != nil {
+	g := newTestGate(f)
+	if err := g.Ensure(context.Background(), "Debian"); err != nil {
 		t.Fatalf("a 3ª tentativa deveria dar certo: %v", err)
 	}
 	if f.started != 3 {
@@ -110,9 +108,9 @@ func TestEnsureRetriesUntilTheDistroStarts(t *testing.T) {
 
 func TestEnsureGivesUpAfterTheDeadline(t *testing.T) {
 	f := &fakeWSL{running: map[string]bool{}, startOK: 1 << 30, bootID: "b1"}
-	g := newTestGate(f, nil)
+	g := newTestGate(f)
 	start := f.clk
-	_, err := g.Ensure(context.Background(), "Debian")
+	err := g.Ensure(context.Background(), "Debian")
 	if err == nil {
 		t.Fatal("distro que nunca sobe deveria dar erro")
 	}
@@ -121,69 +119,9 @@ func TestEnsureGivesUpAfterTheDeadline(t *testing.T) {
 	}
 }
 
-func TestEnsureRunsInitOncePerBoot(t *testing.T) {
-	f := &fakeWSL{running: map[string]bool{"Debian": true}, bootID: "boot-A"}
-	g := newTestGate(f, map[string]wslDistroCfg{"debian": {Init: "service foo start", User: "root"}})
-	ctx := context.Background()
-	for i := 0; i < 3; i++ {
-		if _, err := g.Ensure(ctx, "Debian"); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if n := f.count("--exec sh -c"); n != 1 {
-		t.Fatalf("init rodou %d vezes no mesmo boot, quero 1", n)
-	}
-	f.bootID = "boot-B" // a VM reiniciou
-	if _, err := g.Ensure(ctx, "Debian"); err != nil {
-		t.Fatal(err)
-	}
-	if n := f.count("--exec sh -c"); n != 2 {
-		t.Fatalf("init rodou %d vezes, quero 2 (um por boot)", n)
-	}
-}
-
-func TestEnsureInitArguments(t *testing.T) {
-	f := &fakeWSL{running: map[string]bool{"Debian": true}, bootID: "b1"}
-	g := newTestGate(f, map[string]wslDistroCfg{"debian": {Init: "echo oi && true", User: "alice"}})
-	if _, err := g.Ensure(context.Background(), "Debian"); err != nil {
-		t.Fatal(err)
-	}
-	want := "wsl.exe -d Debian -u alice --exec sh -c echo oi && true"
-	found := false
-	for _, c := range f.calls {
-		if c == want {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatalf("falta a chamada %q em %v", want, f.calls)
-	}
-}
-
-func TestEnsureDefaultInitUserIsRoot(t *testing.T) {
-	f := &fakeWSL{running: map[string]bool{"Debian": true}, bootID: "b1"}
-	g := newTestGate(f, map[string]wslDistroCfg{"debian": {Init: "true"}})
-	_, _ = g.Ensure(context.Background(), "Debian")
-	if f.count("-u root --exec sh -c true") != 1 {
-		t.Fatalf("usuário padrão deveria ser root: %v", f.calls)
-	}
-}
-
-func TestEnsureInitFailureIsReportedButNotFatal(t *testing.T) {
-	f := &fakeWSL{running: map[string]bool{"Debian": true}, bootID: "b1", initErr: errors.New("exit status 3")}
-	g := newTestGate(f, map[string]wslDistroCfg{"debian": {Init: "false"}})
-	initErr, err := g.Ensure(context.Background(), "Debian")
-	if err != nil {
-		t.Fatalf("falha no init não pode impedir a distro de servir: %v", err)
-	}
-	if initErr == nil {
-		t.Fatal("a falha do init deveria ser devolvida como aviso")
-	}
-}
-
 func TestWaitDirAppearsLater(t *testing.T) {
 	f := &fakeWSL{dirAfter: 3}
-	g := newTestGate(f, nil)
+	g := newTestGate(f)
 	if !g.WaitDir(context.Background(), "Debian", "/mnt/data/projetos") {
 		t.Fatal("a pasta aparece na 4ª tentativa: deveria devolver true")
 	}
@@ -194,7 +132,7 @@ func TestWaitDirAppearsLater(t *testing.T) {
 
 func TestWaitDirNeverAppears(t *testing.T) {
 	f := &fakeWSL{dirAfter: -1}
-	g := newTestGate(f, nil)
+	g := newTestGate(f)
 	start := f.clk
 	if g.WaitDir(context.Background(), "Debian", "/mnt/nao/existe") {
 		t.Fatal("pasta que não existe deveria devolver false")
@@ -206,7 +144,7 @@ func TestWaitDirNeverAppears(t *testing.T) {
 
 func TestWaitDirEmptyOrHomeNeedsNoWait(t *testing.T) {
 	f := &fakeWSL{dirAfter: -1}
-	g := newTestGate(f, nil)
+	g := newTestGate(f)
 	for _, p := range []string{"", "~"} {
 		if !g.WaitDir(context.Background(), "Debian", p) {
 			t.Fatalf("%q não precisa esperar", p)
@@ -219,33 +157,11 @@ func TestWaitDirEmptyOrHomeNeedsNoWait(t *testing.T) {
 
 func TestWaitDirHonorsCancellation(t *testing.T) {
 	f := &fakeWSL{dirAfter: -1}
-	g := newTestGate(f, nil)
+	g := newTestGate(f)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	if g.WaitDir(ctx, "Debian", "/mnt/x") {
 		t.Fatal("contexto cancelado deveria devolver false")
-	}
-}
-
-func TestLoadWSLDistroCfgIsCaseInsensitive(t *testing.T) {
-	dir := t.TempDir()
-	body := `{"Debian":{"init":"service x start","user":"root","timeout_sec":90},"Ubuntu-22.04":{"init":"true"}}`
-	if err := os.WriteFile(filepath.Join(dir, "wsl-distros.json"), []byte(body), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	cfg := loadWSLDistroCfg(dir)
-	if c := cfg["debian"]; c.Init != "service x start" || c.TimeoutSec != 90 {
-		t.Fatalf("debian = %+v", c)
-	}
-	if c := cfg["ubuntu-22.04"]; c.Init != "true" {
-		t.Fatalf("ubuntu = %+v", c)
-	}
-	if got := loadWSLDistroCfg(t.TempDir()); len(got) != 0 {
-		t.Fatalf("sem arquivo deveria vir vazio: %+v", got)
-	}
-	_ = os.WriteFile(filepath.Join(dir, "wsl-distros.json"), []byte("não é json"), 0o644)
-	if got := loadWSLDistroCfg(dir); len(got) != 0 {
-		t.Fatalf("arquivo inválido deveria vir vazio: %+v", got)
 	}
 }
 
@@ -272,13 +188,46 @@ func TestSpawnErrorWithRequestIsRecognizedByTheHub(t *testing.T) {
 	}
 }
 
-func TestLoadWSLDistroCfgToleratesUTF8BOM(t *testing.T) {
-	dir := t.TempDir()
-	body := append([]byte{0xEF, 0xBB, 0xBF}, []byte(`{"Debian":{"init":"true","user":"root"}}`)...)
-	if err := os.WriteFile(filepath.Join(dir, "wsl-distros.json"), body, 0o644); err != nil {
+func TestDirExistsChecksOnce(t *testing.T) {
+	f := &fakeWSL{dirAfter: 1} // 1ª chamada falha, a seguinte passa
+	g := newTestGate(f)
+	if g.DirExists(context.Background(), "Debian", "/mnt/data/a") {
+		t.Fatal("1ª checagem deveria dar false")
+	}
+	if !g.DirExists(context.Background(), "Debian", "/mnt/data/a") {
+		t.Fatal("2ª checagem deveria dar true")
+	}
+	if n := f.count("wsl.exe -d Debian --exec test -d /mnt/data/a"); n != 2 {
+		t.Fatalf("cada DirExists é uma chamada só, sem esperar: %d chamadas em %v", n, f.calls)
+	}
+}
+
+func TestDirExistsHomeAndEmpty(t *testing.T) {
+	f := &fakeWSL{dirAfter: -1}
+	g := newTestGate(f)
+	if !g.DirExists(context.Background(), "Debian", "~") || !g.DirExists(context.Background(), "Debian", "") {
+		t.Fatal("pasta vazia ou ~ não depende de checagem: conta como existente")
+	}
+	if len(f.calls) != 0 {
+		t.Fatalf("não deveria chamar o wsl.exe: %v", f.calls)
+	}
+}
+
+func TestEnsureNeverRunsInit(t *testing.T) {
+	f := &fakeWSL{running: map[string]bool{"Debian": true}, bootID: "b1"}
+	g := newTestGate(f)
+	if err := g.Ensure(context.Background(), "Debian"); err != nil {
 		t.Fatal(err)
 	}
-	if c := loadWSLDistroCfg(dir)["debian"]; c.Init != "true" {
-		t.Fatalf("wsl-distros.json com BOM deveria ser lido: %+v", c)
+	if n := f.count("--exec sh -c"); n != 0 {
+		t.Fatalf("o init só roda pelo fluxo guiado, não no Ensure: %v", f.calls)
+	}
+}
+
+func TestBootIDTrimsOutput(t *testing.T) {
+	f := &fakeWSL{running: map[string]bool{"Debian": true}, bootID: "abc-123"}
+	g := newTestGate(f)
+	if got := g.BootID(context.Background(), "Debian"); got != "abc-123" {
+		t.Fatalf("BootID = %q", got)
 	}
 }

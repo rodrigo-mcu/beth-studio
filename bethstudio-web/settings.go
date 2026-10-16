@@ -78,6 +78,8 @@ type webSettings struct {
 	Voice *VoiceSettings `json:"voice,omitempty"`
 	// Nome de aba dado pelo usuario, por pane (panenames.go).
 	PaneNames map[string]*PaneName `json:"pane_names,omitempty"`
+	// Comando de inicialização do WSL por distro (chave em minúsculas): wsl_init_cfg.go.
+	WSLInit map[string]WSLInitCfg `json:"wsl_init,omitempty"`
 }
 
 type SidebarPrefs struct {

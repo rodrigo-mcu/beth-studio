@@ -8,6 +8,7 @@ import type { NotifyPrefs } from "@/lib/notify";
 import { cn } from "@/lib/utils";
 import { KIND_LABEL, kindOrder, moveItem } from "@/lib/kinds";
 import { GeneralAppearance } from "./GeneralAppearance";
+import { WslInitSettings } from "./WslInitSettings";
 import { VoiceSettingsDialog } from "./VoiceSettingsDialog";
 import { AIUsageSection } from "./AIUsage";
 import { DbAssistSettings } from "./DbAssistSettings";
@@ -106,6 +107,7 @@ export function SettingsDialog(p: Props) {
             {sec === "terminais" && (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <TerminalsSection conn={p.conn} settings={p.settings} onMessage={p.onMessage} />
+                {!isRemote() && <WslInitSettings conn={p.conn} onMessage={p.onMessage} />}
                 <GeneralAppearance {...common} sections={["notify"]} />
               </div>
             )}

@@ -184,3 +184,31 @@ func TestLoadSpecsToleratesUTF8BOM(t *testing.T) {
 		t.Fatalf("receita com BOM deveria ser lida: %+v ok=%v", f, ok)
 	}
 }
+
+func TestCarryKeepsTheWorkFolderOfABrokenWSLStart(t *testing.T) {
+	old := []paneSpec{
+		{PaneID: 2, Kind: "wsl", Cwd: "/mnt/kingston/mcu/repo/mobi-server"},
+		{PaneID: 3, Kind: "wsl", Cwd: "/"}, // sem pasta util: nada a guardar
+		{PaneID: 4, Kind: "powershell", Cwd: `C:\x`},
+		{PaneID: 5, Kind: "wsl", Cwd: "/home/r"}, // nao foi restaurado
+	}
+	carry := carryCwds(old, map[int]int{2: 11, 3: 12, 4: 13})
+	if len(carry) != 1 || carry[11] != "/mnt/kingston/mcu/repo/mobi-server" {
+		t.Fatalf("carry = %v", carry)
+	}
+	// o terminal 11 abriu quebrado: a receita nova mantem a pasta de antes
+	specs := []paneSpec{{PaneID: 11, Kind: "wsl", Cwd: "/", Title: "wslhost.exe"}}
+	applyCarry(specs, carry)
+	if specs[0].Cwd != "/mnt/kingston/mcu/repo/mobi-server" {
+		t.Fatalf("cwd = %q", specs[0].Cwd)
+	}
+	// depois o shell sobe e informa a pasta real: ela volta a valer e a lembranca some
+	specs = []paneSpec{{PaneID: 11, Kind: "wsl", Cwd: "/home/r/outra", Title: "rodrigo@PC: ~/outra"}}
+	applyCarry(specs, carry)
+	if specs[0].Cwd != "/home/r/outra" || len(carry) != 0 {
+		t.Fatalf("cwd = %q carry = %v", specs[0].Cwd, carry)
+	}
+	if brokenWSLStart(paneSpec{Kind: "powershell", Title: "wslhost.exe"}) {
+		t.Fatal("so' terminal WSL conta")
+	}
+}

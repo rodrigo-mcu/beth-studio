@@ -16,7 +16,7 @@ export interface GridCard {
   /** caminho legivel da pasta atual ("" = desconhecido) */
   path: string;
   kindLabel: string;
-  /** "Aba “x”", "Aba fechada “x”", "Não organizado" ou "Encerrado · aba “x”" */
+  /** "Aba “x”", "Aba fechada “x”", "Sem aba — clique para abrir" ou "Encerrado · aba “x”" */
   where: string;
   /** aba que contem o terminal (so' state "tab" e "gone") */
   tabId?: string;
@@ -68,7 +68,7 @@ export function buildCards(panes: PaneInfo[], layout: Layout): GridCard[] {
       const c = layout.closed![g];
       const cname = tabDisplayName(c, g, titleOf);
       push(p, "closed", `Aba fechada “${cname}”`, undefined, leaves(c.root).filter((l) => !l.leaf.gone).length === 1 ? cname : undefined);
-    } else push(p, "loose", "Não organizado");
+    } else push(p, "loose", "Sem aba — clique para abrir");
   }
   // 3) encerrados que ainda aparecem numa aba
   layout.tabs.forEach((t, i) => {

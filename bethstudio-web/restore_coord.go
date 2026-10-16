@@ -56,6 +56,19 @@ type restoreCoordinator struct {
 	lastKey    string
 	lastSave   time.Time
 	wg         sync.WaitGroup
+	// carry: pasta de trabalho de terminais WSL restaurados que abriram quebrados
+	// (id novo -> pasta); a receita a mantem em vez de gravar o "/" que eles informam.
+	carry map[int]string
+	// holds: terminais que não abriram porque a pasta não existe; a receita os guarda
+	// (restore_pending.go) para um host que caia não os perder.
+	holds pendingSet
+}
+
+// setCarry guarda as pastas a preservar depois de uma restauracao.
+func (c *restoreCoordinator) setCarry(m map[int]string) {
+	c.mu.Lock()
+	c.carry = m
+	c.mu.Unlock()
 }
 
 func newRestoreCoordinator(d coordDeps) *restoreCoordinator {
@@ -235,8 +248,12 @@ func (c *restoreCoordinator) flush() {
 	}
 	var specs []paneSpec
 	if countPanes(p.list) > 0 {
-		specs = c.d.buildSpecs(p.list)
+		specs = append([]paneSpec(nil), c.d.buildSpecs(p.list)...)
+		c.mu.Lock()
+		applyCarry(specs, c.carry)
+		c.mu.Unlock()
 	}
+	specs = append(specs, c.holds.recipeSpecs(len(specs))...)
 	key := p.host + "#" + structKey(specs)
 	now := c.d.now()
 	c.mu.Lock()

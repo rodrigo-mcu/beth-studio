@@ -281,6 +281,65 @@ export function movePaneToTab(layout: Layout, pane: number, tabId: string): Layo
   return mapTab(l, tabId, (t) => ({ ...t, root: append(t.root, lf) }));
 }
 
+/** Os ids do `?open=` da URL. Sem o parâmetro (ou vazio) é lista vazia: `Number("")` vale 0 e puxava o terminal 0 em toda carga. */
+export function parseOpenParam(q: string | null): number[] {
+  return (q ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^\d+$/.test(s))
+    .map(Number);
+}
+
+/**
+ * `?open=` da URL (Studio aberto com --open): só traz para a aba ativa o
+ * terminal que ainda NÃO está organizado. Quem já está numa aba fica onde
+ * está; antes, cada carga da página arrancava o terminal da aba dele e o
+ * encaixava ao lado do que estava em foco.
+ */
+export function applyOpenParam(layout: Layout, ids: number[], alive: Set<number>): Layout {
+  let next = layout;
+  for (const id of ids) if (alive.has(id) && !findPane(next, id)) next = movePaneToTab(next, id, next.active);
+  return next;
+}
+
+/** Resumo curto para o registro de diagnóstico: "ORACULO[4] | beth studio[3,0] | Aba 3[21]". */
+export function layoutSummary(layout: Layout): string {
+  return layout.tabs
+    .map((t, i) => {
+      const panes = leaves(t.root)
+        .filter((x) => !x.leaf.gone && x.leaf.pane >= 0)
+        .map((x) => x.leaf.pane);
+      return `${t.name.trim() || `Aba ${i + 1}`}[${panes.join(",")}]`;
+    })
+    .join(" | ");
+}
+
+/** Terminal que mudou de aba entre dois layouts (registro de diagnóstico). */
+export interface PaneMove {
+  pane: number;
+  from: string;
+  to: string;
+  /** a aba de origem ficou sem nenhum terminal */
+  fromEmpty: boolean;
+}
+
+/** Os terminais que estavam numa aba em `prev` e estão em outra em `next`. */
+export function movedPanes(prev: Layout, next: Layout): PaneMove[] {
+  const label = (l: Layout, id: string) => {
+    const i = l.tabs.findIndex((t) => t.id === id);
+    return i < 0 ? id : l.tabs[i].name.trim() || `Aba ${i + 1}`;
+  };
+  const out: PaneMove[] = [];
+  for (const pane of livePanes(prev)) {
+    const a = findPane(prev, pane);
+    const b = findPane(next, pane);
+    if (!a || !b || a.tabId === b.tabId) continue;
+    const src = tabById(next, a.tabId);
+    out.push({ pane, from: label(prev, a.tabId), to: label(next, b.tabId), fromEmpty: !src || countLeaves(src.root) === 0 });
+  }
+  return out;
+}
+
 /**
  * Solta `pane` sobre a folha viva `targetPane`: borda = dividir ali,
  * centro = trocar de lugar (se `pane` nao estava organizado, o alvo sai).

@@ -369,11 +369,17 @@ func layoutHasTab(tabs []LayoutTab, id string) bool {
 }
 
 func withoutGone(n *LayoutNode) (*LayoutNode, bool) {
+	return pruneLeaf(n, func(l *LayoutNode) bool { return l.Gone })
+}
+
+// pruneLeaf tira da árvore as folhas que `match` aceita; o split que sobra com
+// um filho só colapsa e os tamanhos são normalizados. true = algo foi tirado.
+func pruneLeaf(n *LayoutNode, match func(*LayoutNode) bool) (*LayoutNode, bool) {
 	if n == nil {
 		return nil, false
 	}
 	if n.Type == "leaf" {
-		if n.Gone {
+		if match(n) {
 			return nil, true
 		}
 		return n, false
@@ -385,7 +391,7 @@ func withoutGone(n *LayoutNode) (*LayoutNode, bool) {
 	var sizes []float64
 	changed := false
 	for i, c := range n.Children {
-		k, dropped := withoutGone(c)
+		k, dropped := pruneLeaf(c, match)
 		if dropped {
 			changed = true
 		}

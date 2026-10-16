@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-14.
+Last updated: 2026-10-16.
 
 ---
 
@@ -66,7 +66,7 @@ Status legend: 🟢 shipped · ⚪ planned.
 
 - 🟢 **Interface atualizável sem reiniciar** — the Beth Studio screen can be replaced on its own: `bethstudio-web\deploy-ui.ps1` installs a new interface package under `%APPDATA%\bethstudio\ui\current`, and **Configurações > Sobre > Recarregar interface** (or F5) applies it. The Studio process, the host and the terminals are not restarted. The previous package is kept for `-Rollback`. A package that needs a newer Studio, or a broken one, is ignored and the interface built into the executable is used.
 - 🟢 **Verificar atualização** — **Configurações > Sobre > Verificar atualização** compares the running version with the latest published GitHub release. If a newer one exists, you choose: install only the interface (no restart) or download the installer for the Studio and the host. Nothing is installed until you confirm. Read-only mode and the remote browser only say that a newer version exists. The phone page does not have this.
-- 🟢 **Painel de voz não fecha por clique fora** — while recording, transcribing, correcting or reviewing text, a click outside the voice panel no longer cancels it; only the buttons or Esc do.
+- 🟢 **Janela de voz móvel** — the **Falar** window no longer dims or blocks the screen: it floats, and you drag it by its title bar to move it off the text you are reading. It remembers where you left it and stays inside the window. Clicking outside never cancels it; only the buttons or Esc (while the window has focus) do.
 
 ## 1. Removed in Phase B (native window)
 
@@ -161,11 +161,24 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   and themes to the new ids. A terminal closed on purpose never comes back. A banner
   shows the progress and, at the end, anything that did not return.
 - 🟢 **Smart WSL start** (2026-10-03). Before a WSL terminal opens, the Studio waits for
-  the distro to answer, runs the optional per-distro init command once per VM boot
-  (`%APPDATA%\bethstudio\wsl-distros.json`: `{"Debian":{"init":"...","user":"root","timeout_sec":60}}`)
-  and waits for the folder to exist; if it never does, the terminal opens in the home folder,
-  not in `/`. The same wait applies to **Novo terminal** on a stopped distro (patch 0197 makes
-  `--cd` and `-d` work).
+  the distro to answer and for the folder to exist; if it never does, the terminal opens in the
+  home folder, not in `/`. The same wait applies to **Novo terminal** on a stopped distro (patch 0197
+  makes `--cd` and `-d` work). The silent per-distro init command that lived in `wsl-distros.json`
+  is gone: it is now the guided flow below (the old file is imported once, into Configurações).
+- 🟢 **WSL init on restore** (2026-10-16). After a restart the host comes up empty and the Studio
+  recreates the terminals. If the folder of a WSL terminal does not exist (WSL has not mounted its
+  disks yet) and that distro has an init command, the banner asks **Executar / Agora não**. On
+  *Executar* the Studio opens a visible WSL terminal, types the command there (so the UAC prompt or a
+  password works as usual), waits for it to finish (exit code 0 closes that terminal; an error or the
+  time limit leaves it open; **Continuar assim mesmo** moves on) and only then opens the terminals of
+  that distro. Terminals that do not need the folder open right away. A terminal whose folder still
+  does not exist is **not** opened in the home folder: it waits in the banner with **Continuar
+  tentando** (also retried every 15 s for 5 min), **Guardar** (stop retrying), **Abrir na pasta
+  padrão** and **Descartar**, and its recipe is kept so a host crash does not lose it. When it opens
+  it comes back as "Aba fechada “name”" in the grid (click to reopen the tab with its name).
+  Configure it in **Configurações > Terminais > WSL**, per distro: on/off, the command (as you would
+  type it), time limit (10–1800 s), default folder, and **Testar agora**. The command cannot contain
+  line breaks (it is typed into a terminal).
 - 🟢 Own tabs and splits (drag, new terminal to the right / below / above /
   left), views **Minha organização**, **Como no Beth Studio**, **Por tipo**,
   and **Por pasta** (groups by each terminal's current folder, follows

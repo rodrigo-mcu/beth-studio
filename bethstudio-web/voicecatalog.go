@@ -403,7 +403,8 @@ func friendlyModelName(id string) string {
 }
 
 // serveUILog: POST /api/log {"msg": "..."} — passos curtos da UI (microfone
-// etc.) no log do Go. So' texto curto, sem controle; nunca audio/chaves.
+// etc.) no log do Go; linhas "layout: …" tambem no host-life.log. So' texto
+// curto, sem controle; nunca audio/chaves.
 func serveUILog(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost || !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		http.Error(w, "use POST application/json", http.StatusBadRequest)
@@ -416,7 +417,13 @@ func serveUILog(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
 		return
 	}
-	log.Printf("ui: %s", cleanLogText(req.Msg))
+	msg := cleanLogText(req.Msg)
+	log.Printf("ui: %s", msg)
+	// terminal que muda de aba: vai também para o host-life.log, onde se
+	// investiga "por que o terminal apareceu aqui?"
+	if strings.HasPrefix(msg, "layout: ") {
+		lifeLog(msg)
+	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 

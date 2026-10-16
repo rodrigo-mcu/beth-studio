@@ -133,3 +133,31 @@ func (st *settingsStore) remapPanesFrom(base *remapBase, m map[int]int, newHost 
 	}
 	return snap
 }
+
+// adoptIdentity dá ao terminal novo o nome de aba e a aparência que o terminal
+// pendente tinha (o id antigo se perdeu na restauração).
+func (st *settingsStore) adoptIdentity(newPane int, name *PaneName, look *PaneAppearance, host string) {
+	if name == nil && look == nil {
+		return
+	}
+	_, _ = st.mutate(func() error {
+		key := strconv.Itoa(newPane)
+		if name != nil {
+			c := *name
+			c.HostID = host
+			if st.s.PaneNames == nil {
+				st.s.PaneNames = map[string]*PaneName{}
+			}
+			st.s.PaneNames[key] = &c
+		}
+		if look != nil {
+			c := *look
+			c.HostID = host
+			if st.s.Panes == nil {
+				st.s.Panes = map[string]*PaneAppearance{}
+			}
+			st.s.Panes[key] = &c
+		}
+		return st.saveLocked()
+	})
+}

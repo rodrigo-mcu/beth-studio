@@ -46,7 +46,7 @@ test("um cartao por terminal: em aba, em aba fechada, solto e encerrado", () => 
   assert.equal(by[3].state, "closed");
   assert.equal(by[3].where, "Aba fechada “velha”");
   assert.equal(by[4].state, "loose");
-  assert.equal(by[4].where, "Não organizado");
+  assert.equal(by[4].where, "Sem aba — clique para abrir");
   assert.equal(by[9].state, "gone");
   assert.equal(by[9].tabId, "b");
   assert.equal(by[9].title, "build antigo");

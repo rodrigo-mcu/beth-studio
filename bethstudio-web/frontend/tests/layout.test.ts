@@ -19,6 +19,10 @@ import {
   removeLeafAt,
   renameTab,
   replacePane,
+  applyOpenParam,
+  parseOpenParam,
+  movedPanes,
+  layoutSummary,
   sanitize,
   setActive,
   setSizes,
@@ -383,4 +387,58 @@ test("sanitize: terminal em duas abas fica na aba onde está sozinho e é relata
   const rep3: DuplicatePane[] = [];
   sanitize({ active: "a", tabs: [{ id: "a", name: "", root: { type: "leaf", pane: 5 } }] }, rep3);
   assert.deepEqual(rep3, []);
+});
+
+test("open= não tira de outra aba o terminal que já está organizado", () => {
+  // aba "support agent" com o 0 e aba ativa "beth studio" com o 3
+  let l = emptyLayout("support agent");
+  l = movePaneToTab(l, 0, l.tabs[0].id);
+  l = addTab(l, "beth studio", 3);
+  const next = applyOpenParam(l, [0, 3], new Set([0, 3]));
+  assert.equal(next, l);
+  assert.equal(show(tab(next, 0).root), "0");
+  assert.equal(show(tab(next, 1).root), "3");
+});
+
+test("open= traz só o terminal que ainda não está em nenhuma aba, e só os vivos", () => {
+  let l = emptyLayout("A");
+  l = movePaneToTab(l, 1, l.tabs[0].id);
+  const next = applyOpenParam(l, [1, 2, 9], new Set([1, 2]));
+  assert.equal(show(tab(next).root), "row(1,2)");
+  assert.equal(findPane(next, 9), null);
+});
+
+test("movedPanes: lista o terminal arrancado da aba e avisa que a origem ficou vazia", () => {
+  let before = emptyLayout("support agent");
+  before = movePaneToTab(before, 0, before.tabs[0].id);
+  before = addTab(before, "beth studio", 3);
+  const after = movePaneToTab(before, 0, before.active); // o que o open= fazia
+  assert.deepEqual(movedPanes(before, after), [{ pane: 0, from: "support agent", to: "beth studio", fromEmpty: true }]);
+});
+
+test("movedPanes: nada se nada mudou de aba, e nome vazio vira Aba N", () => {
+  let l = emptyLayout("");
+  l = movePaneToTab(l, 1, l.tabs[0].id);
+  assert.deepEqual(movedPanes(l, l), []);
+  const l2 = addTab(l, "B");
+  const l3 = movePaneToTab(l2, 1, l2.active);
+  assert.deepEqual(movedPanes(l2, l3), [{ pane: 1, from: "Aba 1", to: "B", fromEmpty: true }]);
+});
+
+test("layoutSummary: abas com nome, sem nome e com divisão", () => {
+  let l = emptyLayout("ORACULO");
+  l = movePaneToTab(l, 4, l.tabs[0].id);
+  l = addTab(l, "", 21);
+  l = addTab(l, "beth studio", 3);
+  l = movePaneToTab(l, 0, l.active); // 3 e 0 lado a lado
+  assert.equal(layoutSummary(l), "ORACULO[4] | Aba 2[21] | beth studio[3,0]");
+});
+
+test("parseOpenParam: sem open= não é o terminal 0 (Number('') vale 0)", () => {
+  assert.deepEqual(parseOpenParam(null), []);
+  assert.deepEqual(parseOpenParam(""), []);
+  assert.deepEqual(parseOpenParam("  "), []);
+  assert.deepEqual(parseOpenParam("0"), [0]);
+  assert.deepEqual(parseOpenParam("9, 10"), [9, 10]);
+  assert.deepEqual(parseOpenParam("9,,abc,-1,2.5,3"), [9, 3]);
 });

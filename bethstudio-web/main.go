@@ -96,6 +96,7 @@ func main() {
 	}
 
 	settings.load(dataDir())
+	importWSLDistrosFile(dataDir(), settings) // migra o wsl-distros.json antigo para a tela de Configurações
 	secrets.load(dataDir())
 	// Scan themes and fonts in the background so the first menu opens fast.
 	go func() {
@@ -121,7 +122,7 @@ func main() {
 		hub.sup = newSupervisor(ctl, newRestartLimiter(3, 10*time.Minute), time.Now, hub.setHost)
 		go hub.sup.Run(ctx)
 		// Restauracao dos terminais depois de uma queda (restore*.go) e gate do WSL.
-		hub.wslGate = newWSLGate(execRunner, loadWSLDistroCfg(dataDir()))
+		hub.wslGate = newWSLGate(execRunner)
 		hub.restore = newHubRestore(hub)
 		// Bandeja do Studio (tray_windows.go): só sobe se a GUI antiga não estiver cuidando dela.
 		go runTrayWhenFree(ctx, hub, hub.sup, ctl)
