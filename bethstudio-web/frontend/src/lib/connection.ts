@@ -1,4 +1,5 @@
 import type { PaneInfo, ScreenEvent, ServerEvent, SettingsEvent, ShellInfo, SocketState, SpawnedEvent, StatusEvent } from "./types";
+import { socketIsStale } from "../phone/retry";
 import { applyAgent, Pending, requestIdFromError, type AgentState } from "./agents";
 import { apiBase } from "./remote";
 import type { TermDragEvent } from "./termDrop";
@@ -52,6 +53,10 @@ export class Connection {
   private backoff = 500;
   private timer: number | undefined;
   private disposed = false;
+  /** vigia da conexão: o navegador não avisa quando o socket morre mudo (rede trocou, tela apagou) */
+  private lastRx = 0;
+  private probeAt = 0;
+  private watchTimer: number | undefined;
   private watched: number[] = [];
   /** Offset de rolagem pedido por pane (reenviado ao reconectar). */
   private offsets = new Map<number, number>();
@@ -107,6 +112,48 @@ export class Connection {
     this.token = p.token;
     this.apiHost = p.api;
     this.connect();
+    this.watchTimer = window.setInterval(() => this.probe(), 20000);
+    window.addEventListener("online", this.wake);
+    document.addEventListener("visibilitychange", this.wake);
+  }
+
+  /** Voltou a rede ou o app: reconecta já (sem esperar o backoff) ou confere se o socket ainda responde. */
+  private wake = () => {
+    if (this.disposed || document.visibilityState === "hidden") return;
+    if (!this.ws) this.reconnectNow();
+    else this.probe();
+  };
+
+  /** Manda uma pergunta ao PC; se nada voltar em 8 s, derruba o socket e reconecta. */
+  private probe() {
+    const ws = this.ws;
+    if (this.disposed || !ws || ws.readyState !== WebSocket.OPEN) return;
+    if (this.probeAt === 0 || this.lastRx >= this.probeAt) {
+      this.probeAt = Date.now();
+      this.raw({ op: "list" });
+    }
+    window.setTimeout(() => {
+      if (this.ws !== ws) return;
+      if (socketIsStale({ probeAt: this.probeAt, lastRx: this.lastRx, now: Date.now(), graceMs: 8000 })) {
+        this.probeAt = 0;
+        this.dropSocket(ws);
+      }
+    }, 8500);
+  }
+
+  /** Dá o socket por morto e reconecta já. */
+  private dropSocket(ws: WebSocket) {
+    if (this.ws !== ws) return;
+    this.ws = null;
+    ws.onclose = null;
+    ws.onmessage = null;
+    try {
+      ws.close();
+    } catch {
+      /* já morto */
+    }
+    this.patch({ socket: "closed" });
+    if (!this.disposed) this.reconnectNow();
   }
 
   private httpProto() {
@@ -138,6 +185,8 @@ export class Connection {
     this.ws = ws;
     ws.onopen = () => {
       this.backoff = 500;
+      this.lastRx = Date.now();
+      this.probeAt = 0;
       // o Go reenvia o estado atual dos agentes logo apos conectar
       this.patch({ socket: "open", agents: {} });
       this.raw({ op: "list" });
@@ -148,6 +197,7 @@ export class Connection {
       for (const [pane_id, offset] of this.offsets) if (offset > 0) this.raw({ op: "scroll", pane_id, offset });
     };
     ws.onmessage = (m) => {
+      this.lastRx = Date.now();
       let ev: ServerEvent;
       try {
         ev = JSON.parse(m.data as string);
@@ -243,6 +293,9 @@ export class Connection {
   dispose() {
     this.disposed = true;
     window.clearTimeout(this.timer);
+    window.clearInterval(this.watchTimer);
+    window.removeEventListener("online", this.wake);
+    document.removeEventListener("visibilitychange", this.wake);
     const ws = this.ws;
     this.ws = null;
     ws?.close();

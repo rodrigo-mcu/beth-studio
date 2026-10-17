@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-17
+
+### Fixed
+- Phone: a recorded audio is no longer lost when sending fails. It is kept (in memory and in the browser storage) until the transcription works. If the network or the PC does not answer, the app retries by itself (2, 4, 8, 15, 30 s, up to 6 times) and shows the countdown; afterwards **Tentar de novo**, **Baixar** and **Descartar** stay on screen, also after reloading the page.
+- Phone: the connection no longer stays dead after the screen turns off or the network changes. The app probes the PC every 20 s and reconnects at once when the socket does not answer, when the network comes back and when you return to the app.
+- Phone: "O PC está desconectado do servidor" appears only after three failed checks in a row (3 s apart), not after a single failed one.
+- Phone link: the keepalive of the PC-to-server link is 10 s (was 30 s), so a dead session is noticed and replaced sooner. (Studio update needed; the server program `bethstudio-proxy` needs the new build too.)
+
 ## [0.2.4] - 2026-10-16
 
 ### Added

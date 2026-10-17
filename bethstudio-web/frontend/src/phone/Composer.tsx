@@ -7,6 +7,8 @@ import { correctStreaming, correctTimeoutMs, transcribe, VoiceError } from "@/li
 import { appendDictation, clock } from "./audio";
 import { PhoneRecorder } from "./recorder";
 import { prepareImage } from "./image";
+import { runWithRetry } from "./retry";
+import { clearTake, loadTake, saveTake } from "./takeStore";
 import { QUICK_KEYS } from "./text";
 
 /** O que o PC deixa o celular saber da voz (phone_gate.go, phoneVoiceView). */
@@ -69,6 +71,8 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
   const [voice, setVoice] = useState<PhoneVoice | null>(null);
   const [levels, setLevels] = useState<number[]>(() => new Array(BARS).fill(0));
   const [elapsed, setElapsed] = useState(0);
+  // áudio gravado que ainda não virou texto: fica guardado até dar certo ou ser descartado
+  const [pending, setPending] = useState<{ blob: Blob; seconds: number } | null>(null);
   const recRef = useRef<PhoneRecorder | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fieldRef = useRef<HTMLTextAreaElement>(null);
@@ -122,6 +126,18 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
       .then(setVoice)
       .catch(() => undefined);
   }, [conn]);
+
+  useEffect(() => {
+    let off = false;
+    void loadTake(paneId).then((t) => {
+      if (off || !t) return;
+      setPending({ blob: t.blob, seconds: t.seconds });
+      setNote({ text: "Há um áudio gravado que ainda não virou texto. Toque em Tentar de novo.", err: true });
+    });
+    return () => {
+      off = true;
+    };
+  }, [paneId]);
 
   useEffect(
     () => () => {
@@ -208,17 +224,33 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
       setNote({ text: "Este navegador não entregou o áudio gravado. Tente de novo; se repetir, atualize o navegador.", err: true });
       return;
     }
+    setPending({ blob: take.blob, seconds: take.seconds });
+    await saveTake({ paneId, blob: take.blob, seconds: take.seconds, savedAt: Date.now() }).catch(() => undefined);
+    await transcribeSaved(take.blob, take.seconds);
+  };
+
+  /** Envia o áudio guardado (tenta de novo sozinho se a rede ou o PC falharem). O áudio só some depois de dar certo. */
+  const transcribeSaved = async (blob: Blob, seconds: number) => {
+    setNote(null);
+    setPhase("transcribing");
     const base = draftRef.current;
     const ac = new AbortController();
     abortRef.current = ac;
     try {
-      const tr = await transcribe(conn, take.blob, { signal: ac.signal, audioMs: take.seconds * 1000, pane: paneId });
+      const tr = await runWithRetry(() => transcribe(conn, blob, { signal: ac.signal, audioMs: seconds * 1000, pane: paneId }), {
+        signal: ac.signal,
+        onWait: ({ attempt, delayMs }) =>
+          setNote({ text: `Sem resposta do PC. Tentando de novo em ${Math.round(delayMs / 1000)} s (tentativa ${attempt}). O áudio está guardado.` }),
+      });
       const heard = tr.text.trim();
       if (!heard) {
         setPhase("idle");
-        setNote({ text: "Não reconheci fala nesse áudio. Fale mais perto do celular e tente de novo.", err: true });
+        setNote({ text: "Não reconheci fala nesse áudio. Tente de novo ou descarte.", err: true });
         return;
       }
+      await clearTake(paneId);
+      setPending(null);
+      setNote(null);
       const raw = appendDictation(base.text, heard);
       setDraft({ text: raw, voice: true, raw: null });
       if (voice?.settings.llm_enabled) {
@@ -240,14 +272,30 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
       setPhase("idle");
     } catch (e) {
       setPhase("idle");
-      if (e instanceof VoiceError && e.canceled) {
-        setNote({ text: "Transcrição cancelada." });
+      if ((e as Error).name === "AbortError" || (e instanceof VoiceError && e.canceled)) {
+        setNote({ text: "Transcrição cancelada. O áudio continua guardado.", err: true });
         return;
       }
-      setNote({ text: (e as Error).message, err: true });
+      setNote({ text: `${(e as Error).message}. O áudio está guardado: toque em Tentar de novo.`, err: true });
     } finally {
       abortRef.current = null;
     }
+  };
+
+  const discardPending = () => {
+    setPending(null);
+    setNote({ text: "Áudio descartado." });
+    void clearTake(paneId);
+  };
+
+  const downloadPending = () => {
+    if (!pending) return;
+    const url = URL.createObjectURL(pending.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audio-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${pending.blob.type.includes("wav") ? "wav" : pending.blob.type.includes("mp4") ? "m4a" : "webm"}`;
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 10000);
   };
 
   const message = (): string | null => {
@@ -378,6 +426,21 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
         <p className={note.err ? "p-note p-note--err" : "p-note"} role={note.err ? "alert" : "status"}>
           {note.text}
         </p>
+      )}
+
+      {pending && phase === "idle" && (
+        <div className="p-busy" role="group" aria-label="Áudio guardado">
+          <span className="p-busy__txt">Áudio guardado ({clock(pending.seconds * 1000)})</span>
+          <button type="button" className="p-btn" onClick={() => void transcribeSaved(pending.blob, pending.seconds)}>
+            Tentar de novo
+          </button>
+          <button type="button" className="p-btn p-btn--quiet" onClick={downloadPending}>
+            Baixar
+          </button>
+          <button type="button" className="p-btn p-btn--quiet" onClick={discardPending}>
+            Descartar
+          </button>
+        </div>
       )}
 
       {(phase === "transcribing" || phase === "correcting") && (

@@ -3,6 +3,7 @@ import type { PaneInfo } from "@/lib/types";
 import { paneLabel } from "@/lib/panes";
 import { Connection } from "@/lib/connection";
 import { checkSession, type SessionState } from "./session";
+import { offlineVerdict } from "./retry";
 import { AgentList } from "./AgentList";
 import { AgentChat } from "./AgentChat";
 import { cleanTitle, touchRecent, type Recent } from "./text";
@@ -77,20 +78,32 @@ export function Studio({ local, onSession }: { local: boolean; onSession: (s: Se
     else setPaneId(null);
   };
 
-  // Socket caiu: a senha venceu (volta ao login) ou o PC saiu do ar (aviso).
+  // Socket caiu: a senha venceu (volta ao login) ou o PC saiu do ar (aviso). Uma
+  // checagem que falha uma vez não prova nada (sinal fraco, proxy trocando de
+  // sessão): confere de 3 em 3 s e só avisa depois de várias falhas seguidas.
   useEffect(() => {
     if (snap.socket === "open") {
       setPcDown(false);
       return;
     }
     if (local) return;
-    const t = window.setTimeout(() => {
+    let off = false;
+    let fails = 0;
+    let t = 0;
+    const tick = () => {
       void checkSession().then((s) => {
-        if (s === "login") leave("login");
-        else setPcDown(s === "offline");
+        if (off) return;
+        if (s === "login") return leave("login");
+        fails = s === "offline" ? fails + 1 : 0;
+        setPcDown(offlineVerdict(fails));
+        t = window.setTimeout(tick, 3000);
       });
-    }, 2500);
-    return () => window.clearTimeout(t);
+    };
+    t = window.setTimeout(tick, 2500);
+    return () => {
+      off = true;
+      window.clearTimeout(t);
+    };
   }, [snap.socket, local, onSession]);
 
   // Voltou ao app depois de um tempo: atualiza a lista.

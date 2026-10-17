@@ -52,6 +52,7 @@ func (p *Proxy) serveLink(w http.ResponseWriter, r *http.Request) {
 	}
 	cfg := yamux.DefaultConfig()
 	cfg.LogOutput = io.Discard
+	tuneLink(cfg)
 	sess, err := yamux.Client(pipe, cfg)
 	if err != nil {
 		_ = pipe.Close()
@@ -293,6 +294,7 @@ func Dial(ctx context.Context, endpoint, secret string) (*yamux.Session, error) 
 	pipe := newWSPipe(conn, br, bw, true)
 	cfg := yamux.DefaultConfig()
 	cfg.LogOutput = io.Discard
+	tuneLink(cfg)
 	return yamux.Server(pipe, cfg)
 }
 
@@ -338,3 +340,11 @@ type dummyAddr struct{}
 
 func (dummyAddr) Network() string { return "yamux" }
 func (dummyAddr) String() string  { return "yamux" }
+
+// tuneLink: o padrão do yamux (keepalive de 30 s, escrita de 10 s) deixa a
+// sessão morta valendo por quase um minuto, e o celular vê "PC desconectado"
+// com o PC ligado. Com 10 s a queda é percebida logo e o PC religa.
+func tuneLink(cfg *yamux.Config) {
+	cfg.KeepAliveInterval = 10 * time.Second
+	cfg.ConnectionWriteTimeout = 10 * time.Second
+}
