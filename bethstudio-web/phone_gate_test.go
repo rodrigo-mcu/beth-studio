@@ -15,14 +15,15 @@ import (
 func withPhoneSession(t *testing.T) string {
 	t.Helper()
 	old := phone
-	const tok = "sessao-de-teste"
 	phone = &phoneAuth{
 		domain:   testDomain,
 		secret:   "segredo",
-		sessions: map[string]time.Time{tok: time.Now().Add(time.Hour)},
 		now:      time.Now,
 	}
 	t.Cleanup(func() { phone = old })
+	phone.mu.Lock()
+	tok, _ := phone.addDeviceLocked("1.1.1.1", "")
+	phone.mu.Unlock()
 	return tok
 }
 

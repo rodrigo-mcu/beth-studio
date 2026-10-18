@@ -21,6 +21,12 @@ import (
 // Só no PC: configurar o acesso e o que abre algo na tela do PC.
 var remoteOnlyOnPC = map[string]bool{
 	"/api/phone/setup":             true,
+	"/api/phone/devices":                 true,
+	"/api/phone/devices/pairing":         true,
+	"/api/phone/devices/pairing/cancel":  true,
+	"/api/phone/devices/rename":          true,
+	"/api/phone/devices/revoke":          true,
+	"/api/phone/devices/revoke-all":      true,
 	"/api/remote":                  true,
 	"/api/remote/totp":             true,
 	"/api/remote/revoke":           true,

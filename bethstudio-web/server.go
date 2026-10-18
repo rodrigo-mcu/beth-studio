@@ -110,6 +110,10 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		s.serveDB(w, r)
 		return
 	}
+	if phoneDevicesPath(r.URL.Path) {
+		s.servePhoneDevices(w, r, remoteKey)
+		return
+	}
 	switch r.URL.Path {
 	case "/ws":
 		if remoteKey != "" {
@@ -318,6 +322,10 @@ func (s *server) serveWSWith(w http.ResponseWriter, r *http.Request, setup func(
 				}
 			case <-t.C:
 				if c.remote != "" && !remote.touchKey(c.remote) {
+					c.close()
+					return
+				}
+				if c.device != "" && !phone.deviceAlive(c.device) {
 					c.close()
 					return
 				}

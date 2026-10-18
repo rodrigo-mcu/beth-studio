@@ -17,15 +17,24 @@ import (
 	"github.com/hashicorp/yamux"
 )
 
-const offlineHTML = `<!DOCTYPE html><html lang="pt"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Beth Studio</title><body style="font-family:sans-serif;background:#111;color:#eee;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0"><p>O computador está desconectado.</p>`
-
 // Proxy recebe o celular (atrás do proxy que a pessoa já tem) e uma ligação do Beth Studio.
 type Proxy struct {
 	Domain string
 	Secret string
+	// DataDir: onde guardar a hora em que o PC foi visto pela última vez ("" = só memória).
+	DataDir string
+	// Now: relógio (testes). nil = time.Now.
+	Now func() time.Time
 
 	mu   sync.Mutex
 	sess *yamux.Session
+
+	seenMu     sync.Mutex
+	seen       time.Time
+	seenLoaded bool
+
+	capMu sync.Mutex
+	caps  map[string][]time.Time
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +74,7 @@ func (p *Proxy) serveLink(w http.ResponseWriter, r *http.Request) {
 	if old != nil {
 		_ = old.Close()
 	}
-	<-sess.CloseChan()
+	p.watchSeen(sess.CloseChan())
 }
 
 func (p *Proxy) session() *yamux.Session {
@@ -75,18 +84,21 @@ func (p *Proxy) session() *yamux.Session {
 }
 
 func (p *Proxy) forward(w http.ResponseWriter, r *http.Request) {
+	if loginCapPath(r) && !p.allowLogin(ClientIP(r)) {
+		w.Header().Set("Retry-After", "60")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = io.WriteString(w, `{"error":"muitas tentativas, espere um minuto"}`)
+		return
+	}
 	sess := p.session()
-	if sess == nil {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = io.WriteString(w, offlineHTML)
+	if sess == nil || sess.IsClosed() {
+		p.serveOffline(w, r)
 		return
 	}
 	stream, err := sess.Open()
 	if err != nil {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = io.WriteString(w, offlineHTML)
+		p.serveOffline(w, r)
 		return
 	}
 	defer stream.Close()

@@ -85,6 +85,8 @@ type client struct {
 	gone  chan struct{}
 	once  sync.Once
 	phone bool
+	// device: id do aparelho do celular (quando phone)
+	device string
 	// remote: chave da sessão do Studio remoto ("" = Studio no PC ou celular)
 	remote string
 }
@@ -162,6 +164,21 @@ func (h *hub) dropRemote(gone func(key string) bool) {
 	var out []*client
 	for c := range h.clients {
 		if c.remote != "" && gone(c.remote) {
+			out = append(out, c)
+		}
+	}
+	h.mu.Unlock()
+	for _, c := range out {
+		c.close()
+	}
+}
+
+// dropPhone fecha as conexões dos aparelhos revogados.
+func (h *hub) dropPhone(alive func(id string) bool) {
+	h.mu.Lock()
+	var out []*client
+	for c := range h.clients {
+		if c.device != "" && !alive(c.device) {
 			out = append(out, c)
 		}
 	}

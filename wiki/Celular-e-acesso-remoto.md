@@ -58,11 +58,32 @@ A mesma tela mostra o estado da ligação: **Conectado**, **Conectando…** ou *
 
 ### 3. Usar no celular
 
+**Pelo QR code (recomendado).**
+
+1. No PC, abra **Configurações → Celular → Aparelhos conectados** e clique em **Conectar um celular**.
+2. Aponte a câmera do celular para o QR code (ou copie o link e mande para o celular).
+3. O app abre já logado. Pronto: sem domínio e sem senha.
+
+O link vale **5 minutos** e **uma única vez**. Gerar outro invalida o anterior. Se o celular mostrar "Link inválido ou expirado", gere um novo.
+
+**Pela senha (alternativa).**
+
 1. No celular, abra `https://meu-dominio.exemplo`.
 2. Entre com a senha do celular. A tela de entrada diz: "Entre com a senha do celular que você criou no PC, em Configurações → Celular."
-3. Escolha o agente na lista e responda.
 
-O app pode ser instalado na tela inicial (manifesto, ícones e service worker). Se o PC estiver offline, o app abre e avisa que o computador está desconectado. O service worker guarda só o app, nunca `/api` nem `/ws`.
+Depois, escolha o agente na lista e responda.
+
+O app pode ser instalado na tela inicial (manifesto, ícones e service worker). Se o PC estiver offline, o app abre e avisa que o computador está desconectado, com **"Visto pela última vez às HH:MM de dd/mm"** e uma nova tentativa automática a cada 15 segundos. O service worker guarda só o app, nunca `/api` nem `/ws`.
+
+### Aparelhos conectados
+
+Cada celular que entra (pelo QR ou pela senha) vira um **aparelho**, com nome sugerido pelo navegador (por exemplo "iPhone — Safari"), data de entrada, último uso e último IP. Em **Configurações → Celular → Aparelhos conectados** dá para:
+
+- **Renomear** um aparelho;
+- **Revogar** um aparelho: a sessão cai na hora, inclusive a conexão aberta, e o celular volta à tela de entrada;
+- **Revogar todos**.
+
+A sessão de um aparelho expira após **90 dias sem uso** (e, em qualquer caso, 365 dias após a entrada). **Trocar a senha do celular não revoga os aparelhos já conectados**; para derrubá-los use Revogar. As sessões do Studio remoto continuam sendo encerradas ao trocar a senha.
 
 > Captura sugerida: lista de terminais no celular, com um agente esperando resposta no topo.
 
@@ -124,7 +145,7 @@ Em vez disso, o remoto usa um navegador de pastas dentro da página, "Salvar uma
 
 ## Detalhes e limites
 
-**Senha do celular.** Criada no PC, mínimo de 8 caracteres. No PC fica só o hash (bcrypt), nos segredos cifrados do Windows. O `bethstudio-proxy` não guarda a senha. A sessão do celular dura 30 dias, num cookie `HttpOnly`, `Secure` e `SameSite=Strict`. O login do celular pede só a senha; o segundo fator vale apenas para o Studio remoto. O cookie do celular nunca abre o Studio remoto (o cookie do Studio remoto tem `Path=/studio`).
+**Senha do celular.** Criada no PC, mínimo de 8 caracteres. No PC fica só o hash (bcrypt), nos segredos cifrados do Windows. O `bethstudio-proxy` não guarda a senha. A sessão de cada aparelho dura 90 dias sem uso (365 no máximo), num cookie `HttpOnly`, `Secure` e `SameSite=Strict`; no PC fica só o SHA-256 do token. O login do celular pede só a senha; o segundo fator vale apenas para o Studio remoto. O cookie do celular nunca abre o Studio remoto (o cookie do Studio remoto tem `Path=/studio`).
 
 **A linha do servidor não é a senha.** Ela só autoriza este PC a ligar no seu proxy, e fica guardada nos segredos locais do Beth Studio. Uma ligação nova com a mesma linha substitui a anterior.
 
@@ -132,6 +153,10 @@ Em vez disso, o remoto usa um navegador de pastas dentro da página, "Salvar uma
 
 - por IP: 5 erros seguidos travam esse IP por 1 minuto; cada nova trava dobra, até 15 minutos; o contador volta a zero após 1 hora sem erro;
 - geral: 30 erros em 10 minutos, somando todos os IPs, recusam o login pelo túnel até a janela passar. O Studio no PC não é afetado.
+- o link do QR code conta igual: um link errado, vencido ou já usado é uma tentativa errada;
+- o `bethstudio-proxy` ainda limita a 20 tentativas por minuto e por IP em `/api/phone/login` e `/api/phone/pair` (resposta 429), só para poupar o PC.
+
+O IP vem do proxy (que sobrescreve o cabeçalho `X-BethStudio-Client`), então trocar cabeçalhos no celular não contorna o limite.
 
 **Verificações em cada pedido pelo túnel.** O `Host` precisa ser o domínio configurado. Pedidos que alteram algo e o WebSocket precisam de `Origin` igual a `https://meu-dominio.exemplo`. Há política de conteúdo (CSP) restrita, `X-Frame-Options: DENY` e `Referrer-Policy: same-origin`.
 
@@ -141,7 +166,9 @@ Em vez disso, o remoto usa um navegador de pastas dentro da página, "Salvar uma
 
 **Confiança no servidor.** O TLS termina no proxy HTTPS do servidor, então quem controla esse servidor consegue ver o tráfego que passa por ele (texto dos terminais, o que você digita). Para entrar, essa pessoa ainda precisaria da senha (e do código, no Studio remoto), mas o conteúdo não é cifrado ponta a ponta além do TLS do proxy. Use um servidor seu e de confiança.
 
-**Sem QR para o celular.** O pareamento do celular é a linha `bethstudio://link` colada em Configurações → Celular e a senha digitada no aparelho. O único QR dessa tela é o do segundo fator (app autenticador).
+**QR do celular.** O QR de **Conectar um celular** leva a `https://meu-dominio.exemplo/#pair=<token>`. O token fica depois do `#`, que o navegador não envia ao servidor (não aparece em log do proxy nem em `Referer`); o app o lê, apaga da barra de endereço e o troca por uma sessão com um POST. Não confunda com o QR do segundo fator do Studio remoto (app autenticador).
+
+**Última vez visto.** O `bethstudio-proxy` grava a hora em que o PC esteve ligado (ao ligar, a cada 30 segundos e ao cair) no arquivo `last-seen` da pasta de dados dele, então a informação sobrevive a um reinício do proxy. A página pública de "computador desconectado" mostra só essa hora, nada mais. Precisa da versão nova do `bethstudio-proxy` no servidor.
 
 **Fora do escopo.** App nativo com notificação, várias pessoas num mesmo proxy e edição simultânea do layout nos dois Studios (vale a última gravação).
 

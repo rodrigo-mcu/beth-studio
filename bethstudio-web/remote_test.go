@@ -96,7 +96,7 @@ func withRemote(t *testing.T, now *time.Time) {
 	}
 	oldP, oldR := phone, remote
 	clock := func() time.Time { return *now }
-	phone = &phoneAuth{domain: testDomain, secret: "segredo", hash: hash, sessions: map[string]time.Time{}, now: clock}
+	phone = &phoneAuth{domain: testDomain, secret: "segredo", hash: hash, now: clock}
 	remote = &remoteAuth{
 		enabled:  true,
 		totp:     testTOTP,
