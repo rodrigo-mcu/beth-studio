@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-18
+
 ### Added
 - Phone: **Conectar um celular** (Configurações → Celular → Aparelhos conectados) shows a QR code and a link that sign the phone in without typing the domain or password. The link is single use and valid for 5 minutes; the token travels in the URL fragment and is exchanged by a POST for a normal session cookie. (Studio update needed.)
 - Phone: **Aparelhos conectados**. Each phone that enters is a named device (suggested from the browser, editable) with creation date, last use and last IP. Rename, revoke one (its session and open WebSocket drop at once) or revoke all. Sessions expire after 90 days without use (365 at most); the old phone password still works, creates a device too, and changing it does not revoke paired devices. Sessions of the old `phone-sessions.json` are migrated to devices. (Studio update needed.)
