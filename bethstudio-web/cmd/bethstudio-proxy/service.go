@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 )
@@ -12,6 +13,8 @@ import (
 const (
 	serviceBin  = "/usr/local/bin/bethstudio-proxy"
 	serviceUnit = "/etc/systemd/system/bethstudio-proxy.service"
+	// serviceUser é o usuário sem shell que roda o serviço no modo HTTPS próprio.
+	serviceUser = "bethstudio"
 )
 
 func serviceDone(action string) string {
@@ -30,6 +33,9 @@ func serviceDone(action string) string {
 }
 
 func systemdUnit(exe string, cfg installConfig) string {
+	if cfg.TLS {
+		return tlsUnit(exe, cfg)
+	}
 	return fmt.Sprintf(`[Unit]
 Description=Beth Studio proxy do celular
 After=network-online.target
@@ -44,6 +50,47 @@ RestartSec=2
 [Install]
 WantedBy=multi-user.target
 `, exe, cfg.Listen, cfg.Domain, cfg.Data)
+}
+
+// tlsUnit: modo HTTPS próprio. Não roda como root: usuário dedicado, só a
+// capability de abrir portas abaixo de 1024, sistema de arquivos somente
+// leitura exceto a pasta de dados.
+func tlsUnit(exe string, cfg installConfig) string {
+	args := "-tls -domain " + cfg.Domain + " -data " + cfg.Data
+	if cfg.Email != "" {
+		args += " -acme-email " + cfg.Email
+	}
+	if cfg.Staging {
+		args += " -acme-staging"
+	}
+	return fmt.Sprintf(`[Unit]
+Description=Beth Studio proxy do celular (HTTPS direto)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%s %s
+User=%s
+Group=%s
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+ReadWritePaths=%s
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+`, exe, args, serviceUser, serviceUser, cfg.Data)
 }
 
 func unitDataDir(body string) string {
@@ -80,12 +127,21 @@ func removeService(binPath, unitPath string, purge bool, run func(name string, a
 			return err
 		}
 	}
+	// o usuário dedicado do modo HTTPS próprio foi criado por nós: sai junto
+	if strings.Contains(string(body), "\nUser="+serviceUser+"\n") {
+		_ = run("userdel", serviceUser)
+	}
 	return nil
 }
 
 func installService(cfg installConfig, srcExe, binPath, unitPath string, run func(name string, args ...string) error) error {
 	if err := copyBinary(srcExe, binPath); err != nil {
 		return err
+	}
+	if cfg.TLS {
+		if err := prepareServiceUser(cfg.Data, run); err != nil {
+			return err
+		}
 	}
 	if err := os.MkdirAll(filepath.Dir(unitPath), 0o755); err != nil {
 		return err
@@ -101,6 +157,23 @@ func installService(cfg installConfig, srcExe, binPath, unitPath string, run fun
 		return fmt.Errorf("systemctl enable --now: %w", err)
 	}
 	return nil
+}
+
+// prepareServiceUser cria o usuário sem shell e entrega a pasta de dados a ele
+// (o segredo da ligação foi criado por quem instalou, root).
+func prepareServiceUser(data string, run func(name string, args ...string) error) error {
+	if err := os.MkdirAll(data, 0o700); err != nil {
+		return err
+	}
+	if _, err := user.Lookup(serviceUser); err != nil {
+		if err := run("useradd", "--system", "--user-group", "--home-dir", data, "--no-create-home", "--shell", "/usr/sbin/nologin", serviceUser); err != nil {
+			return fmt.Errorf("useradd %s: %w", serviceUser, err)
+		}
+	}
+	if err := run("chown", "-R", serviceUser+":"+serviceUser, data); err != nil {
+		return fmt.Errorf("chown: %w", err)
+	}
+	return run("chmod", "700", data)
 }
 
 func copyBinary(src, dst string) error {

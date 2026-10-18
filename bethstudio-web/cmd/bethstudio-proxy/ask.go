@@ -12,6 +12,11 @@ import (
 
 type installConfig struct {
 	Listen  string
+	// TLS: o próprio programa atende HTTPS em :443 (e :80 para o desafio e o
+	// redirecionamento), com certificado Let's Encrypt automático. Exclui Listen.
+	TLS     bool
+	Email   string // contato opcional para a Let's Encrypt (só TLS)
+	Staging bool   // Let's Encrypt de testes (só TLS)
 	Domain  string
 	Data    string
 	Service bool
@@ -24,6 +29,17 @@ type installConfig struct {
 var errNeedFlags = errors.New("faltam opções")
 
 func resolveInstall(preset installConfig, interactive bool, in io.Reader, out io.Writer) (installConfig, error) {
+	if preset.TLS && preset.Listen != "" {
+		return installConfig{}, errors.New("use -tls ou -listen, não os dois")
+	}
+	if !preset.TLS && (preset.Staging || preset.Email != "") {
+		return installConfig{}, errors.New("-acme-email e -acme-staging só valem com -tls")
+	}
+	if email, err := phonelink.CleanEmail(preset.Email); err != nil {
+		return installConfig{}, err
+	} else {
+		preset.Email = email
+	}
 	if complete(preset) {
 		return preset, nil
 	}
@@ -34,7 +50,7 @@ func resolveInstall(preset installConfig, interactive bool, in io.Reader, out io
 }
 
 func complete(c installConfig) bool {
-	return c.Listen != "" && c.Domain != "" && c.Data != ""
+	return (c.Listen != "" || c.TLS) && c.Domain != "" && c.Data != ""
 }
 
 func askInstall(in *bufio.Reader, out io.Writer, preset installConfig) (installConfig, error) {
@@ -82,15 +98,28 @@ func askInstall(in *bufio.Reader, out io.Writer, preset installConfig) (installC
 			domain = cleanDomain(v)
 		}
 		listen := preset.Listen
-		if listen == "" {
-			fmt.Fprintln(out, "Como o proxy HTTPS que você já tem chega aqui?")
-			fmt.Fprintln(out, "  1) por uma porta neste servidor")
-			fmt.Fprintln(out, "  2) por um arquivo socket")
+		useTLS := preset.TLS
+		email := preset.Email
+		if listen == "" && !useTLS {
+			fmt.Fprintln(out, "Como o celular chega neste programa?")
+			fmt.Fprintln(out, "  1) por uma porta neste servidor (atrás do proxy HTTPS que você já tem)")
+			fmt.Fprintln(out, "  2) por um arquivo socket (atrás do proxy HTTPS que você já tem)")
+			fmt.Fprintln(out, "  3) HTTPS direto: este programa atende as portas 80 e 443 e obtém o certificado sozinho")
 			choice, err := ask(in, out, "Escolha", "1")
 			if err != nil {
 				return installConfig{}, err
 			}
 			switch strings.ToLower(choice) {
+			case "3", "https", "tls", "direto":
+				useTLS = true
+				v, err := ask(in, out, "E-mail de contato para a Let's Encrypt (opcional)", "")
+				if err != nil {
+					return installConfig{}, err
+				}
+				if email, err = phonelink.CleanEmail(v); err != nil {
+					fmt.Fprintln(out, "E-mail inválido; seguindo sem e-mail.")
+					email = ""
+				}
 			case "2", "socket", "unix":
 				path, err := ask(in, out, "Arquivo socket", "/run/bethstudio-proxy.sock")
 				if err != nil {
@@ -105,12 +134,18 @@ func askInstall(in *bufio.Reader, out io.Writer, preset installConfig) (installC
 				listen = normalizePort(port)
 			}
 		}
-		if _, _, err := phonelink.ParseListen(listen); err != nil {
-			fmt.Fprintf(out, "Endereço inválido: %s\n", err)
-			preset.Listen = ""
-			continue
+		if !useTLS {
+			if _, _, err := phonelink.ParseListen(listen); err != nil {
+				fmt.Fprintf(out, "Endereço inválido: %s\n", err)
+				preset.Listen = ""
+				continue
+			}
 		}
-		fmt.Fprintf(out, "\nO celular abre https://%s\nSeu proxy HTTPS aponta para %s\n", domain, listenForPerson(listen))
+		if useTLS {
+			fmt.Fprintf(out, "\nO celular abre https://%s\nEste programa atende as portas 80 e 443 e pede o certificado à Let's Encrypt.\nO domínio precisa apontar para este servidor e as portas 80 e 443 precisam estar livres.\n", domain)
+		} else {
+			fmt.Fprintf(out, "\nO celular abre https://%s\nSeu proxy HTTPS aponta para %s\n", domain, listenForPerson(listen))
+		}
 		ok, err := ask(in, out, "Está certo? (s/n)", "s")
 		if err != nil {
 			return installConfig{}, err
@@ -124,7 +159,7 @@ func askInstall(in *bufio.Reader, out io.Writer, preset installConfig) (installC
 				}
 				service = yes(answer)
 			}
-			return installConfig{Listen: listen, Domain: domain, Data: data, Service: service}, nil
+			return installConfig{Listen: listen, TLS: useTLS, Email: email, Staging: preset.Staging, Domain: domain, Data: data, Service: service}, nil
 		}
 		preset = installConfig{}
 	}

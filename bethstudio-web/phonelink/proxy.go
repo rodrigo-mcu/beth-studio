@@ -25,6 +25,10 @@ type Proxy struct {
 	DataDir string
 	// Now: relógio (testes). nil = time.Now.
 	Now func() time.Time
+	// Direct: o proxy atende a internet sem outro proxy na frente (modo HTTPS
+	// próprio). O IP do cliente é só o da conexão TCP; X-Forwarded-For e
+	// X-Real-IP vindos do cliente nunca valem, nem de 127.0.0.1.
+	Direct bool
 
 	mu   sync.Mutex
 	sess *yamux.Session
@@ -35,6 +39,25 @@ type Proxy struct {
 
 	capMu sync.Mutex
 	caps  map[string][]time.Time
+}
+
+func (p *Proxy) clientIP(r *http.Request) string {
+	if p.Direct {
+		return directIP(r)
+	}
+	return ClientIP(r)
+}
+
+// directIP: o endereço da conexão, sem ler nenhum cabeçalho.
+func directIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	if host == "" {
+		return "local"
+	}
+	return host
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +107,7 @@ func (p *Proxy) session() *yamux.Session {
 }
 
 func (p *Proxy) forward(w http.ResponseWriter, r *http.Request) {
-	if loginCapPath(r) && !p.allowLogin(ClientIP(r)) {
+	if loginCapPath(r) && !p.allowLogin(p.clientIP(r)) {
 		w.Header().Set("Retry-After", "60")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusTooManyRequests)
@@ -108,7 +131,11 @@ func (p *Proxy) forward(w http.ResponseWriter, r *http.Request) {
 	out.URL.Host = "studio"
 	out.RequestURI = ""
 	out.Host = r.Host
-	out.Header.Set("X-BethStudio-Client", ClientIP(r))
+	out.Header.Set("X-BethStudio-Client", p.clientIP(r))
+	if p.Direct {
+		out.Header.Del("X-Forwarded-For")
+		out.Header.Del("X-Real-IP")
+	}
 	if !isWebsocket(r) {
 		out.Header.Del("Upgrade")
 		out.Header.Del("Connection")
@@ -175,6 +202,10 @@ func copyHeader(dst, src http.Header) {
 		if strings.EqualFold(k, "Content-Length") {
 			continue
 		}
+		// cabeçalhos de segurança que o próprio proxy já pôs não duplicam
+		if (strings.EqualFold(k, "Strict-Transport-Security") || strings.EqualFold(k, "X-Content-Type-Options")) && dst.Get(k) != "" {
+			continue
+		}
 		for _, v := range vs {
 			dst.Add(k, v)
 		}
@@ -232,6 +263,11 @@ func dialAddr(u *url.URL) string {
 
 // Dial liga o Beth Studio no proxy e devolve a sessão que aceita os pedidos do celular.
 func Dial(ctx context.Context, endpoint, secret string) (*yamux.Session, error) {
+	return DialTLS(ctx, endpoint, secret, nil)
+}
+
+// DialTLS é o Dial com configuração TLS própria (testes com certificado autoassinado).
+func DialTLS(ctx context.Context, endpoint, secret string, tlsCfg *tls.Config) (*yamux.Session, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
@@ -253,7 +289,7 @@ func Dial(ctx context.Context, endpoint, secret string) (*yamux.Session, error) 
 	d := &net.Dialer{Timeout: 15 * time.Second}
 	var conn net.Conn
 	if u.Scheme == "wss" {
-		conn, err = (&tls.Dialer{NetDialer: d}).DialContext(ctx, "tcp", addr)
+		conn, err = (&tls.Dialer{NetDialer: d, Config: tlsCfg}).DialContext(ctx, "tcp", addr)
 	} else {
 		conn, err = d.DialContext(ctx, "tcp", addr)
 	}
