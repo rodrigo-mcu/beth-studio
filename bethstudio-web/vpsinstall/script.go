@@ -76,7 +76,7 @@ func cmdProxyService(domain string) string {
 }
 
 func cmdPrereqs() string {
-	return `set -e; export DEBIAN_FRONTEND=noninteractive; apt-get update -qq; apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https curl gnupg ca-certificates`
+	return `set -e; export DEBIAN_FRONTEND=noninteractive; apt-get -o DPkg::Lock::Timeout=300 update -qq; apt-get -o DPkg::Lock::Timeout=300 install -y -qq debian-keyring debian-archive-keyring apt-transport-https curl gnupg ca-certificates`
 }
 
 // cmdInstallCaddy segue https://caddyserver.com/docs/install (Debian/Ubuntu).
@@ -87,8 +87,8 @@ if [ ! -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg ]; then
 fi
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' -o /etc/apt/sources.list.d/caddy-stable.list
 chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg /etc/apt/sources.list.d/caddy-stable.list
-apt-get update -qq
-apt-get install -y -qq caddy
+apt-get -o DPkg::Lock::Timeout=300 update -qq
+apt-get -o DPkg::Lock::Timeout=300 install -y -qq caddy
 mkdir -p ` + WizardDir + ` && touch ` + CaddyInstalledMark
 }
 
@@ -116,7 +116,7 @@ func cmdApplyCaddyfile(src string) string {
 
 func cmdFirewall(sshPorts []int) string {
 	var b strings.Builder
-	b.WriteString("set -e; export DEBIAN_FRONTEND=noninteractive; command -v ufw >/dev/null 2>&1 || apt-get install -y -qq ufw\n")
+	b.WriteString("set -e; export DEBIAN_FRONTEND=noninteractive; command -v ufw >/dev/null 2>&1 || apt-get -o DPkg::Lock::Timeout=300 install -y -qq ufw\n")
 	for _, p := range sshPorts {
 		b.WriteString("ufw allow " + strconv.Itoa(p) + "/tcp >/dev/null\n")
 	}
@@ -126,7 +126,7 @@ func cmdFirewall(sshPorts []int) string {
 }
 
 func cmdUnattended() string {
-	return `set -e; export DEBIAN_FRONTEND=noninteractive; apt-get install -y -qq unattended-upgrades
+	return `set -e; export DEBIAN_FRONTEND=noninteractive; apt-get -o DPkg::Lock::Timeout=300 install -y -qq unattended-upgrades
 printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' > /etc/apt/apt.conf.d/20auto-upgrades`
 }
 

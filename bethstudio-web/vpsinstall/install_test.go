@@ -117,7 +117,7 @@ func (f *fakeVPS) Run(_ context.Context, cmd string, stdin string) (Result, erro
 		return ok("ok\n")
 	case has("install -m 0755"):
 		f.proxySHA = f.lastSHA
-	case has("apt-get install -y -qq caddy"):
+	case has("install -y -qq caddy"):
 		f.caddyInst = true
 	case has("link-secret"):
 		return ok(testLinkSec + "\n")
@@ -405,7 +405,7 @@ func TestInstallFalhaNoMeioERetomada(t *testing.T) {
 	// o apt do Caddy rodou uma vez só
 	n := 0
 	for _, c := range h.vps.cmds {
-		if strings.Contains(c, "apt-get install -y -qq caddy") {
+		if strings.Contains(c, "install -y -qq caddy") {
 			n++
 		}
 	}
@@ -459,7 +459,7 @@ func TestInstallSudoComSenhaNaoVazaSegredos(t *testing.T) {
 	h.params.Password = testSSHPass
 	h.vps.uid = "1000\n"
 	h.vps.sudoPass = testSSHPass
-	h.vps.failOn = "apt-get install -y -qq caddy"
+	h.vps.failOn = "install -y -qq caddy"
 	h.vps.failErr = "E: falha, a senha " + testSSHPass + " apareceu na saída, token " + testToken
 	_, err := h.install()
 	if err == nil {

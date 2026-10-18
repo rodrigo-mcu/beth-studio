@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- **Instalar servidor** (Configurações > Celular): a wizard that installs the phone server on a clean, dedicated Debian/Ubuntu VPS. It takes a Cloudflare token and the SSH login, asks you to confirm the server fingerprint, checks the VPS is clean and compatible (and stops without changing anything if not), creates the DNS record (DNS only by default; proxied optional), installs `bethstudio-proxy` (embedded in the Studio for linux/amd64 and linux/arm64, SHA-256 checked) and Caddy with automatic HTTPS, enables ufw (SSH, 80, 443) and unattended security upgrades, pairs this Studio by itself and tests end to end, ending with a QR code. Rerunning fixes instead of duplicating; update, state/logs, change phone password and remove are available afterwards. SSH passwords and the Cloudflare token are never written to disk or logs. (Studio update needed; `build.ps1` now cross-compiles the proxy and embeds it.)
+
 ## [0.2.5] - 2026-10-17
 
 ### Fixed

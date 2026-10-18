@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-16.
+Last updated: 2026-10-18.
 
 ---
 
@@ -273,6 +273,20 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   is created on the same screen. The remote page
   only reads agents and sends text or audio. Database, SSH and files stay
   on the Studio window.
+- 🟢 **Instalar servidor** (Configurações → Celular): a wizard that sets up
+  the phone server on a clean, dedicated Debian/Ubuntu VPS with no terminal.
+  It asks for a Cloudflare API token (Zone → DNS → Edit, Zone → Zone → Read)
+  and the VPS login (password or private key), shows the server's SSH
+  fingerprint for you to confirm, checks that the VPS is clean (it stops and
+  explains instead of deleting anything), creates the DNS record, installs
+  `bethstudio-proxy` (embedded in the Studio, SHA-256 checked) and Caddy
+  (automatic HTTPS, HTTP→HTTPS, WebSocket), turns on the firewall (SSH,
+  80, 443) and security updates, pairs this Studio by itself, tests
+  everything end to end and shows a QR code. It can be rerun after a
+  failure without duplicating anything, and offers update, state/logs,
+  change phone password and remove (only the DNS records it created).
+  Passwords and the token live in memory only. The old "behind the proxy you
+  already have" setup still works. See `bethstudio-web/docs/INSTALADOR-VPS-teste-manual.md`.
 - 🟢 Fit the pane to the Studio window when it is alone in its host tab
   (patch 0178). A split that exists only in Beth Studio keeps that
   column's size, so the text in the column stays intact (patch 0194).
