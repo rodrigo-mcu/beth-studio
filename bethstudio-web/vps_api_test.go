@@ -20,7 +20,7 @@ func withVPSStores(t *testing.T) {
 	oldK, oldP := secrets, phone
 	secrets = &secretStore{}
 	secrets.load(dir)
-	phone = &phoneAuth{dir: dir, sessions: map[string]time.Time{}, now: time.Now}
+	phone = &phoneAuth{dir: dir, now: time.Now}
 	t.Cleanup(func() { secrets, phone = oldK, oldP })
 }
 
