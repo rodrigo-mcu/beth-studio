@@ -20,30 +20,5 @@ export const C = {
   busy: "#93C5FD",
 } as const;
 
-/** Cores do xterm (DEFAULT_TERM_THEME do bethstudio-web). */
-export const XTERM_THEME = {
-  background: "#0B1220",
-  foreground: "#E5E7EB",
-  cursor: "#93C5FD",
-  cursorAccent: "#0B1220",
-  selectionBackground: "#2B6CB088",
-  black: "#1F2937",
-  red: "#F87171",
-  green: "#34D399",
-  yellow: "#FBBF24",
-  blue: "#60A5FA",
-  magenta: "#C084FC",
-  cyan: "#22D3EE",
-  white: "#E5E7EB",
-  brightBlack: "#6B7280",
-  brightRed: "#FCA5A5",
-  brightGreen: "#6EE7B7",
-  brightYellow: "#FDE68A",
-  brightBlue: "#93C5FD",
-  brightMagenta: "#D8B4FE",
-  brightCyan: "#67E8F9",
-  brightWhite: "#F9FAFB",
-} as const;
-
 /** Area de toque minima (Material 48dp / Apple 44pt). */
 export const TOUCH = 48;

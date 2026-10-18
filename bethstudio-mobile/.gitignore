@@ -6,5 +6,3 @@ android/
 ios/
 *.log
 expo-env.d.ts
-# O xterm gerado sai do node_modules no postinstall.
-src/terminal/xtermAssets.generated.ts

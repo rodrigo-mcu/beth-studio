@@ -17,7 +17,9 @@
     "android": {
       "package": "dev.bethstudio.mobile",
       "backgroundColor": "#0F1729",
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "softwareKeyboardLayoutMode": "resize"
     },
     "plugins": [
@@ -30,7 +32,10 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-sharing",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": false
