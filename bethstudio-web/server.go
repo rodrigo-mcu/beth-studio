@@ -106,6 +106,10 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		s.serveHost(w, r, remoteKey)
 		return
 	}
+	if strings.HasPrefix(r.URL.Path, "/api/vps/") {
+		s.serveVPS(w, r, remoteKey)
+		return
+	}
 	if strings.HasPrefix(r.URL.Path, "/api/db/") {
 		s.serveDB(w, r)
 		return

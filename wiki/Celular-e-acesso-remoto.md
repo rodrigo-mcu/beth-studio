@@ -24,7 +24,29 @@ O cadeado do navegador é o do proxy HTTPS do servidor. Entre esse proxy e o `be
 
 ## Como usar
 
-### 1. Instalar o `bethstudio-proxy` no servidor
+### Opção A: o assistente "Instalar servidor" (VPS limpo, sem terminal)
+
+Para um VPS Linux **novo e só para isso** (Debian 11/12/13 ou Ubuntu 22.04/24.04/26.04, amd64 ou arm64). Em **Configurações → Celular → Instalar servidor**:
+
+1. **Cloudflare.** Cole um token de API com as permissões **Zone → DNS → Edit** e **Zone → Zone → Read** (só na zona que vai usar). O assistente lista as zonas; escolha a zona e o subdomínio (por exemplo `agentes.exemplo.com`). Escolha também o tipo do registro:
+   - **Somente DNS (nuvem cinza), recomendado.** O certificado do Caddy e o WebSocket funcionam sem depender de configuração da zona.
+   - **Com proxy (nuvem laranja).** Esconde o IP do servidor, mas a zona precisa estar em **SSL/TLS → Full (strict)**; em *Flexible* o acesso entra em laço de redirecionamento. O assistente não altera a zona, só avisa.
+2. **Servidor.** IP (ou nome), porta SSH, usuário e senha **ou** chave privada (cole o texto ou escolha o arquivo; passphrase opcional). Se o usuário não for root, ele precisa de sudo (informe a senha dele).
+3. **Impressão digital.** O assistente mostra o SHA256 da chave do servidor. Compare com o painel do seu provedor e confirme. Se ela já foi confirmada antes, avisa; se **mudou**, bloqueia até você confirmar de propósito (normal só se o servidor foi reinstalado).
+4. **Opções e "Ver o que será feito".** Senha do celular e atualizações de segurança automáticas. O botão lista cada passo e cada comando que será executado no servidor.
+5. **Instalar.** O progresso aparece passo a passo: conexão, verificação (se o servidor **não** estiver limpo, para e explica, sem apagar nada), DNS, `bethstudio-proxy`, Caddy, firewall, atualizações, pareamento e teste de ponta a ponta. No fim: o endereço, um **QR code** e o estado da ligação.
+
+Se algo falhar, a tela diz o passo, o erro e o que fazer. É só rodar de novo: o assistente confere o que já existe e continua, sem duplicar. Depois da instalação a mesma tela oferece **Atualizar o servidor** (envia o programa embutido neste Studio), **Ver estado** e **Ver logs**, **Trocar senha do celular** e **Remover o servidor** (para o serviço, apaga o programa, os dados e a configuração do Caddy do Beth e **só** os registros DNS que o próprio assistente criou; não desinstala o Caddy nem pacotes e não fecha portas).
+
+O que ele instala: o `bethstudio-proxy` como serviço systemd escutando só em `127.0.0.1:8787`, o **Caddy** (repositório oficial do Caddy) na frente, com certificado Let's Encrypt automático, redirecionamento HTTP→HTTPS, WebSocket, HSTS e `nosniff`, e o `ufw` liberando só SSH, 80 e 443 (a porta do SSH é liberada **antes** de ligar o firewall).
+
+Segurança: a senha SSH, a chave, a passphrase e o token da Cloudflare ficam só na memória durante o assistente (nunca em disco nem em log); por isso Atualizar, Ver estado e Remover pedem as credenciais de novo. Fica salvo no PC apenas `vps-server.json` (servidor, domínio, ids dos registros, impressão digital) e `vps-hostkeys.json`, sem segredos. O programa do servidor vem **dentro do Studio** (conferido por SHA-256 antes de usar e de novo no servidor depois do envio), então funciona offline e sem baixar nada sem checksum. As rotas do assistente só respondem à janela do Studio no PC: o celular e o Studio remoto não as alcançam.
+
+Roteiro para testar com um VPS e uma conta Cloudflare reais: `bethstudio-web/docs/INSTALADOR-VPS-teste-manual.md`.
+
+### Opção B: instalar à mão atrás do proxy que você já tem
+
+### B1. Instalar o `bethstudio-proxy` no servidor
 
 O programa é escrito em Go, neste projeto, e é compilado para Linux (`GOOS=linux GOARCH=amd64 go build -o bethstudio-proxy ./cmd/bethstudio-proxy`, dentro de `bethstudio-web/`). Veja [Compilar do código](Compilar-do-codigo).
 
@@ -45,7 +67,7 @@ A opção `-service` instala e inicia como serviço do systemd (`bethstudio-prox
 
 No fim, o programa imprime uma linha que começa com `bethstudio://link`. Ela contém o domínio e o segredo da ligação. Trate-a como uma senha: quem tem essa linha pode conectar um PC no seu proxy.
 
-### 2. Ligar o PC ao proxy
+### B2. Ligar o PC ao proxy (a Opção A já faz isto sozinha)
 
 1. No Beth Studio, abra **Configurações → Celular**.
 2. Cole a linha em **Linha do servidor**.

@@ -51,6 +51,10 @@ func remoteBlocked(sub, method string) bool {
 	if remoteOnlyOnPC[sub] {
 		return true
 	}
+	// Assistente de instalação do servidor (VPS): credenciais de root e da Cloudflare, só no PC.
+	if strings.HasPrefix(sub, "/api/vps/") {
+		return true
+	}
 	// GET /api/about lista os arquivos; POST abre o Explorer no PC.
 	if sub == "/api/about" && method != http.MethodGet && method != http.MethodHead {
 		return true
