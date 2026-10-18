@@ -1,0 +1,55 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {},
+    "android-apk": {
+      "extends": "base",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "android-aab": {
+      "extends": "base",
+      "distribution": "store",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "ios-internal": {
+      "extends": "base",
+      "distribution": "internal",
+      "autoIncrement": true
+    },
+    "ios-enterprise": {
+      "extends": "base",
+      "distribution": "internal",
+      "autoIncrement": true,
+      "ios": {
+        "enterpriseProvisioning": "universal"
+      }
+    },
+    "ios-store": {
+      "extends": "base",
+      "distribution": "store",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "ios-store": {
+      "ios": {
+        "ascAppId": "TROCAR_PELO_ID_DO_APP_NO_APP_STORE_CONNECT"
+      }
+    },
+    "android-aab": {
+      "android": {
+        "serviceAccountKeyPath": "./play-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}

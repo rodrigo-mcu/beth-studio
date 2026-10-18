@@ -13,20 +13,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={theme}>
         <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: C.bgPanel },
-            headerTintColor: C.text1,
-            headerTitleStyle: { fontWeight: "600" },
-            contentStyle: { backgroundColor: C.bgBody },
-          }}
-        >
-          <Stack.Screen name="index" options={{ title: "Conexões" }} />
-          <Stack.Screen name="connection" options={{ title: "Conexão", presentation: "modal" }} />
-          <Stack.Screen name="scan" options={{ title: "Ler QR code", presentation: "modal" }} />
-          <Stack.Screen name="c/[connId]/index" options={{ title: "Terminais" }} />
-          <Stack.Screen name="c/[connId]/[paneId]" options={{ title: "Terminal" }} />
-        </Stack>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bgBody } }} />
       </ThemeProvider>
     </SafeAreaProvider>
   );

@@ -1,7 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { ComponentProps, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import type { SocketState } from "@/protocol/types";
 import { C, TOUCH } from "./theme";
 
 export type IconName = ComponentProps<typeof Ionicons>["name"];
@@ -71,31 +70,6 @@ export function Banner({ kind, children, onClose }: { kind: "error" | "warn" | "
   );
 }
 
-const SOCKET_LABEL: Record<SocketState, string> = {
-  idle: "Desligado",
-  connecting: "Conectando…",
-  open: "Conectado",
-  closed: "Sem conexão",
-};
-
-export function StatusPill({ socket, readOnly }: { socket: SocketState; readOnly: boolean }) {
-  const color = socket === "open" ? C.ok : socket === "connecting" ? C.busy : C.err;
-  return (
-    <View style={styles.pillRow}>
-      <View style={styles.pill} accessibilityLabel={SOCKET_LABEL[socket]}>
-        <View style={[styles.dot, { backgroundColor: color }]} />
-        <Text style={styles.pillText}>{SOCKET_LABEL[socket]}</Text>
-      </View>
-      {readOnly && (
-        <View style={styles.pill}>
-          <Ionicons name="eye-outline" size={14} color={C.accentText} />
-          <Text style={styles.pillText}>Somente leitura</Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
 export function EmptyState({ icon, title, children }: { icon: IconName; title: string; children?: ReactNode }) {
   return (
     <View style={styles.empty}>
@@ -132,17 +106,6 @@ export const styles = StyleSheet.create({
     backgroundColor: C.bgPanel,
   },
   bannerText: { flex: 1, fontSize: 14 },
-  pillRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: C.bgCard,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  pillText: { color: C.text2, fontSize: 12 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   empty: { alignItems: "center", gap: 12, padding: 32 },
   emptyTitle: { color: C.text1, fontSize: 17, fontWeight: "600", textAlign: "center" },

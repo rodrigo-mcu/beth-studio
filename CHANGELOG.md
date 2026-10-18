@@ -12,9 +12,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Phone: the offline page and screen show "Visto pela última vez às HH:MM de dd/mm" and retry by themselves. (Studio update needed for the screen; server (`bethstudio-proxy`) update needed for the time.)
 - Phone link: `bethstudio-proxy` caps `/api/phone/login` and `/api/phone/pair` at 20 attempts per minute per address. (server (`bethstudio-proxy`) update needed.)
 - **Instalar servidor** (Configurações > Celular): a wizard that installs the phone server on a clean, dedicated Debian/Ubuntu VPS. It takes a Cloudflare token and the SSH login, asks you to confirm the server fingerprint, checks the VPS is clean and compatible (and stops without changing anything if not), creates the DNS record (DNS only by default; proxied optional), installs `bethstudio-proxy` (embedded in the Studio for linux/amd64 and linux/arm64, SHA-256 checked) and Caddy with automatic HTTPS, enables ufw (SSH, 80, 443) and unattended security upgrades, pairs this Studio by itself and tests end to end, ending with a QR code. Rerunning fixes instead of duplicating; update, state/logs, change phone password and remove are available afterwards. SSH passwords and the Cloudflare token are never written to disk or logs. (Studio update needed; `build.ps1` now cross-compiles the proxy and embeds it.)
+- Native phone app (`bethstudio-mobile/`, Expo, Android and iOS): a thin shell that loads the phone web app from your domain in a WebView. It asks for the domain and the phone password once (secure storage, HTTPS only) and logs in by itself. The microphone permission is asked once by the system (`NSMicrophoneUsageDescription` / `RECORD_AUDIO`).
+- Native audio recording straight to files on the device, in closed 2-minute pieces, so a suspended or killed app does not lose what was already recorded. Recordings go to a persistent queue and are sent to the PC with the same retry policy as the web app (2, 4, 8, 15, 30 s, 6 attempts); **Tentar de novo**, **Baixar** and **Descartar** stay on screen. The text is put in the open terminal message field.
+- Quick reconnection in the native app: coming back to the app or the network coming back retries the queue at once, reloads a page that failed to load and wakes the web app connection watchdog.
+- EAS build profiles for internal distribution (`eas.json`) and the publishing guide `bethstudio-mobile/docs/PUBLICACAO.md`. Bundle identifiers are placeholders (`com.exemplo.bethstudio`).
 
 ### Changed
 - Phone: a wrong, used or expired QR link counts as a failed login for the per-address lock (5 errors, then 1 to 15 minutes). (Studio update needed.)
+- `bethstudio-mobile` no longer contains the unused WebSocket client and xterm terminal skeleton (it stays in the repository history up to commit 349c55a). The architecture is in `bethstudio-mobile/docs/ARQUITETURA.md`.
+
+### Known limits
+- The native app was not built or run on a device yet. Notifications with the phone locked are not part of this version (they need a push sender on the PC).
 
 ## [0.2.5] - 2026-10-17
 
