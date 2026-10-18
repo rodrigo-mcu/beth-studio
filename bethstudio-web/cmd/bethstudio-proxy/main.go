@@ -72,7 +72,7 @@ func main() {
 	}
 	fmt.Print(pasteInstructions(code, cfg.Domain))
 	log.Printf("bethstudio-proxy: %s em %s, domínio %s", ln.Addr().Network(), ln.Addr().String(), cfg.Domain)
-	p := &phonelink.Proxy{Domain: cfg.Domain, Secret: secret}
+	p := &phonelink.Proxy{Domain: cfg.Domain, Secret: secret, DataDir: cfg.Data}
 	srv := &http.Server{Handler: p, ReadHeaderTimeout: 15 * time.Second}
 	if err := srv.Serve(ln); err != nil {
 		log.Fatal(err)
