@@ -3,39 +3,45 @@
     "name": "Beth Studio",
     "slug": "bethstudio-mobile",
     "scheme": "bethstudio",
-    "version": "0.1.0",
+    "version": "0.2.5",
     "orientation": "default",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0F1729",
     "ios": {
-      "bundleIdentifier": "dev.bethstudio.mobile",
+      "bundleIdentifier": "com.exemplo.bethstudio",
+      "buildNumber": "1",
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "A câmera é usada só para ler o QR code de pareamento do BethStudio."
+        "NSMicrophoneUsageDescription": "O Beth Studio usa o microfone só quando você toca em gravar, para ditar texto aos seus terminais. O áudio é enviado ao seu PC e transcrito lá.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "dev.bethstudio.mobile",
+      "package": "com.exemplo.bethstudio",
+      "versionCode": 1,
       "backgroundColor": "#0F1729",
-      "permissions": [
-        "android.permission.CAMERA"
-      ],
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
       [
-        "expo-camera",
+        "expo-audio",
         {
-          "cameraPermission": "A câmera é usada só para ler o QR code de pareamento do BethStudio.",
-          "microphonePermission": false,
-          "recordAudioAndroid": false
+          "microphonePermission": "O Beth Studio usa o microfone só quando você toca em gravar, para ditar texto aos seus terminais. O áudio é enviado ao seu PC e transcrito lá.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": true,
+          "enableBackgroundPlayback": false
         }
       ],
-      "expo-audio",
       "expo-sharing",
-      "expo-build-properties"
+      "expo-font",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": false

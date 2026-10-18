@@ -25,7 +25,6 @@ describe("isAllowedNavigation", () => {
 /** Roda o script como o WebView rodaria, num "navegador" falso mínimo. */
 function run(script: string, env: Record<string, unknown>) {
   const names = Object.keys(env);
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const fn = new Function(...names, `${script}`);
   return fn(...names.map((n) => env[n]));
 }

@@ -107,6 +107,11 @@ export function nextWakeAt(takes: Take[]): number | null {
   return min;
 }
 
+/** Rede voltou ou o app voltou para a tela: o que estava esperando para tentar de novo vai agora. */
+export function expedite(takes: Take[], now: number): Take[] {
+  return takes.map((t) => (t.status === "pending" && t.nextAttemptAt > now ? { ...t, nextAttemptAt: now } : t));
+}
+
 /** Ao abrir o app: o que estava gravando ou enviando quando ele morreu volta para a fila. */
 export function recoverInterrupted(takes: Take[], now: number): Take[] {
   const out: Take[] = [];

@@ -6,3 +6,9 @@ android/
 ios/
 *.log
 expo-env.d.ts
+
+play-service-account.json
+*.jks
+*.p12
+*.mobileprovision
+credentials.json

@@ -3,6 +3,7 @@ import {
   allPartsDone,
   completeTake,
   dueTakes,
+  expedite,
   finishRecording,
   joinTexts,
   manualRetry,
@@ -146,6 +147,22 @@ describe("fila", () => {
 
   it("gravação interrompida sem nenhum trecho é descartada", () => {
     expect(recoverInterrupted([newTake("vazio", T0)], T0)).toEqual([]);
+  });
+});
+
+describe("expedite (reconexão rápida)", () => {
+  it("adianta só o que está esperando; o resto fica como está", () => {
+    const wait = { ...recorded(), id: "w", nextAttemptAt: T0 + 30_000 };
+    const failed = { ...recorded(), id: "f", status: "failed" as const, nextAttemptAt: T0 + 30_000 };
+    const ready = { ...recorded(), id: "r", status: "ready" as const };
+    const out = expedite([wait, failed, ready], T0 + 100);
+    expect(out[0]?.nextAttemptAt).toBe(T0 + 100);
+    expect(out[1]).toBe(failed);
+    expect(out[2]).toBe(ready);
+  });
+  it("não atrasa quem já podia ser enviado", () => {
+    const t = { ...recorded(), nextAttemptAt: T0 };
+    expect(expedite([t], T0 + 500)[0]).toBe(t);
   });
 });
 
