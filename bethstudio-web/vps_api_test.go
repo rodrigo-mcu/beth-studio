@@ -196,3 +196,22 @@ func TestStudioHookPareamento(t *testing.T) {
 		t.Fatal("a senha do celular continua")
 	}
 }
+
+func TestVPSEnderecoValidaAntesDeChamarACloudflare(t *testing.T) {
+	withVPSStores(t)
+	srv := &server{hub: newHub(false)}
+	old := vpsCF
+	t.Cleanup(func() { vpsCF = old })
+	vpsCF = func(string) vpsinstall.CFAPI { return stubCF{} }
+	if rec := vpsPost(srv, "/api/vps/cf/apply", map[string]any{}); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "token") {
+		t.Fatalf("sem token: %d %s", rec.Code, rec.Body.String())
+	}
+	body := map[string]any{"cf_token": "tok", "zone_id": "aaa111", "zone_name": "exemplo.com", "domain": "a.exemplo.com", "ip": "não-é-ip"}
+	if rec := vpsPost(srv, "/api/vps/cf/apply", body); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "IP") {
+		t.Fatalf("IP inválido: %d %s", rec.Code, rec.Body.String())
+	}
+	body["ip"], body["domain"] = "203.0.113.9", "a.outro.org"
+	if rec := vpsPost(srv, "/api/vps/cf/apply", body); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "zona") {
+		t.Fatalf("fora da zona: %d %s", rec.Code, rec.Body.String())
+	}
+}

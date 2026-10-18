@@ -28,12 +28,20 @@ No modo HTTPS próprio, o cadeado do navegador é o certificado do próprio `bet
 
 Para um VPS Linux **novo e só para isso** (Debian 11/12/13 ou Ubuntu 22.04/24.04/26.04, amd64 ou arm64). Em **Configurações → Celular → Instalar servidor**:
 
+São **duas partes independentes**; faça só a que precisar.
+
+**Parte 1: Endereço (DNS), opcional.** Use se o seu domínio está na Cloudflare e você quer que o Studio crie o nome. Se o DNS é de outro provedor (Cloud DNS, Registro.br etc.) ou o nome já existe, pule: na parte 2 você só digita o nome e cria o registro A por lá.
+
 1. **Cloudflare.** Cole um token de API com as permissões **Zone → DNS → Edit** e **Zone → Zone → Read** (só na zona que vai usar). O assistente lista as zonas; escolha a zona e o subdomínio (por exemplo `agentes.exemplo.com`).
    O registro é sempre **somente DNS (nuvem cinza)**: o servidor pede o certificado à Let's Encrypt sozinho e isso exige que a internet chegue direto nele. A nuvem laranja da Cloudflare não é oferecida porque fica no meio desse desafio (o desafio por TLS-ALPN, na porta 443, não passa por ela, e o desafio HTTP depende de ajustes da zona, como *Always Use HTTPS* e regras de WAF, que o assistente não controla).
-2. **Servidor.** IP (ou nome), porta SSH, usuário e senha **ou** chave privada (cole o texto ou escolha o arquivo; passphrase opcional). Se o usuário não for root, ele precisa de sudo (informe a senha dele).
-3. **Impressão digital.** O assistente mostra o SHA256 da chave do servidor. Compare com o painel do seu provedor e confirme. Se ela já foi confirmada antes, avisa; se **mudou**, bloqueia até você confirmar de propósito (normal só se o servidor foi reinstalado).
-4. **Opções e "Ver o que será feito".** Senha do celular e atualizações de segurança automáticas. O botão lista cada passo e cada comando que será executado no servidor.
-5. **Instalar.** O progresso aparece passo a passo: conexão, verificação (se o servidor **não** estiver limpo, para e explica, sem apagar nada), DNS, `bethstudio-proxy`, firewall, atualizações, certificado HTTPS, pareamento e teste de ponta a ponta. No fim: o endereço, um **QR code** e o estado da ligação.
+2. **IP do servidor.** O assistente cria o registro A (ou AAAA) apontando o nome para ele. Repetir não duplica e não mexe em registro que não seja do assistente.
+
+**Parte 2: Servidor (VPS).** Passo 1 de 3:
+
+1. **Servidor.** IP (ou nome), porta SSH, usuário e senha **ou** chave privada (cole o texto ou escolha o arquivo; passphrase opcional). Se o usuário não for root, ele precisa de sudo (informe a senha dele).
+2. **Impressão digital.** O assistente mostra o SHA256 da chave do servidor. Compare com o painel do seu provedor e confirme. Se ela já foi confirmada antes, avisa; se **mudou**, bloqueia até você confirmar de propósito (normal só se o servidor foi reinstalado).
+3. **Opções e "Ver o que será feito".** O **endereço do celular** (já preenchido se você fez a parte 1; senão digite o nome que aponta para o servidor), a senha do celular e as atualizações de segurança automáticas. O botão lista cada passo e cada comando que será executado no servidor.
+4. **Instalar.** O progresso aparece passo a passo: conexão, verificação (se o servidor **não** estiver limpo, para e explica, sem apagar nada), conferência do DNS (se o nome ainda não aponta para o servidor, avisa qual registro criar e segue; o certificado só sai depois que resolver), `bethstudio-proxy`, firewall, atualizações, certificado HTTPS, pareamento e teste de ponta a ponta. No fim: o endereço, um **QR code** e o estado da ligação.
 
 Se algo falhar, a tela diz o passo, o erro e o que fazer. É só rodar de novo: o assistente confere o que já existe e continua, sem duplicar. Depois da instalação a mesma tela oferece **Atualizar o servidor** (envia o programa embutido neste Studio), **Ver estado** e **Ver logs**, **Trocar senha do celular** e **Remover o servidor** (para o serviço, apaga o programa, os dados com os certificados, o usuário de serviço `bethstudio` e **só** os registros DNS que o próprio assistente criou; não desinstala pacotes e não fecha portas).
 

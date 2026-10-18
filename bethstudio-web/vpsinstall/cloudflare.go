@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -343,4 +344,45 @@ func RemoveWizardRecords(ctx context.Context, api CFAPI, zoneID, name string, id
 		}
 	}
 	return removed, nil
+}
+
+// DNSResult é o que o passo "Endereço" devolve: os registros criados (ou já
+// existentes do assistente) e uma frase por registro.
+type DNSResult struct {
+	Domain    string   `json:"domain"`
+	RecordIDs []string `json:"record_ids"`
+	Notes     []string `json:"notes"`
+}
+
+// SetupDNS aponta domain para ip (A ou AAAA, sempre "somente DNS"). Repetir não
+// duplica nem mexe em registro que não seja do assistente.
+func SetupDNS(ctx context.Context, api CFAPI, zoneID, zoneName, domain, ip string) (DNSResult, error) {
+	domain = NormalizeDomain(domain)
+	if err := ValidateDomain(domain); err != nil {
+		return DNSResult{}, err
+	}
+	if !DomainInZone(domain, zoneName) {
+		return DNSResult{}, errors.New("o domínio precisa ser a zona escolhida ou um subdomínio dela")
+	}
+	addr := net.ParseIP(strings.TrimSpace(ip))
+	if addr == nil {
+		return DNSResult{}, errors.New("informe o IP do servidor (ex.: 203.0.113.9)")
+	}
+	z, err := api.GetZone(ctx, zoneID)
+	if err != nil {
+		return DNSResult{}, err
+	}
+	if !strings.EqualFold(z.Name, zoneName) {
+		return DNSResult{}, errors.New("a zona escolhida não é " + zoneName)
+	}
+	typ := "AAAA"
+	if addr.To4() != nil {
+		typ = "A"
+	}
+	o, err := EnsureRecord(ctx, api, zoneID, domain, typ, addr.String(), false)
+	if err != nil {
+		return DNSResult{}, err
+	}
+	return DNSResult{Domain: domain, RecordIDs: []string{o.RecordID},
+		Notes: []string{fmt.Sprintf("Registro %s %s → %s: %s.", typ, domain, addr, o.Action)}}, nil
 }

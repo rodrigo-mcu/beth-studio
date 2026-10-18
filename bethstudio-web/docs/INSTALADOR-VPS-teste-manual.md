@@ -13,13 +13,14 @@ Cobrem (sem rede): validação de domínio/host/usuário, cliente da API v4 da C
 ## O que você precisa
 
 - Um VPS Debian 12 ou Ubuntu 24.04 **recém-criado**, com IP público, acesso root (senha ou chave) e as portas **80 e 443 liberadas no firewall do provedor** (painel do provedor, fora do servidor). Dica: um que você possa destruir depois.
-- Um domínio na Cloudflare e um token de API só com **Zone → DNS → Edit** e **Zone → Zone → Read** (escopo: só aquela zona).
+- (Parte 1, opcional) Um domínio na Cloudflare e um token de API só com **Zone → DNS → Edit** e **Zone → Zone → Read** (escopo: só aquela zona).
 - Um Studio construído com `bethstudio-web\build.ps1` (ele embute o `bethstudio-proxy` para Linux). Rode isolado, como manda o `AGENTS.md`, se não quiser tocar no seu Studio do dia a dia.
 
 ## Roteiro (cerca de 15 minutos)
 
-1. **Configurações → Celular → Instalar servidor.** Cole o token e clique em *Verificar e listar zonas*. Esperado: a zona aparece. Teste também um token errado (mensagem sem o token) e um token sem a permissão de DNS (mensagem citando *Zone → DNS → Edit* ao criar o registro).
-2. Escolha a zona e o subdomínio (`agentes`). A tela explica que o registro é **somente DNS (nuvem cinza)**; não existe a opção de nuvem laranja. Em *Servidor*, IP, usuário e senha. Clique em *Conectar e ver a impressão digital*.
+0. **DNS é opcional.** A tela inicial tem duas partes: *1. Endereço (DNS)* e *2. Servidor (VPS)*. Teste os dois caminhos: (a) parte 1 com o IP do VPS e depois a parte 2 (o endereço vem preenchido); (b) pule a parte 1, crie o registro A à mão em qualquer provedor, e na parte 2 digite o nome. Em (b), sem criar o registro antes de instalar, o passo *DNS* deve avisar qual registro criar e a instalação seguir, esperando o certificado.
+1. **Configurações → Celular → Instalar servidor → Configurar DNS na Cloudflare.** Cole o token e clique em *Verificar e listar zonas*. Esperado: a zona aparece. Teste também um token errado (mensagem sem o token) e um token sem a permissão de DNS (mensagem citando *Zone → DNS → Edit* ao criar o registro).
+2. Escolha a zona, o subdomínio (`agentes`) e o IP do VPS, e clique em *Criar o registro*. A tela explica que o registro é **somente DNS (nuvem cinza)**; não existe a opção de nuvem laranja. Concluir. Depois, *Instalar servidor*: IP, usuário e senha. Clique em *Conectar e ver a impressão digital*.
 3. Compare a impressão digital com a do painel do provedor (ou, no VPS: `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`). Marque a confirmação.
 4. Defina a senha do celular e clique em *Ver o que será feito*: confira os comandos (não deve haver Caddy, `apt-get update`, `curl` nem `gpg`). Clique em **Instalar**.
 5. Esperado: passos com ✓ (conectar, verificar, DNS, proxy, firewall, atualizações, **certificado**, parear, teste), QR code e "Ligação PC ↔ servidor: no ar". No celular, abra `https://agentes.seudominio` (cadeado válido) e entre com a senha. O passo do certificado pode levar de segundos a alguns minutos.

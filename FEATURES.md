@@ -305,10 +305,14 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   on the Studio window.
 - 🟢 **Instalar servidor** (Configurações → Celular): a wizard that sets up
   the phone server on a clean, dedicated Debian/Ubuntu VPS with no terminal.
-  It asks for a Cloudflare API token (Zone → DNS → Edit, Zone → Zone → Read)
-  and the VPS login (password or private key), shows the server's SSH
+  It has two independent parts. Part 1, optional, "Endereço (DNS)": a
+  Cloudflare API token (Zone → DNS → Edit, Zone → Zone → Read) and the
+  server's IP create the name; skip it if your DNS is elsewhere (Cloudflare,
+  Cloud DNS, any provider) and just type the name in part 2. Part 2,
+  "Servidor (VPS)": the VPS login (password or private key), shows the server's SSH
   fingerprint for you to confirm, checks that the VPS is clean (it stops and
-  explains instead of deleting anything), creates the DNS record, installs
+  explains instead of deleting anything), checks the name points to the VPS
+  (and says which record to create if not), installs
   `bethstudio-proxy` (embedded in the Studio, SHA-256 checked) as the only
   program on the server (it serves HTTPS itself, with an automatic Let's
   Encrypt certificate, HTTP→HTTPS and WebSocket, as an unprivileged user;

@@ -5,11 +5,14 @@ import {
   STEP_ICON,
   emptyForm,
   fingerprintNotice,
+  dnsBody,
   firstError,
   fullDomain,
   installBody,
   sshFields,
   stepStatuses,
+  validateDomain,
+  validateIp,
   validatePhonePassword,
   validateServerForm,
   validateSubdomain,
@@ -25,14 +28,18 @@ type Probe = { fingerprint: string; key_type: string; status: ProbeStatus; known
 type PlanStep = { id: string; title: string; detail: string; commands?: string[] };
 type VpsState = { server: VpsServer | null; phone_has_pw: boolean; bins_embedded: boolean };
 
-type Stage = "home" | "cloudflare" | "server" | "fingerprint" | "options" | "run" | "action";
+type Stage = "home" | "dns" | "server" | "fingerprint" | "options" | "run" | "action";
 
 const input = "mt-1 w-full max-w-xl rounded border border-border bg-bg-term px-2.5 py-2 text-[14px] text-text-1 outline-none focus:border-accent";
 const label = "mt-3 block text-[12px] text-text-3";
 const btn = "rounded bg-accent px-3 py-1.5 text-[13px] text-white disabled:opacity-50";
 const btn2 = "rounded border border-border px-3 py-1.5 text-[13px] text-text-1 disabled:opacity-50";
 
-/** Configurações > Celular > Instalar servidor: VPS limpo + bethstudio-proxy com HTTPS próprio + Cloudflare. */
+/**
+ * Configurações > Celular > Instalar servidor. Duas partes independentes:
+ * "Endereço (DNS)", opcional, cria o nome na Cloudflare; "Servidor (VPS)" instala o
+ * bethstudio-proxy com HTTPS próprio. Cada uma funciona sem a outra.
+ */
 export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMessage: (m: string) => void }) {
   const [stage, setStage] = useState<Stage>("home");
   const [state, setState] = useState<VpsState | null>(null);
@@ -49,6 +56,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
   const [action, setAction] = useState<"update" | "status" | "logs" | "remove" | "password" | "">("");
   const [newPhonePw, setNewPhonePw] = useState("");
   const [alsoDns, setAlsoDns] = useState(true);
+  const [dnsNote, setDnsNote] = useState<string[]>([]);
   const poll = useRef<number | null>(null);
 
   const set = <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => setF((p) => ({ ...p, [k]: v }));
@@ -90,6 +98,14 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
     if (!r) return;
     setZones(r.zones);
     if (!f.zoneId && r.zones.length === 1) setF((p) => ({ ...p, zoneId: r.zones[0].id, zoneName: r.zones[0].name }));
+  }
+
+  async function applyDns() {
+    const r = await guard(() => conn.api<{ domain: string; record_ids: string[]; notes: string[] }>("/api/vps/cf/apply", dnsBody(f)));
+    if (!r) return;
+    setDnsNote(r.notes);
+    // o token só serve a este passo: sai da memória da tela
+    setF((p) => ({ ...p, token: "", domain: r.domain, recordIds: r.record_ids, host: p.host || p.ip.trim() }));
   }
 
   async function doProbe() {
@@ -190,7 +206,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
         {srv ? (
           <>
             <p className="mt-1 max-w-xl text-[13px] text-text-2">
-              Instalado em <b>{srv.host}</b> como <b>{srv.domain}</b> ({srv.proxied ? "com proxy da Cloudflare (instalação antiga)" : "somente DNS"}).
+              Instalado em <b>{srv.host}</b> como <b>{srv.domain}</b> ({srv.proxied ? "com proxy da Cloudflare (instalação antiga)" : srv.zone_name ? "DNS criado pelo assistente na Cloudflare" : "DNS feito por você"}).
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {(
@@ -248,14 +264,32 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
         ) : (
           <>
             <p className="mt-1 max-w-xl text-[13px] text-text-2">
-              Instala o servidor do celular num VPS Linux limpo e dedicado (Debian ou Ubuntu), com HTTPS automático (o próprio bethstudio-proxy obtém o certificado: nenhum outro programa é instalado no servidor) e o DNS na Cloudflare, sem abrir terminal. Este assistente <b>não apaga nada</b> do servidor: se ele não estiver limpo, para e explica.
+              Para usar o celular fora de casa, o Studio precisa de um servidor (VPS Linux limpo e dedicado, Debian ou Ubuntu) com um endereço na internet. São duas partes independentes; faça só a que precisar. Nenhum outro programa é instalado no servidor: o próprio bethstudio-proxy obtém o certificado HTTPS.
             </p>
             {state && !state.bins_embedded && (
               <p className="mt-2 text-[12px] text-status-err">Este Studio foi compilado sem o programa do servidor; o assistente não vai conseguir instalar.</p>
             )}
-            <button type="button" className={btn + " mt-3"} onClick={() => { setStage("cloudflare"); setErr(""); }}>
-              Instalar servidor
-            </button>
+            <div className="mt-3 max-w-xl rounded border border-border p-3">
+              <h4 className="text-[13px] font-semibold text-text-1">1. Endereço (DNS) <span className="font-normal text-text-3">— opcional</span></h4>
+              <p className="mt-1 text-[12px] text-text-2">
+                Cria o nome (ex.: agentes.exemplo.com) na sua zona da Cloudflare, apontando para o IP do servidor. Pule se o seu DNS é de outro provedor ou se o nome já existe: na parte 2 você só informa o nome.
+              </p>
+              {f.recordIds.length > 0 ? (
+                <p className="mt-2 text-[12px] text-text-1">✓ Pronto: <b>{f.domain}</b> {dnsNote.join(" ")}</p>
+              ) : null}
+              <button type="button" className={btn2 + " mt-2"} onClick={() => { setStage("dns"); setErr(""); setDnsNote([]); }}>
+                {f.recordIds.length > 0 ? "Refazer o DNS" : "Configurar DNS na Cloudflare"}
+              </button>
+            </div>
+            <div className="mt-3 max-w-xl rounded border border-border p-3">
+              <h4 className="text-[13px] font-semibold text-text-1">2. Servidor (VPS)</h4>
+              <p className="mt-1 text-[12px] text-text-2">
+                Conecta por SSH (senha ou chave), confere a impressão digital, instala o bethstudio-proxy, o firewall e espera o certificado. <b>Não apaga nada</b>: se o servidor não estiver limpo, para e explica.
+              </p>
+              <button type="button" className={btn + " mt-2"} onClick={() => { setStage("server"); setErr(""); }}>
+                Instalar servidor
+              </button>
+            </div>
           </>
         )}
         {err && <p className="mt-2 text-[13px] text-status-err">{err}</p>}
@@ -263,12 +297,12 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
     );
   }
 
-  const stepNo = stage === "cloudflare" ? 1 : stage === "server" ? 2 : stage === "fingerprint" ? 3 : 4;
+  const stepNo = stage === "server" ? 1 : stage === "fingerprint" ? 2 : 3;
   return (
     <div className="mt-6 border-t border-border pt-4">
-      <h3 className="text-[14px] font-semibold text-text-1">Instalar servidor ({stepNo} de 4)</h3>
+      <h3 className="text-[14px] font-semibold text-text-1">{stage === "dns" ? "Endereço (DNS)" : `Servidor (VPS): passo ${stepNo} de 3`}</h3>
 
-      {stage === "cloudflare" && (
+      {stage === "dns" && (
         <>
           <p className="mt-1 max-w-xl text-[13px] text-text-2">
             Crie um token em dash.cloudflare.com → Meu perfil → Tokens de API, com as permissões <b>Zone → DNS → Edit</b> e <b>Zone → Zone → Read</b>, só na zona que vai usar. O token fica só na memória durante o assistente.
@@ -304,7 +338,11 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
               <p className="mt-4 max-w-xl text-[13px] text-text-1">
                 <b>Registro somente DNS (nuvem cinza).</b> O servidor pede o certificado HTTPS à Let&apos;s Encrypt sozinho, e isso exige que a internet chegue direto nele. A nuvem laranja da Cloudflare não é usada: ela fica no meio do desafio do certificado.
               </p>
+              <label className={label} htmlFor="vps-ip">IP do servidor (o que o nome vai apontar)</label>
+              <input id="vps-ip" className={input} value={f.ip} spellCheck={false} placeholder="203.0.113.9" onChange={(e) => set("ip", e.target.value)} />
+              {f.ip.trim() !== "" && validateIp(f.ip) && <p className="mt-1 text-[12px] text-status-err">{validateIp(f.ip)}</p>}
               <p className="mt-2 text-[12px] text-text-3">Endereço final: https://{domain}</p>
+              {f.recordIds.length > 0 && dnsNote.length > 0 && <p className="mt-2 text-[13px] text-text-1">✓ {dnsNote.join(" ")}</p>}
             </>
           )}
         </>
@@ -352,6 +390,14 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
 
       {stage === "options" && (
         <>
+          <label className={label} htmlFor="vps-domain">Endereço do celular (o nome que aponta para este servidor)</label>
+          <input id="vps-domain" className={input} value={f.domain} spellCheck={false} placeholder="agentes.exemplo.com" onChange={(e) => set("domain", e.target.value)} />
+          {f.domain.trim() !== "" && validateDomain(f.domain) && <p className="mt-1 text-[12px] text-status-err">{validateDomain(f.domain)}</p>}
+          <p className="mt-1 max-w-xl text-[12px] text-text-3">
+            {f.recordIds.length > 0
+              ? "Veio da parte 1 (DNS)."
+              : `Este nome precisa apontar para ${f.host.trim() || "o IP do servidor"} (registro A, sem proxy), no seu provedor de DNS: Cloudflare, Cloud DNS ou outro. O assistente confere e avisa o que falta; o certificado só sai depois que o nome resolver. Prefere que o Studio crie o registro na Cloudflare? Volte e faça a parte 1.`}
+          </p>
           <label className={label} htmlFor="vps-phonepw">Senha do celular {state?.phone_has_pw ? "(deixe em branco para manter a atual)" : "(mínimo de 8 caracteres)"}</label>
           <input id="vps-phonepw" type="password" autoComplete="new-password" className={input} value={f.phonePassword} onChange={(e) => set("phonePassword", e.target.value)} />
           <label className="mt-3 flex items-start gap-2 text-[13px] text-text-1">
@@ -376,7 +422,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
               ))}
             </ol>
           )}
-          <p className="mt-3 max-w-xl text-[12px] text-text-3">Endereço: https://{domain}. A instalação pode ser repetida sem duplicar nada, se algo falhar no meio.</p>
+          <p className="mt-3 max-w-xl text-[12px] text-text-3">Endereço: https://{f.domain.trim().toLowerCase() || "…"}. A instalação pode ser repetida sem duplicar nada, se algo falhar no meio.</p>
         </>
       )}
 
@@ -388,17 +434,26 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
           className={btn2}
           onClick={() => {
             setErr("");
-            if (stage === "cloudflare") setStage("home");
-            else if (stage === "server") setStage("cloudflare");
+            if (stage === "dns" || stage === "server") setStage("home");
             else if (stage === "fingerprint") setStage("server");
             else setStage("fingerprint");
           }}
         >
           Voltar
         </button>
-        {stage === "cloudflare" && (
-          <button type="button" className={btn} disabled={!f.zoneId || !!validateSubdomain(f.sub, f.zoneName)} onClick={() => setStage("server")}>
-            Continuar
+        {stage === "dns" && f.recordIds.length === 0 && (
+          <button
+            type="button"
+            className={btn}
+            disabled={busy || !f.token.trim() || !f.zoneId || !!validateSubdomain(f.sub, f.zoneName) || !!validateIp(f.ip)}
+            onClick={() => void applyDns()}
+          >
+            Criar o registro
+          </button>
+        )}
+        {stage === "dns" && f.recordIds.length > 0 && (
+          <button type="button" className={btn} onClick={() => setStage("home")}>
+            Concluir
           </button>
         )}
         {stage === "server" && (
@@ -424,7 +479,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
           <button
             type="button"
             className={btn}
-            disabled={busy || !!validatePhonePassword(f.phonePassword, !!state?.phone_has_pw)}
+            disabled={busy || !!validateDomain(f.domain) || !!validatePhonePassword(f.phonePassword, !!state?.phone_has_pw)}
             onClick={() => void startInstall()}
           >
             Instalar

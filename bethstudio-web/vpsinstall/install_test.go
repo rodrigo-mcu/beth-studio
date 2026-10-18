@@ -758,3 +758,92 @@ func TestManagerUmJobPorVez(t *testing.T) {
 		t.Fatal("id desconhecido")
 	}
 }
+
+// --- DNS opcional: o servidor pode ser instalado sem a Cloudflare ---
+
+func TestInstallSemCloudflarePulaODNS(t *testing.T) {
+	h := newHarness(t)
+	h.params.CFToken, h.params.ZoneID, h.params.ZoneName = "", "", ""
+	out, err := h.install()
+	if err != nil {
+		t.Fatalf("%v\n%s", err, h.allText())
+	}
+	if out.URL != "https://agentes.exemplo.com" {
+		t.Fatalf("%+v", out)
+	}
+	if !h.stepStatus("dns", "skip") || h.stepStatus("dns", "error") {
+		t.Fatalf("o passo dns deveria ser pulado:\n%s", h.allText())
+	}
+	if len(h.cf.records) != 0 {
+		t.Fatalf("nenhum registro deveria ser criado: %+v", h.cf.records)
+	}
+	if strings.Contains(h.allText(), "dns|warn|") {
+		t.Fatalf("o nome já aponta para o servidor, não deveria avisar:\n%s", h.allText())
+	}
+}
+
+func TestInstallSemCloudflareAvisaQuandoONomeNaoApontaParaOServidor(t *testing.T) {
+	h := newHarness(t)
+	h.params.CFToken, h.params.ZoneID, h.params.ZoneName = "", "", ""
+	h.net.ips = []string{"198.51.100.7"}
+	h.rebuild()
+	h.params.PhonePassword = testPhonePass
+	_, _ = h.install()
+	text := h.allText()
+	if !strings.Contains(text, "dns|warn|") || !strings.Contains(text, "203.0.113.9") || !strings.Contains(text, "agentes.exemplo.com") {
+		t.Fatalf("faltou o aviso com o registro a criar:\n%s", text)
+	}
+}
+
+func TestInstallSemCloudflareGuardaRegistrosCriadosAntes(t *testing.T) {
+	h := newHarness(t)
+	h.params.CFToken = ""
+	h.params.RecordIDs = []string{"bee111"}
+	if _, err := h.install(); err != nil {
+		t.Fatalf("%v\n%s", err, h.allText())
+	}
+	sv, _ := h.deps.Store.Load()
+	if sv == nil || len(sv.RecordIDs) != 1 || sv.RecordIDs[0] != "bee111" || sv.ZoneID != "aaa111" {
+		t.Fatalf("o estado deveria lembrar o registro criado no passo de DNS: %+v", sv)
+	}
+}
+
+func TestInstallComTokenSemZonaAindaExigeAZona(t *testing.T) {
+	h := newHarness(t)
+	h.params.ZoneID = ""
+	if _, err := h.install(); err == nil || !strings.Contains(err.Error(), "zona") {
+		t.Fatalf("esperava erro pedindo a zona, veio %v", err)
+	}
+}
+
+func TestSetupDNSCriaOsRegistrosDoIP(t *testing.T) {
+	h := newHarness(t)
+	res, err := SetupDNS(context.Background(), h.deps.CF(testToken), "aaa111", "exemplo.com", "agentes.exemplo.com", "203.0.113.9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.RecordIDs) != 1 || res.Domain != "agentes.exemplo.com" || len(res.Notes) != 1 {
+		t.Fatalf("%+v", res)
+	}
+	if len(h.cf.records) != 1 || h.cf.records[0].Type != "A" || h.cf.records[0].Proxied || h.cf.records[0].Comment != WizardComment {
+		t.Fatalf("%+v", h.cf.records)
+	}
+	// repetir não duplica
+	if _, err := SetupDNS(context.Background(), h.deps.CF(testToken), "aaa111", "exemplo.com", "agentes.exemplo.com", "203.0.113.9"); err != nil || len(h.cf.records) != 1 {
+		t.Fatalf("duplicou: %v %+v", err, h.cf.records)
+	}
+}
+
+func TestSetupDNSRecusaIPInvalidoEDominioForaDaZona(t *testing.T) {
+	h := newHarness(t)
+	api := h.deps.CF(testToken)
+	if _, err := SetupDNS(context.Background(), api, "aaa111", "exemplo.com", "agentes.exemplo.com", "não-é-ip"); err == nil {
+		t.Fatal("IP inválido deveria falhar")
+	}
+	if _, err := SetupDNS(context.Background(), api, "aaa111", "exemplo.com", "agentes.outro.org", "203.0.113.9"); err == nil {
+		t.Fatal("domínio fora da zona deveria falhar")
+	}
+	if len(h.cf.records) != 0 {
+		t.Fatalf("nada deveria ser criado: %+v", h.cf.records)
+	}
+}

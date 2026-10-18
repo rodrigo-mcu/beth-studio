@@ -91,23 +91,25 @@ func vpsDeps() vpsinstall.Deps {
 var vpsBins vpsinstall.BinSource = vpsinstall.EmbeddedBins()
 
 type vpsReq struct {
-	Host          string `json:"host"`
-	Port          int    `json:"port"`
-	User          string `json:"user"`
-	Password      string `json:"password"`
-	PrivateKey    string `json:"private_key"`
-	Passphrase    string `json:"passphrase"`
-	Fingerprint   string `json:"fingerprint"`
-	ReplaceKnown  bool   `json:"replace_known"`
-	Domain        string `json:"domain"`
-	ZoneID        string `json:"zone_id"`
-	ZoneName      string `json:"zone_name"`
-	CFToken       string `json:"cf_token"`
-	Proxied       bool   `json:"proxied"`
-	PhonePassword string `json:"phone_password"`
-	Unattended    bool   `json:"unattended"`
-	Action        string `json:"action"`
-	Logs          bool   `json:"logs"`
+	Host          string   `json:"host"`
+	Port          int      `json:"port"`
+	User          string   `json:"user"`
+	Password      string   `json:"password"`
+	PrivateKey    string   `json:"private_key"`
+	Passphrase    string   `json:"passphrase"`
+	Fingerprint   string   `json:"fingerprint"`
+	ReplaceKnown  bool     `json:"replace_known"`
+	Domain        string   `json:"domain"`
+	ZoneID        string   `json:"zone_id"`
+	ZoneName      string   `json:"zone_name"`
+	RecordIDs     []string `json:"record_ids"`
+	IP            string   `json:"ip"`
+	CFToken       string   `json:"cf_token"`
+	Proxied       bool     `json:"proxied"`
+	PhonePassword string   `json:"phone_password"`
+	Unattended    bool     `json:"unattended"`
+	Action        string   `json:"action"`
+	Logs          bool     `json:"logs"`
 }
 
 func (q vpsReq) params() vpsinstall.Params {
@@ -118,7 +120,7 @@ func (q vpsReq) params() vpsinstall.Params {
 	return vpsinstall.Params{
 		Host: strings.TrimSpace(q.Host), Port: port, User: strings.TrimSpace(q.User),
 		Password: q.Password, PrivateKey: q.PrivateKey, Passphrase: q.Passphrase, Fingerprint: q.Fingerprint,
-		Domain: q.Domain, ZoneID: q.ZoneID, ZoneName: q.ZoneName, CFToken: q.CFToken,
+		Domain: q.Domain, ZoneID: q.ZoneID, ZoneName: q.ZoneName, CFToken: q.CFToken, RecordIDs: q.RecordIDs,
 		Proxied: q.Proxied, PhonePassword: q.PhonePassword, Unattended: q.Unattended,
 	}
 }
@@ -180,6 +182,8 @@ func (s *server) serveVPS(w http.ResponseWriter, r *http.Request, remoteKey stri
 	switch sub {
 	case "/cf/zones":
 		s.vpsZones(w, r, q)
+	case "/cf/apply":
+		s.vpsDNS(w, r, q)
 	case "/probe":
 		s.vpsProbe(w, r, q)
 	case "/plan":
@@ -229,6 +233,28 @@ func (s *server) vpsZones(w http.ResponseWriter, r *http.Request, q vpsReq) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"zones": zs})
+}
+
+// vpsDNS é o passo opcional "Endereço": só cria o registro DNS na Cloudflare,
+// sem tocar em servidor nenhum.
+func (s *server) vpsDNS(w http.ResponseWriter, r *http.Request, q vpsReq) {
+	if strings.TrimSpace(q.CFToken) == "" {
+		vpsBad(w, http.StatusBadRequest, "informe o token da Cloudflare")
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 40*time.Second)
+	defer cancel()
+	api := vpsCF(q.CFToken)
+	if err := api.VerifyToken(ctx); err != nil {
+		vpsBad(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	res, err := vpsinstall.SetupDNS(ctx, api, q.ZoneID, q.ZoneName, q.Domain, q.IP)
+	if err != nil {
+		vpsBad(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 func (s *server) vpsProbe(w http.ResponseWriter, r *http.Request, q vpsReq) {

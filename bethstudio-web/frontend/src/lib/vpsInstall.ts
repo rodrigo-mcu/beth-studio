@@ -34,7 +34,7 @@ export type StepStatus = "pending" | "running" | "ok" | "skip" | "error";
 export const INSTALL_STEPS: { id: string; label: string }[] = [
   { id: "connect", label: "Conectar por SSH" },
   { id: "preflight", label: "Verificar o servidor" },
-  { id: "dns", label: "DNS na Cloudflare" },
+  { id: "dns", label: "Conferir o DNS" },
   { id: "proxy", label: "Instalar o bethstudio-proxy" },
   { id: "firewall", label: "Firewall" },
   { id: "upgrades", label: "Atualizações de segurança" },
@@ -75,6 +75,27 @@ export function validateSubdomain(sub: string, zone: string): string | null {
 export function fullDomain(sub: string, zone: string): string {
   const s = sub.trim().toLowerCase().replace(/\.$/, "");
   return s ? `${s}.${zone}` : zone;
+}
+
+/** Endereço final do celular (o nome que aponta para o servidor). */
+export function validateDomain(d: string): string | null {
+  const v = d.trim().toLowerCase().replace(/\.$/, "");
+  if (!v) return "Informe o endereço do celular (ex.: agentes.exemplo.com)";
+  if (/^[0-9.]+$/.test(v) || /^[0-9a-f:]+$/.test(v) && v.includes(":")) return "Use um nome (agentes.exemplo.com), não um IP";
+  if (/[\s/\:@;|&$`'"<>()]/.test(v)) return "Só o nome, sem https:// nem porta";
+  const labels = v.split(".");
+  if (labels.length < 2) return "O nome precisa ter pelo menos dois pedaços (agentes.exemplo.com)";
+  if (v.length > 253 || !labels.every((l) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(l))) return "Nome inválido: só letras, números e hífen";
+  return null;
+}
+
+/** IP do servidor para o registro DNS (v4 ou v6). */
+export function validateIp(ip: string): string | null {
+  const v = ip.trim();
+  const v4 = v.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4 && v4.slice(1).every((n) => Number(n) <= 255)) return null;
+  if (v.includes(":") && /^[0-9a-fA-F:.]+$/.test(v) && !v.includes(":::")) return null;
+  return "Informe o IP do servidor (ex.: 203.0.113.9)";
 }
 
 export function validateHost(h: string): string | null {
@@ -120,6 +141,12 @@ export type WizardForm = {
   zoneId: string;
   zoneName: string;
   sub: string;
+  /** IP do servidor, só para o registro DNS do passo opcional */
+  ip: string;
+  /** endereço final do celular; vem do passo de DNS ou é digitado */
+  domain: string;
+  /** registros criados no passo de DNS (para o Remover apagá-los) */
+  recordIds: string[];
   proxied: boolean;
   host: string;
   port: string;
@@ -137,6 +164,9 @@ export const emptyForm = (): WizardForm => ({
   zoneId: "",
   zoneName: "",
   sub: "agentes",
+  ip: "",
+  domain: "",
+  recordIds: [],
   proxied: false,
   host: "",
   port: "22",
@@ -172,16 +202,23 @@ export function sshFields(f: WizardForm): { host: string; port: number; user: st
   };
 }
 
+/** Pedido do passo opcional "Endereço (DNS)". O token só serve a ele. */
+export function dnsBody(f: WizardForm) {
+  return { cf_token: f.token, zone_id: f.zoneId, zone_name: f.zoneName, domain: fullDomain(f.sub, f.zoneName), ip: f.ip.trim() };
+}
+
+/** Pedido de instalação do servidor. Sem o token da Cloudflare: o DNS é outro passo. */
 export function installBody(f: WizardForm, fingerprint: string, replaceKnown: boolean) {
   return {
     ...sshFields(f),
     fingerprint,
     replace_known: replaceKnown,
-    domain: fullDomain(f.sub, f.zoneName),
+    domain: f.domain.trim().toLowerCase(),
     zone_id: f.zoneId,
     zone_name: f.zoneName,
-    cf_token: f.token,
-    proxied: f.proxied,
+    record_ids: f.recordIds,
+    cf_token: "",
+    proxied: false,
     phone_password: f.phonePassword,
     unattended: f.unattended,
   };

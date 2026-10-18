@@ -5,6 +5,9 @@ import {
   fingerprintNotice,
   firstError,
   fullDomain,
+  dnsBody,
+  validateIp,
+  validateDomain,
   INSTALL_STEPS,
   installBody,
   stepStatuses,
@@ -63,12 +66,11 @@ test("formulário do servidor exige senha ou chave", () => {
 });
 
 test("o pedido de instalação usa só o modo de autenticação escolhido", () => {
-  const f = { ...emptyForm(), host: "h.exemplo.com", zoneId: "aaa", zoneName: "exemplo.com", token: "tok", password: "pw", privateKey: "KEY PRIVATE KEY", passphrase: "pp", phonePassword: "senha-celular" };
+  const f = { ...emptyForm(), host: "h.exemplo.com", domain: "agentes.exemplo.com", password: "pw", privateKey: "KEY PRIVATE KEY", passphrase: "pp", phonePassword: "senha-celular" };
   const a = installBody(f, "SHA256:x", false);
   assert.equal(a.private_key, "");
   assert.equal(a.passphrase, "");
   assert.equal(a.domain, "agentes.exemplo.com");
-  assert.equal(a.cf_token, "tok");
   const b = installBody({ ...f, authKind: "key" }, "SHA256:x", true);
   assert.equal(b.private_key, "KEY PRIVATE KEY");
   assert.equal(b.replace_known, true);
@@ -110,4 +112,37 @@ test("passos da tela: sem Caddy, com espera do certificado depois do firewall", 
 
 test("a nuvem laranja nunca é pedida pela tela", () => {
   assert.equal(emptyForm().proxied, false);
+});
+
+test("a instalação do servidor não leva o token da Cloudflare: o DNS é um passo à parte", () => {
+  const f = { ...emptyForm(), host: "h.exemplo.com", domain: "agentes.exemplo.com", token: "tok-secreto", password: "pw" };
+  const b = installBody(f, "SHA256:x", false);
+  assert.equal(b.cf_token, "");
+  assert.ok(!JSON.stringify(b).includes("tok-secreto"));
+});
+
+test("o endereço feito no passo de DNS segue para a instalação (zona e registros, para o Remover)", () => {
+  const f = { ...emptyForm(), host: "h", domain: "agentes.exemplo.com", zoneId: "aaa111", zoneName: "exemplo.com", recordIds: ["bee111"], password: "pw" };
+  const b = installBody(f, "SHA256:x", false);
+  assert.equal(b.zone_id, "aaa111");
+  assert.equal(b.zone_name, "exemplo.com");
+  assert.deepEqual(b.record_ids, ["bee111"]);
+});
+
+test("pedido do passo de DNS", () => {
+  const f = { ...emptyForm(), token: "tok", zoneId: "aaa111", zoneName: "exemplo.com", sub: "Agentes", ip: " 203.0.113.9 " };
+  assert.deepEqual(dnsBody(f), { cf_token: "tok", zone_id: "aaa111", zone_name: "exemplo.com", domain: "agentes.exemplo.com", ip: "203.0.113.9" });
+});
+
+test("validação do IP e do endereço do celular", () => {
+  assert.equal(validateIp("203.0.113.9"), null);
+  assert.equal(validateIp("2001:db8::1"), null);
+  assert.match(validateIp("") ?? "", /IP/);
+  assert.match(validateIp("vps.exemplo.com") ?? "", /IP/);
+  assert.match(validateIp("300.1.1.1") ?? "", /IP/);
+  assert.equal(validateDomain("agentes.exemplo.com"), null);
+  assert.match(validateDomain("") ?? "", /endereço/i);
+  assert.match(validateDomain("https://a.exemplo.com") ?? "", /sem/);
+  assert.match(validateDomain("exemplo") ?? "", /dois/);
+  assert.match(validateDomain("203.0.113.9") ?? "", /nome/);
 });

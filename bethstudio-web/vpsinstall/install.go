@@ -78,8 +78,12 @@ type Params struct {
 	Fingerprint                      string
 
 	Domain, ZoneID, ZoneName string
-	CFToken                  string
-	Proxied                  bool
+	// CFToken é opcional: sem ele o DNS não é tocado (o nome já aponta para o
+	// servidor, ou foi criado no passo "Endereço" ou à mão). RecordIDs são os
+	// registros criados nesse passo, lembrados para o "Remover" apagá-los.
+	CFToken   string
+	RecordIDs []string
+	Proxied   bool
 	PhonePassword            string
 	Unattended               bool
 }
@@ -124,14 +128,18 @@ func (p Params) ValidateInstall(phoneConfigured bool) error {
 	if p.Proxied {
 		return errors.New("a nuvem laranja da Cloudflare não é suportada: o servidor obtém o certificado sozinho (Let's Encrypt) e a Cloudflare no meio atrapalha o desafio. Use \"somente DNS\" (nuvem cinza)")
 	}
-	if !DomainInZone(p.Domain, p.ZoneName) {
-		return errors.New("o domínio precisa ser a zona escolhida ou um subdomínio dela")
+	if strings.TrimSpace(p.CFToken) != "" {
+		if !DomainInZone(p.Domain, p.ZoneName) {
+			return errors.New("o domínio precisa ser a zona escolhida ou um subdomínio dela")
+		}
+		if p.ZoneID == "" || checkID(p.ZoneID) != nil {
+			return errors.New("escolha a zona da Cloudflare")
+		}
 	}
-	if p.ZoneID == "" || checkID(p.ZoneID) != nil {
-		return errors.New("escolha a zona da Cloudflare")
-	}
-	if strings.TrimSpace(p.CFToken) == "" {
-		return errors.New("informe o token da Cloudflare")
+	for _, id := range p.RecordIDs {
+		if checkID(id) != nil {
+			return errors.New("registro DNS inválido")
+		}
 	}
 	if p.PhonePassword != "" {
 		if len(strings.TrimSpace(p.PhonePassword)) < 8 {
@@ -369,6 +377,9 @@ func sudoText(m SudoMode) string {
 
 func (r *runner) dns(ctx context.Context, p Params) ([]string, error) {
 	d := r.d
+	if strings.TrimSpace(p.CFToken) == "" {
+		return p.RecordIDs, r.dnsManual(ctx, p)
+	}
 	r.ev("dns", "running", "Configurando o DNS na Cloudflare…", "")
 	api := d.CF(p.CFToken)
 	if err := api.VerifyToken(ctx); err != nil {
@@ -408,6 +419,33 @@ func (r *runner) dns(ctx context.Context, p Params) ([]string, error) {
 	}
 	r.ev("dns", "ok", "DNS pronto, "+mode+".", "")
 	return ids, nil
+}
+
+// dnsManual: sem token da Cloudflare o assistente não mexe no DNS. Só confere se
+// o nome já aponta para o servidor e, se não, diz qual registro criar. Não
+// falha: o DNS pode estar propagando, e o passo do certificado espera.
+func (r *runner) dnsManual(ctx context.Context, p Params) error {
+	d := r.d
+	r.ev("dns", "skip", "DNS: não mexi (sem token da Cloudflare). O nome "+p.Domain+" precisa apontar para este servidor.", "")
+	v4, v6, err := hostIPs(ctx, d, p.Host)
+	if err != nil {
+		return nil
+	}
+	got, err := d.Net.LookupHost(ctx, p.Domain)
+	if err == nil {
+		for _, g := range got {
+			if g == v4 || g == v6 {
+				r.ev("dns", "info", p.Domain+" já aponta para este servidor.", "")
+				return nil
+			}
+		}
+	}
+	want := "A " + v4
+	if v4 == "" {
+		want = "AAAA " + v6
+	}
+	r.ev("dns", "warn", p.Domain+" ainda não aponta para este servidor.", "Crie no seu provedor de DNS o registro "+want+" para "+p.Domain+" (sem proxy). O certificado só sai depois que o nome resolver.")
+	return nil
 }
 
 func (r *runner) proxy(ctx context.Context, s *session, p Params, pf Preflight, data []byte, sha string) error {
@@ -691,7 +729,7 @@ func (r *runner) remove(ctx context.Context, p Params) error {
 		return err
 	}
 	r.ev("remove", "ok", "Servidor limpo do Beth. O ufw e os pacotes continuam instalados e as portas abertas continuam abertas (não apago pacotes nem mexo no firewall).", "")
-	if strings.TrimSpace(p.CFToken) != "" {
+	if strings.TrimSpace(p.CFToken) != "" && sv.ZoneID != "" {
 		r.ev("dns", "running", "Removendo os registros DNS criados pelo assistente…", "")
 		api := r.d.CF(p.CFToken)
 		n, err := RemoveWizardRecords(ctx, api, sv.ZoneID, sv.Domain, sv.RecordIDs)
@@ -700,7 +738,7 @@ func (r *runner) remove(ctx context.Context, p Params) error {
 		}
 		r.ev("dns", "ok", fmt.Sprintf("%d registro(s) DNS do assistente removido(s). Os outros não foram tocados.", n), "")
 	} else {
-		r.ev("dns", "skip", "Sem token da Cloudflare: os registros DNS ficaram como estão.", "Apague o registro "+sv.Domain+" na Cloudflare se quiser.")
+		r.ev("dns", "skip", "Sem token da Cloudflare (ou o DNS não foi feito pelo assistente): os registros DNS ficaram como estão.", "Apague o registro "+sv.Domain+" na Cloudflare se quiser.")
 	}
 	if err := r.d.Studio.ClearPairing(); err != nil {
 		r.ev("pair", "warn", "Não consegui limpar o pareamento deste Studio: "+err.Error(), "")
@@ -730,7 +768,7 @@ func Plan(p Params) []PlanStep {
 		{ID: "connect", Title: "Conectar por SSH", Detail: "Confere que a impressão digital é a que você confirmou. Nada é aceito às cegas."},
 		{ID: "preflight", Title: "Verificar o servidor (só leitura)", Detail: "Debian 11/12/13 ou Ubuntu 22.04/24.04/26.04, amd64 ou arm64, systemd, root ou sudo, portas 80/443 livres, sem nginx/apache/Caddy/Docker no meio. Se algo não servir, para e explica; não apaga nada.",
 			Commands: []string{cmdOSRelease, cmdArch, cmdPorts, cmdServices}},
-		{ID: "dns", Title: "Cloudflare: registro DNS", Detail: "Cria ou atualiza " + domain + " (A, e AAAA se o servidor tiver IPv6) " + dnsMode + " (a nuvem laranja não é usada: atrapalharia o certificado). Só mexe em registros marcados com \"" + WizardComment + "\"."},
+		dnsPlan(p, domain, dnsMode),
 		{ID: "proxy", Title: "Instalar o bethstudio-proxy", Detail: "Cria o usuário de serviço " + ProxyUser + " (sem shell), envia o programa embutido neste Studio por SFTP, confere o SHA-256 no servidor e cria o serviço systemd. O programa atende HTTPS sozinho nas portas 80 e 443, sem root (só a permissão de abrir essas portas). Nenhum outro programa é instalado no servidor.",
 			Commands: []string{cmdCreateUser(), cmdVerifySHA("<sha256>", "<arquivo enviado>"), cmdStopProxy(), cmdInstallProxyBin("<arquivo enviado>"), cmdProxyService(domain)}},
 		{ID: "firewall", Title: "Firewall (ufw)", Detail: "Libera a porta do SSH antes de ligar, depois 80 e 443. O resto fica fechado.",
@@ -745,4 +783,11 @@ func Plan(p Params) []PlanStep {
 		PlanStep{ID: "verify", Title: "Teste de ponta a ponta", Detail: "DNS resolve, HTTPS com certificado válido visto deste PC, o proxy responde e a ligação PC↔servidor sobe."},
 	)
 	return steps
+}
+
+func dnsPlan(p Params, domain, dnsMode string) PlanStep {
+	if strings.TrimSpace(p.CFToken) == "" {
+		return PlanStep{ID: "dns", Title: "DNS: não será alterado", Detail: "Sem token da Cloudflare o assistente não mexe no DNS. Ele só confere se " + domain + " já aponta para o servidor e avisa qual registro criar se não apontar."}
+	}
+	return PlanStep{ID: "dns", Title: "Cloudflare: registro DNS", Detail: "Cria ou atualiza " + domain + " (A, e AAAA se o servidor tiver IPv6) " + dnsMode + " (a nuvem laranja não é usada: atrapalharia o certificado). Só mexe em registros marcados com \"" + WizardComment + "\"."}
 }
