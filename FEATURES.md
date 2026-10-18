@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-16.
+Last updated: 2026-10-18.
 
 ---
 
@@ -263,6 +263,18 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   and overall (also for the phone login), and every sign-in, failure and
   ended session goes to `remote-access.log` (listed in Configurações →
   Sobre).
+- 🟢 **Celular: QR code, aparelhos e PC offline** (2026-10-18). Configurações
+  → Celular → **Conectar um celular** shows a QR code and a link that open
+  the phone web app already signed in: single use, valid 5 minutes, the
+  token travels in the URL fragment (never a query string). Every phone that
+  enters (QR or password) becomes a named device with creation date, last use
+  and last IP; devices can be renamed, revoked (the session and its open
+  WebSocket drop at once) or all revoked. Sessions last 90 days without use.
+  Changing the phone password does not revoke paired devices. The offline
+  page and screen say "Visto pela última vez às HH:MM de dd/mm" (kept by
+  `bethstudio-proxy`) and retry on their own. The QR link counts as a login
+  attempt for the per-address limit, and the proxy caps logins at 20 per
+  minute per address.
 - 🟢 **Acesso pelo celular** uses `bethstudio-proxy`, a Linux program you
   install on a server you already have. It listens on a TCP port or a Unix
   socket and accepts one domain. Your existing HTTPS proxy forwards that

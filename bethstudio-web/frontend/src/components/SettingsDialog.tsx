@@ -13,6 +13,7 @@ import { VoiceSettingsDialog } from "./VoiceSettingsDialog";
 import { AIUsageSection } from "./AIUsage";
 import { DbAssistSettings } from "./DbAssistSettings";
 import { PhoneRemoteSection } from "./PhoneRemoteSection";
+import { PhoneDevicesSection } from "./PhoneDevicesSection";
 import { RemoteStudioSection } from "./RemoteStudioSection";
 import { UpdateSection } from "./UpdateSection";
 import { isRemote } from "@/lib/remote";
@@ -118,6 +119,7 @@ export function SettingsDialog(p: Props) {
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   <PhoneRemoteSection conn={p.conn} onMessage={p.onMessage} />
                   <div className="px-5 pb-6">
+                    <PhoneDevicesSection conn={p.conn} onMessage={p.onMessage} />
                     <RemoteStudioSection conn={p.conn} onMessage={p.onMessage} />
                   </div>
                 </div>

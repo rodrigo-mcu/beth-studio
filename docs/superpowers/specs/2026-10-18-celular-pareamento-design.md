@@ -20,7 +20,7 @@ de senha existe só para a senha (não para o novo fluxo).
   não aparece em log de proxy, nem em `Referer`. O web app lê o fragmento,
   apaga-o da barra (`history.replaceState`) e faz `POST /api/phone/pair`
   `{token}`. A resposta define o cookie de sessão.
-- Validade: **5 minutos** e **uma única vez**. No disco só fica o SHA-256 do
+- Validade: **5 minutos** e **uma única vez**. Só existe um link pendente por vez: gerar outro invalida o anterior. No disco só fica o SHA-256 do
   token (`phone-devices.json`). A comparação percorre os pendentes com
   `subtle.ConstantTimeCompare`. O consumo acontece sob um mutex: dois usos
   simultâneos, só um vale. Token errado, usado ou expirado dão a mesma

@@ -56,11 +56,14 @@ A verificação de atualização não é automática e não é telemetria. No mo
 O acesso pelo celular e pelo navegador (veja [Celular e acesso remoto](Celular-e-acesso-remoto)) é o único recurso que expõe o Beth Studio fora do PC. Ele vem desligado. O PC continua escutando só em `127.0.0.1`: é ele que liga para fora, no seu servidor.
 
 - **Rotas separadas.** O app do celular só lê agentes e manda texto, voz e imagem. Banco, SSH, SFTP, arquivos e configurações não têm rota pelo túnel do celular.
-- **Senha do celular.** Mínimo de 8 caracteres, guardada só como hash (bcrypt) no PC. O proxy no servidor não a conhece.
+- **Senha do celular.** Mínimo de 8 caracteres, guardada só como hash (bcrypt) no PC. O proxy no servidor não a conhece. Continua valendo como alternativa ao QR code.
+- **QR code / link de pareamento.** Token aleatório de 256 bits, uso único, vale 5 minutos, vai no fragmento (`#`) da URL (nunca na query string) e é trocado por uma sessão com um POST. No disco fica só o SHA-256; a comparação é em tempo constante; nunca vai para o log. Gerar, listar, renomear e revogar aparelhos só existe na interface do Studio no PC: nem o celular nem o Studio remoto alcançam essas rotas.
+- **Aparelhos.** Cada celular tem sessão própria (token de 256 bits, só o SHA-256 no disco), 90 dias sem uso ou 365 no máximo. Revogar derruba a sessão e o WebSocket aberto na hora. Trocar a senha não revoga aparelhos; **Revogar todos** faz isso.
 - **Segundo fator para o Studio completo.** Senha mais código TOTP de 6 dígitos (um código não vale duas vezes). O Studio completo só liga com o segundo fator configurado.
 - **Cookies** `HttpOnly`, `Secure`, `SameSite=Strict`. O cookie do celular não abre o Studio completo, e o do Studio completo vale só em `/studio`.
-- **Sessões.** Celular: 30 dias. Studio completo: 12 horas sem uso e 7 dias no máximo; só o SHA-256 do token fica no disco. Trocar a senha, trocar o segundo fator ou desligar o acesso encerra as sessões do Studio completo. Há botões **Encerrar** e **Encerrar todas**.
+- **Sessões.** Celular: por aparelho, 90 dias sem uso. Studio completo: 12 horas sem uso e 7 dias no máximo; só o SHA-256 do token fica no disco. Trocar a senha, trocar o segundo fator ou desligar o acesso encerra as sessões do Studio completo. Há botões **Encerrar** e **Encerrar todas**.
 - **Limite de tentativas.** Por IP: 5 erros seguidos travam esse IP por 1 minuto, com espera que dobra até 15 minutos. Geral: 30 erros em 10 minutos recusam todo o login pelo túnel até a janela passar. O Studio do PC não é afetado.
+- **Proxy.** O `bethstudio-proxy` limita a 20 tentativas por minuto e por IP nas rotas de entrada, e sobrescreve o IP do cliente que repassa ao Studio. A página pública de "desconectado" mostra apenas a hora da última vez que o PC foi visto.
 - **Origem e host.** O proxy só aceita o domínio configurado, e pedidos que alteram algo e o WebSocket precisam de `Origin` igual a `https://<domínio>`.
 - **Operações presas ao PC.** O que abriria algo na tela do PC (escolher pasta, Explorer, janelas de Banco e SFTP, abrir link) responde 403 pelo túnel.
 - **Registro** em `remote-access.log`: entradas, erros, bloqueios e sessões encerradas.
