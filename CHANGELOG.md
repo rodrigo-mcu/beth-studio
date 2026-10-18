@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- Native phone app (`bethstudio-mobile/`, Expo, Android and iOS): a thin shell that loads the phone web app from your domain in a WebView. It asks for the domain and the phone password once (secure storage, HTTPS only) and logs in by itself. The microphone permission is asked once by the system (`NSMicrophoneUsageDescription` / `RECORD_AUDIO`).
+- Native audio recording straight to files on the device, in closed 2-minute pieces, so a suspended or killed app does not lose what was already recorded. Recordings go to a persistent queue and are sent to the PC with the same retry policy as the web app (2, 4, 8, 15, 30 s, 6 attempts); **Tentar de novo**, **Baixar** and **Descartar** stay on screen. The text is put in the open terminal message field.
+- Quick reconnection in the native app: coming back to the app or the network coming back retries the queue at once, reloads a page that failed to load and wakes the web app connection watchdog.
+- EAS build profiles for internal distribution (`eas.json`) and the publishing guide `bethstudio-mobile/docs/PUBLICACAO.md`. Bundle identifiers are placeholders (`com.exemplo.bethstudio`).
+
+### Changed
+- `bethstudio-mobile` no longer contains the unused WebSocket client and xterm terminal skeleton (it stays in the repository history up to commit 349c55a). The architecture is in `bethstudio-mobile/docs/ARQUITETURA.md`.
+
+### Known limits
+- The native app was not built or run on a device yet. Notifications with the phone locked are not part of this version (they need a push sender on the PC).
+
 ## [0.2.5] - 2026-10-17
 
 ### Fixed

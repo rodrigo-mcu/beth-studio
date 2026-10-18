@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-16.
+Last updated: 2026-10-18.
 
 ---
 
@@ -263,6 +263,24 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   and overall (also for the phone login), and every sign-in, failure and
   ended session goes to `remote-access.log` (listed in Configurações →
   Sobre).
+- 🟡 **App nativo do celular** (`bethstudio-mobile/`, Android and iOS,
+  2026-10-18): a thin shell that opens the phone web app in a WebView at
+  your own domain and adds a native bar on top. The first run asks for the
+  domain and the phone password once (kept in the device vault, HTTPS
+  only). The system asks for the microphone once. **Gravar** (mic button)
+  records straight to files on the device, cut into closed 2-minute
+  pieces, so what was already recorded survives if the app is suspended or
+  killed; the audio is queued and sent to this computer, retried by itself
+  (2, 4, 8, 15, 30 s, 6 attempts), and **Tentar de novo**, **Baixar** and
+  **Descartar** stay in the list (list button, with a count) until the text
+  is in the message field. The transcribed text goes into the open
+  terminal's message field. Coming back to the app, or the network coming
+  back, retries at once and makes the web app check its connection. Built
+  with EAS for internal distribution (Android APK/AAB; iOS TestFlight, ad
+  hoc, Apple Business Manager custom app or Enterprise). Not yet tested on
+  a real device (see `bethstudio-mobile/docs/PUBLICACAO.md`). Notifications
+  with the phone locked need a push sender on the PC and are left for a
+  later phase.
 - 🟢 **Acesso pelo celular** uses `bethstudio-proxy`, a Linux program you
   install on a server you already have. It listens on a TCP port or a Unix
   socket and accepts one domain. Your existing HTTPS proxy forwards that

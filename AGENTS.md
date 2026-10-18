@@ -21,8 +21,10 @@ workspace. Read this before changing or testing the project.
   terminals. See
   `docs/superpowers/specs/2026-10-03-studio-supervisor-design.md` and
   `bethstudio-web/README.md`.
-- **`bethstudio-mobile/`** (Expo/TypeScript) is a skeleton Android/iOS app.
-  The phone path that ships is the phone web app (separate build:
+- **`bethstudio-mobile/`** (Expo/TypeScript) is the native Android/iOS app,
+  a thin shell: a WebView on the phone web app plus native recording, a
+  persistent send queue and secure storage (`bethstudio-mobile/docs/ARQUITETURA.md`;
+  not yet built on a device). The phone path that ships today is the phone web app (separate build:
   `bethstudio-web/frontend/phone.html`, `src/phone/`, output `dist/phone`;
   never the Studio page) plus the Linux program
   `bethstudio-web/cmd/bethstudio-proxy`. See
