@@ -118,11 +118,16 @@ func (s *server) servePhonePublic(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 		return
 	}
+	if r.URL.Path == "/api/phone/pair" && r.Method == http.MethodPost {
+		s.servePhonePair(w, r)
+		return
+	}
 	if phonePublicFile(r.URL.Path) {
 		servePhoneStatic(w, r)
 		return
 	}
-	if !phone.authorized(r) {
+	device, authed := phone.authenticate(r)
+	if !authed {
 		if strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/ws" {
 			http.Error(w, "login", http.StatusUnauthorized)
 			return
@@ -130,7 +135,7 @@ func (s *server) servePhonePublic(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	s.servePhoneAuthed(w, r)
+	s.servePhoneAuthed(w, r, device)
 }
 
 func (s *server) servePhoneLogin(w http.ResponseWriter, r *http.Request) {
@@ -141,20 +146,43 @@ func (s *server) servePhoneLogin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
 		return
 	}
-	token, err := phone.login(phoneClientIP(r), req.Password)
+	token, err := phone.login(phoneClientIP(r), r.UserAgent(), req.Password)
 	if err != nil {
 		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": err.Error()})
 		return
 	}
-	setPhoneCookie(w, token, 30*24*3600)
+	setPhoneCookie(w, token, phoneCookieMaxAge)
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
-func (s *server) servePhoneAuthed(w http.ResponseWriter, r *http.Request) {
+// servePhonePair troca o token do link mágico (que vem no # da URL e a página
+// manda no corpo) por uma sessão de aparelho novo.
+func (s *server) servePhonePair(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Token string `json:"token"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
+		return
+	}
+	token, err := phone.pairRedeem(phoneClientIP(r), r.UserAgent(), strings.TrimSpace(req.Token))
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": err.Error()})
+		return
+	}
+	setPhoneCookie(w, token, phoneCookieMaxAge)
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *server) servePhoneAuthed(w http.ResponseWriter, r *http.Request, device string) {
 	switch {
 	case r.URL.Path == "/ws":
-		s.serveWS(w, r, true)
+		s.serveWSWith(w, r, func(c *client) { c.phone = true; c.device = device })
 	case r.URL.Path == "/api/phone/me":
+		// renova o cookie: a validade (90 dias) conta do último uso
+		if c, err := r.Cookie(phoneCookie); err == nil {
+			setPhoneCookie(w, c.Value, phoneCookieMaxAge)
+		}
 		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 	case r.URL.Path == "/api/phone/names":
 		// Nomes que a pessoa deu às abas no Studio (pane id -> nome).

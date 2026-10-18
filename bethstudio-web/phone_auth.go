@@ -1,14 +1,9 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -17,7 +12,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const phoneCookie = "bethstudio_phone"
+const (
+	phoneCookie       = "bethstudio_phone"
+	phoneCookieMaxAge = int(deviceIdleMax / time.Second)
+)
 
 type phoneAuth struct {
 	mu       sync.Mutex
@@ -25,15 +23,18 @@ type phoneAuth struct {
 	domain   string
 	secret   string
 	hash     []byte
-	sessions map[string]time.Time
 	limit    *loginLimiter // nil = tunnelLogins
 	now      func() time.Time
+
+	// aparelhos e links de pareamento (phone_devices.go)
+	devices       []*phoneDevice
+	pairs         []pairEntry
+	devicesLoaded bool
+	saveMu        sync.Mutex
+	onDrop        func(alive func(id string) bool)
 }
 
-var phone = &phoneAuth{
-	sessions: map[string]time.Time{},
-	now:      time.Now,
-}
+var phone = &phoneAuth{now: time.Now}
 
 func (a *phoneAuth) limiter() *loginLimiter {
 	if a.limit != nil {
@@ -72,7 +73,7 @@ func (a *phoneAuth) load() {
 		a.dir = dataDir()
 	}
 	a.mu.Unlock()
-	a.loadSessions()
+	a.loadDevices()
 }
 
 func (a *phoneAuth) creds() (domain, secret string) {
@@ -114,26 +115,26 @@ func (a *phoneAuth) setPassword(pw string) error {
 	}
 	a.mu.Lock()
 	a.hash = hash
-	a.sessions = map[string]time.Time{}
 	a.mu.Unlock()
-	a.saveSessions()
+	// Trocar a senha NÃO revoga os aparelhos já pareados (há "Revogar todos").
 	// A senha é a mesma do Studio remoto: trocar derruba as sessões de lá também.
 	remote.revoke("", "senha trocada")
 	return nil
 }
 
-func (a *phoneAuth) login(ip, password string) (string, error) {
+func (a *phoneAuth) login(ip, ua, password string) (string, error) {
 	lim := a.limiter()
 	if err := lim.check(ip); err != nil {
 		remoteLog("celular: login recusado (espera) ip=%s", ip)
 		return "", err
 	}
 	a.mu.Lock()
-	defer a.mu.Unlock()
-	if len(a.hash) == 0 {
+	hash := a.hash
+	a.mu.Unlock()
+	if len(hash) == 0 {
 		return "", errors.New("a senha do celular ainda não foi criada neste PC")
 	}
-	if bcrypt.CompareHashAndPassword(a.hash, []byte(password)) != nil {
+	if bcrypt.CompareHashAndPassword(hash, []byte(password)) != nil {
 		if lim.fail(ip) {
 			remoteLog("celular: senha errada, ip travado ip=%s", ip)
 		} else {
@@ -142,88 +143,25 @@ func (a *phoneAuth) login(ip, password string) (string, error) {
 		return "", errors.New("senha incorreta")
 	}
 	lim.ok(ip)
-	remoteLog("celular: login ip=%s", ip)
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
+	a.mu.Lock()
+	token, err := a.addDeviceLocked(ip, ua)
+	a.mu.Unlock()
+	if err != nil {
 		return "", err
 	}
-	token := hex.EncodeToString(buf)
-	if a.sessions == nil {
-		a.sessions = map[string]time.Time{}
-	}
-	a.sessions[token] = a.clock().Add(30 * 24 * time.Hour)
-	go a.saveSessions()
+	remoteLog("celular: login ip=%s", ip)
+	a.saveDevices()
 	return token, nil
 }
 
-func (a *phoneAuth) valid(token string) bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	exp, ok := a.sessions[token]
-	if !ok {
-		return false
-	}
-	if !a.clock().Before(exp) {
-		delete(a.sessions, token)
-		go a.saveSessions()
-		return false
-	}
-	return true
-}
-
+// logout: o aparelho sai (some da lista).
 func (a *phoneAuth) logout(token string) {
 	a.mu.Lock()
-	delete(a.sessions, token)
-	a.mu.Unlock()
-	a.saveSessions()
-}
-
-func (a *phoneAuth) loadSessions() {
-	a.mu.Lock()
-	dir := a.dir
-	a.mu.Unlock()
-	if dir == "" {
-		return
-	}
-	b, err := os.ReadFile(filepath.Join(dir, "phone-sessions.json"))
-	if err != nil {
-		return
-	}
-	var file struct {
-		Tokens map[string]time.Time `json:"tokens"`
-	}
-	if json.Unmarshal(b, &file) != nil || file.Tokens == nil {
-		return
-	}
-	now := a.clock()
-	a.mu.Lock()
-	if a.sessions == nil {
-		a.sessions = map[string]time.Time{}
-	}
-	for k, exp := range file.Tokens {
-		if now.Before(exp) {
-			a.sessions[k] = exp
-		}
+	if d, ok := a.findLocked(token); ok {
+		a.removeLocked(d.ID)
 	}
 	a.mu.Unlock()
-}
-
-func (a *phoneAuth) saveSessions() {
-	a.mu.Lock()
-	dir := a.dir
-	cp := make(map[string]time.Time, len(a.sessions))
-	for k, v := range a.sessions {
-		cp[k] = v
-	}
-	a.mu.Unlock()
-	if dir == "" {
-		return
-	}
-	b, err := json.Marshal(map[string]any{"tokens": cp})
-	if err != nil {
-		return
-	}
-	_ = writeAtomic(filepath.Join(dir, "phone-sessions.json"), b)
+	a.saveDevices()
 }
 
 func phoneClientIP(r *http.Request) string {
@@ -237,12 +175,18 @@ func phoneClientIP(r *http.Request) string {
 	return host
 }
 
-func (a *phoneAuth) authorized(r *http.Request) bool {
+// authenticate confere o cookie, registra o uso e devolve o id do aparelho.
+func (a *phoneAuth) authenticate(r *http.Request) (string, bool) {
 	c, err := r.Cookie(phoneCookie)
 	if err != nil || c.Value == "" {
-		return false
+		return "", false
 	}
-	return a.valid(c.Value)
+	return a.session(c.Value, phoneClientIP(r))
+}
+
+func (a *phoneAuth) authorized(r *http.Request) bool {
+	_, ok := a.authenticate(r)
+	return ok
 }
 
 func setPhoneCookie(w http.ResponseWriter, token string, maxAge int) {

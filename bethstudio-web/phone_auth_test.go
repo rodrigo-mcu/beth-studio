@@ -28,20 +28,19 @@ func TestPhoneLoginLock(t *testing.T) {
 	now := time.Date(2026, 9, 27, 20, 0, 0, 0, time.UTC)
 	a := &phoneAuth{
 		hash:     hash,
-		sessions: map[string]time.Time{},
 		limit:    &loginLimiter{now: func() time.Time { return now }},
 		now:      func() time.Time { return now },
 	}
 	for i := 0; i < 5; i++ {
-		if _, err := a.login("1.2.3.4", "errada"); err == nil {
+		if _, err := a.login("1.2.3.4", "ua", "errada"); err == nil {
 			t.Fatal("aceitou senha errada")
 		}
 	}
-	if _, err := a.login("1.2.3.4", "senha-certa"); err == nil || err.Error() != "muitas tentativas, espere um minuto" {
+	if _, err := a.login("1.2.3.4", "ua", "senha-certa"); err == nil || err.Error() != "muitas tentativas, espere um minuto" {
 		t.Fatalf("trava: %v", err)
 	}
 	now = now.Add(time.Minute + time.Second)
-	tok, err := a.login("1.2.3.4", "senha-certa")
+	tok, err := a.login("1.2.3.4", "ua", "senha-certa")
 	if err != nil || tok == "" {
 		t.Fatal(err)
 	}

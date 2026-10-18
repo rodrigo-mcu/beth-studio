@@ -41,7 +41,7 @@ func TestRemotePreview(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 	domain := strings.TrimPrefix(ts.URL, "https://")
-	phone = &phoneAuth{domain: domain, secret: "x", hash: hash, sessions: map[string]time.Time{}, now: time.Now}
+	phone = &phoneAuth{domain: domain, secret: "x", hash: hash, now: time.Now}
 	remote = &remoteAuth{enabled: true, totp: testTOTP, sessions: map[string]*remoteSession{}, limit: newLoginLimiter(), now: time.Now, onDrop: hub.dropRemote}
 	key, _ := totpKey(testTOTP)
 	t.Logf("abra %s/studio/  senha: senha-de-teste", ts.URL)

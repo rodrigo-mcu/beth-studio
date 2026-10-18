@@ -110,6 +110,7 @@ func main() {
 	remoteLogDir = appDataDir()
 	remote.load()
 	remote.onDrop = hub.dropRemote
+	phone.onDrop = hub.dropPhone
 	br := newBridge(exe, hub)
 	hub.bridge = br
 
