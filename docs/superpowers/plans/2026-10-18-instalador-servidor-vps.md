@@ -1,5 +1,7 @@
 # Instalar servidor (VPS) — Plano de implementação
 
+> **Revisão (2026-10-18, decisão do dono):** o Caddy foi removido; o `bethstudio-proxy` atende HTTPS sozinho (`-tls`). As tarefas abaixo que citam Caddy/Caddyfile foram substituídas por: usuário de serviço, unit em modo `-tls`, espera do certificado. Veja a nota no spec.
+
 **Spec:** `docs/superpowers/specs/2026-10-18-instalador-servidor-vps-design.md`
 **Stack:** Go (`bethstudio-web/vpsinstall`), React/TS (`frontend/src/components/VpsInstallWizard.tsx`), `go test`, `node --test`.
 

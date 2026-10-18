@@ -5,6 +5,7 @@ import {
   fingerprintNotice,
   firstError,
   fullDomain,
+  INSTALL_STEPS,
   installBody,
   stepStatuses,
   validateHost,
@@ -97,4 +98,16 @@ test("aviso da impressão digital muda de tom quando ela mudou", () => {
   const c = fingerprintNotice("changed", "SHA256:antiga");
   assert.equal(c.tone, "danger");
   assert.match(c.text, /SHA256:antiga/);
+});
+
+test("passos da tela: sem Caddy, com espera do certificado depois do firewall", () => {
+  const ids = INSTALL_STEPS.map((s) => s.id);
+  assert.ok(!ids.includes("caddy"));
+  assert.ok(ids.indexOf("cert") > ids.indexOf("firewall"));
+  assert.ok(ids.indexOf("cert") < ids.indexOf("verify"));
+  assert.ok(!INSTALL_STEPS.some((s) => /caddy/i.test(s.label)));
+});
+
+test("a nuvem laranja nunca é pedida pela tela", () => {
+  assert.equal(emptyForm().proxied, false);
 });

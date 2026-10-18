@@ -36,9 +36,9 @@ export const INSTALL_STEPS: { id: string; label: string }[] = [
   { id: "preflight", label: "Verificar o servidor" },
   { id: "dns", label: "DNS na Cloudflare" },
   { id: "proxy", label: "Instalar o bethstudio-proxy" },
-  { id: "caddy", label: "Instalar o Caddy (HTTPS)" },
   { id: "firewall", label: "Firewall" },
   { id: "upgrades", label: "Atualizações de segurança" },
+  { id: "cert", label: "Certificado HTTPS (Let's Encrypt)" },
   { id: "pair", label: "Parear este Studio" },
   { id: "verify", label: "Teste de ponta a ponta" },
 ];

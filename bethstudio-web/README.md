@@ -186,9 +186,11 @@ navegador (WebView2)  <-- WebSocket -->  bethstudio-web.exe (Go)  <-- stdin/stdo
   que o servidor imprimiu (`bethstudio://link…`), cria-se a senha do
   telefone, e a tela mostra se este computador está conectado.
   O programa Linux é `cmd/bethstudio-proxy` (`bethstudio-proxy-linux` no
-  build). Ele não abre 80/443: o proxy HTTPS que já existe no servidor
-  encaminha o domínio, inclusive WebSocket, para a porta ou o socket
-  escolhidos. O Studio liga para fora. Banco, SSH e arquivos não passam
+  build). Dois modos: `-tls` (HTTPS próprio nas portas 443/80, certificado
+  Let's Encrypt automático via autocert, sem outro programa no servidor;
+  é o que o assistente "Instalar servidor" instala) ou `-listen` (atrás do
+  proxy HTTPS que já existe no servidor, que encaminha o domínio, inclusive
+  WebSocket, para a porta ou o socket escolhidos). O Studio liga para fora. Banco, SSH e arquivos não passam
   por essa página.
 - **Studio completo pelo navegador** (`remote_auth.go`, `remote_gate.go`,
   `src/lib/remote.ts`): o mesmo túnel do celular serve o Studio inteiro em
@@ -204,8 +206,9 @@ navegador (WebView2)  <-- WebSocket -->  bethstudio-web.exe (Go)  <-- stdin/stdo
   página (`FolderBrowser.tsx`, sobre `/api/local-fs/list`, que também lista
   as distros WSL). O remoto nunca muda o tamanho dos terminais no host.
   Registro em `%LOCALAPPDATA%\bethstudio-web\remote-access.log`.
-  O `bethstudio-proxy` usa o último `X-Forwarded-For` (ou `X-Real-IP`)
-  quando o pedido vem do proxy HTTPS local: no nginx,
+  No modo `-listen`, o `bethstudio-proxy` usa o último `X-Forwarded-For` (ou `X-Real-IP`)
+  quando o pedido vem do proxy HTTPS local; no modo `-tls` o IP é o da
+  conexão e esses cabeçalhos nunca valem. No nginx, no nginx,
   `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`.
   Vitrine manual com a ponte real: `BETH_REMOTE_PREVIEW=1
   BETHSTUDIO_DATA_DIR=<temp> BETHSTUDIO_EXE=<bethstudio.exe> go test -v -run

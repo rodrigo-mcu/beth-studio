@@ -32,7 +32,7 @@ const label = "mt-3 block text-[12px] text-text-3";
 const btn = "rounded bg-accent px-3 py-1.5 text-[13px] text-white disabled:opacity-50";
 const btn2 = "rounded border border-border px-3 py-1.5 text-[13px] text-text-1 disabled:opacity-50";
 
-/** Configurações > Celular > Instalar servidor: VPS limpo + Caddy + Cloudflare. */
+/** Configurações > Celular > Instalar servidor: VPS limpo + bethstudio-proxy com HTTPS próprio + Cloudflare. */
 export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMessage: (m: string) => void }) {
   const [stage, setStage] = useState<Stage>("home");
   const [state, setState] = useState<VpsState | null>(null);
@@ -190,7 +190,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
         {srv ? (
           <>
             <p className="mt-1 max-w-xl text-[13px] text-text-2">
-              Instalado em <b>{srv.host}</b> como <b>{srv.domain}</b> ({srv.proxied ? "com proxy da Cloudflare" : "somente DNS"}).
+              Instalado em <b>{srv.host}</b> como <b>{srv.domain}</b> ({srv.proxied ? "com proxy da Cloudflare (instalação antiga)" : "somente DNS"}).
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {(
@@ -230,7 +230,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
                       <input aria-label="Token da Cloudflare" type="password" autoComplete="off" placeholder="Token da Cloudflare" className={input} value={f.token} onChange={(e) => set("token", e.target.value)} />
                     )}
                     <p className="mt-2 max-w-xl text-[12px] text-text-3">
-                      Remove o serviço, o programa, os dados do proxy e a configuração do Caddy do Beth. Não desinstala o Caddy, o ufw nem pacotes, e não fecha portas. Só apaga registros DNS marcados pelo assistente.
+                      Remove o serviço, o programa, os dados do proxy (certificados incluídos) e o usuário de serviço bethstudio. Não desinstala o ufw nem pacotes, e não fecha portas. Só apaga registros DNS marcados pelo assistente.
                     </p>
                   </>
                 )}
@@ -248,7 +248,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
         ) : (
           <>
             <p className="mt-1 max-w-xl text-[13px] text-text-2">
-              Instala o servidor do celular num VPS Linux limpo e dedicado (Debian ou Ubuntu), com HTTPS automático e o DNS na Cloudflare, sem abrir terminal. Este assistente <b>não apaga nada</b> do servidor: se ele não estiver limpo, para e explica.
+              Instala o servidor do celular num VPS Linux limpo e dedicado (Debian ou Ubuntu), com HTTPS automático (o próprio bethstudio-proxy obtém o certificado: nenhum outro programa é instalado no servidor) e o DNS na Cloudflare, sem abrir terminal. Este assistente <b>não apaga nada</b> do servidor: se ele não estiver limpo, para e explica.
             </p>
             {state && !state.bins_embedded && (
               <p className="mt-2 text-[12px] text-status-err">Este Studio foi compilado sem o programa do servidor; o assistente não vai conseguir instalar.</p>
@@ -301,17 +301,9 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
                 <span className="mt-1 whitespace-nowrap text-[13px] text-text-2">.{f.zoneName || "zona"}</span>
               </div>
               {validateSubdomain(f.sub, f.zoneName) && <p className="mt-1 text-[12px] text-status-err">{validateSubdomain(f.sub, f.zoneName)}</p>}
-              <fieldset className="mt-4 max-w-xl">
-                <legend className="text-[12px] text-text-3">Registro no DNS</legend>
-                <label className="mt-1 flex items-start gap-2 text-[13px] text-text-1">
-                  <input type="radio" name="vps-proxied" checked={!f.proxied} onChange={() => set("proxied", false)} />
-                  <span><b>Somente DNS (nuvem cinza) — recomendado.</b> O certificado do Caddy e o WebSocket funcionam sem depender do modo SSL da sua zona.</span>
-                </label>
-                <label className="mt-2 flex items-start gap-2 text-[13px] text-text-1">
-                  <input type="radio" name="vps-proxied" checked={f.proxied} onChange={() => set("proxied", true)} />
-                  <span><b>Com proxy da Cloudflare (nuvem laranja).</b> Esconde o IP do servidor, mas a zona precisa estar em SSL/TLS → <b>Full (strict)</b>; em Flexible o acesso entra em laço. O assistente não altera a zona.</span>
-                </label>
-              </fieldset>
+              <p className="mt-4 max-w-xl text-[13px] text-text-1">
+                <b>Registro somente DNS (nuvem cinza).</b> O servidor pede o certificado HTTPS à Let&apos;s Encrypt sozinho, e isso exige que a internet chegue direto nele. A nuvem laranja da Cloudflare não é usada: ela fica no meio do desafio do certificado.
+              </p>
               <p className="mt-2 text-[12px] text-text-3">Endereço final: https://{domain}</p>
             </>
           )}

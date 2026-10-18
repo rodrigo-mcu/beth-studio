@@ -309,9 +309,10 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   and the VPS login (password or private key), shows the server's SSH
   fingerprint for you to confirm, checks that the VPS is clean (it stops and
   explains instead of deleting anything), creates the DNS record, installs
-  `bethstudio-proxy` (embedded in the Studio, SHA-256 checked) and Caddy
-  (automatic HTTPS, HTTP→HTTPS, WebSocket), turns on the firewall (SSH,
-  80, 443) and security updates, pairs this Studio by itself, tests
+  `bethstudio-proxy` (embedded in the Studio, SHA-256 checked) as the only
+  program on the server (it serves HTTPS itself, with an automatic Let's
+  Encrypt certificate, HTTP→HTTPS and WebSocket, as an unprivileged user;
+  no Caddy), turns on the firewall (SSH, 80, 443) and security updates, pairs this Studio by itself, tests
   everything end to end and shows a QR code. It can be rerun after a
   failure without duplicating anything, and offers update, state/logs,
   change phone password and remove (only the DNS records it created).

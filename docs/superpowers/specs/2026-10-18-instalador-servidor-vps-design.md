@@ -1,5 +1,8 @@
 # Assistente "Instalar servidor" (VPS limpo + Caddy + Cloudflare)
 
+> **Revisão de 2026-10-18 (decisão do dono): o Caddy saiu.** Este documento nasceu com o Caddy como proxy HTTPS. O Rodrigo decidiu que **nenhum programa adicional** deve viver no servidor: o próprio `bethstudio-proxy` passou a atender HTTPS (modo `-tls`, `autocert`, Let's Encrypt automático, 443 e 80, sem root, `CAP_NET_BIND_SERVICE`), e o assistente instala só o binário, a unit systemd e o firewall. Onde o texto abaixo fala em Caddy, repositório apt, chave GPG, Caddyfile, "Caddy alheio" ou porta 8787, leia como **removido**. Mudanças: (1) passos novos "usuário de serviço `bethstudio`" e "esperar o certificado" (o assistente confere por SSH se o arquivo `/var/lib/bethstudio-proxy/certs/<domínio>` existe; o proxy pede o certificado ao subir, sem esperar visitante) antes do teste de ponta a ponta; (2) a nuvem laranja da Cloudflare **não é mais oferecida**: o desafio TLS-ALPN-01 não atravessa o proxy da Cloudflare (ela termina o TLS) e o HTTP-01 depende de ajustes da zona fora do controle do assistente (*Always Use HTTPS*, WAF); a documentação oficial da Cloudflare não garante esse caminho; (3) Remover apaga também os certificados e o usuário `bethstudio`; (4) o serviço deste modo **não** roda como root (o modo `-listen` antigo continua igual). Detalhes e roteiro: `bethstudio-web/docs/INSTALADOR-VPS-teste-manual.md`.
+
+
 Data: 2026-10-18. Estado: **proposta implementada** (plano em `docs/superpowers/plans/2026-10-18-instalador-servidor-vps.md`). Roteiro de teste real: `bethstudio-web/docs/INSTALADOR-VPS-teste-manual.md`.
 
 ## 1. Problema
@@ -38,4 +41,4 @@ Desfazer: para e remove o serviço e o binário, troca o Caddyfile por um inerte
 
 - Não foi possível testar contra VPS, Cloudflare nem Let's Encrypt reais (ver roteiro manual).
 - A chave GPG do Caddy é baixada por HTTPS do Cloudsmith, como a doc oficial manda; não há fingerprint fixo no assistente.
-- O serviço `bethstudio-proxy` continua rodando como root (a unit existente não muda; modo antigo preservado).
+- (Revisado) No modo `-tls` o serviço roda como `bethstudio`, não root; o modo `-listen` antigo continua como root, sem mudança.
