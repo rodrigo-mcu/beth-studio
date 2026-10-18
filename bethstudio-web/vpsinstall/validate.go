@@ -1,5 +1,5 @@
-// Package vpsinstall instala o bethstudio-proxy num VPS Linux limpo (com Caddy
-// e DNS na Cloudflare). Nada aqui grava segredo em disco nem em log.
+// Package vpsinstall instala o bethstudio-proxy num VPS Linux limpo (que atende HTTPS
+// sozinho, sem Caddy) com DNS na Cloudflare. Nada aqui grava segredo em disco nem em log.
 package vpsinstall
 
 import (

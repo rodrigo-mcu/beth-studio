@@ -123,7 +123,7 @@ func TestVPSPlanoEZonas(t *testing.T) {
 	withVPSStores(t)
 	srv := &server{hub: newHub(false)}
 	rec := vpsPost(srv, "/api/vps/plan", map[string]any{"domain": "a.exemplo.com", "port": 2222, "unattended": true})
-	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "reverse_proxy 127.0.0.1:8787") {
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "-tls -domain") {
 		t.Fatalf("%d %s", rec.Code, rec.Body.String())
 	}
 

@@ -92,8 +92,6 @@ type Preflight struct {
 	Problems    []string
 	ProxySHA    string
 	SSHPorts    []int
-	CaddyOurs   bool // Caddy instalado ou configurado por este assistente
-	CaddyExists bool
 }
 
 func (p Preflight) OK() bool { return len(p.Problems) == 0 }
@@ -143,15 +141,12 @@ func (s *session) Check(ctx context.Context) (Preflight, error) {
 	}
 	listeners := ParseListeners(ports.Stdout)
 
-	state, err := s.r.Run(ctx, cmdCaddyState, "")
+	home, err := s.r.Run(ctx, cmdUserHome, "")
 	if err != nil {
 		return pf, err
 	}
-	pf.CaddyExists = strings.Contains(state.Stdout, "caddy=1")
-	ours := strings.Contains(state.Stdout, "ours=1") || strings.Contains(state.Stdout, "marker=1")
-	pf.CaddyOurs = ours
-	if pf.CaddyExists && !ours {
-		pf.Problems = append(pf.Problems, "Já existe um Caddy neste servidor que não foi instalado por este assistente. Ele não será tocado: use um servidor limpo.")
+	if h := strings.TrimSpace(home.Stdout); h != "" && h != ProxyData {
+		pf.Problems = append(pf.Problems, fmt.Sprintf("Já existe um usuário %s neste servidor que não é deste assistente (pasta pessoal %s). Use um servidor limpo.", ProxyUser, h))
 	}
 
 	seen := map[string]bool{}
@@ -159,18 +154,12 @@ func (s *session) Check(ctx context.Context) (Preflight, error) {
 		if l.Proc == "sshd" || l.Proc == "ssh" {
 			pf.SSHPorts = append(pf.SSHPorts, l.Port)
 		}
-		var allowed string
 		switch l.Port {
 		case 80, 443:
-			if l.Proc == "caddy" && ours {
-				continue
-			}
-			allowed = "web"
-		case 8787:
+			// uma instalação anterior deste assistente (reinstalar/atualizar) pode estar de pé
 			if l.Proc == "bethstudio-proxy" {
 				continue
 			}
-			allowed = "proxy"
 		default:
 			continue
 		}
@@ -186,22 +175,18 @@ func (s *session) Check(ctx context.Context) (Preflight, error) {
 		if l.Proc == "docker-proxy" {
 			who = "o Docker (docker-proxy)"
 		}
-		if allowed == "web" {
-			pf.Problems = append(pf.Problems, fmt.Sprintf("A porta %d já está em uso por %s. O assistente só instala em servidor limpo e não remove nada: libere a porta você mesmo ou use outro servidor.", l.Port, who))
-		} else {
-			pf.Problems = append(pf.Problems, fmt.Sprintf("A porta 8787 (usada pelo bethstudio-proxy) já está em uso por %s.", who))
-		}
+		pf.Problems = append(pf.Problems, fmt.Sprintf("A porta %d já está em uso por %s. O bethstudio-proxy atende HTTPS sozinho e precisa das portas 80 e 443. O assistente só instala em servidor limpo e não remove nada: libere a porta você mesmo ou use outro servidor.", l.Port, who))
 	}
 
 	svc, err := s.r.Run(ctx, cmdServices, "")
 	if err != nil {
 		return pf, err
 	}
-	names := []string{"nginx", "apache2", "httpd", "lighttpd", "haproxy"}
+	names := []string{"nginx", "apache2", "httpd", "lighttpd", "haproxy", "caddy"}
 	lines := strings.Fields(svc.Stdout)
 	for i, st := range lines {
 		if i < len(names) && st == "active" {
-			pf.Problems = append(pf.Problems, fmt.Sprintf("O serviço %s está ativo. Este assistente instala o Caddy como único proxy HTTPS e não mexe em outros servidores web.", names[i]))
+			pf.Problems = append(pf.Problems, fmt.Sprintf("O serviço %s está ativo. O bethstudio-proxy atende HTTPS sozinho nas portas 80 e 443 e este assistente não mexe em outros servidores web: use um servidor limpo.", names[i]))
 		}
 	}
 

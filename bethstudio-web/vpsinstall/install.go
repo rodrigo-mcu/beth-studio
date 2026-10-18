@@ -121,6 +121,9 @@ func (p Params) ValidateInstall(phoneConfigured bool) error {
 	if err := ValidateDomain(p.Domain); err != nil {
 		return err
 	}
+	if p.Proxied {
+		return errors.New("a nuvem laranja da Cloudflare não é suportada: o servidor obtém o certificado sozinho (Let's Encrypt) e a Cloudflare no meio atrapalha o desafio. Use \"somente DNS\" (nuvem cinza)")
+	}
 	if !DomainInZone(p.Domain, p.ZoneName) {
 		return errors.New("o domínio precisa ser a zona escolhida ou um subdomínio dela")
 	}
@@ -294,7 +297,7 @@ func (r *runner) install(ctx context.Context, p Params) (*Outcome, error) {
 		return nil, &StepError{Step: "preflight", Msg: "O servidor não está pronto: " + strings.Join(pf.Problems, " "),
 			Hint: "Nada foi alterado no servidor. Corrija o que foi dito, ou use um VPS recém-criado."}
 	}
-	r.ev("preflight", "ok", fmt.Sprintf("%s, %s, acesso %s. Portas 80 e 443 livres.", pf.OS, pf.Arch, sudoText(pf.Sudo)), "")
+	r.ev("preflight", "ok", fmt.Sprintf("%s, %s, acesso %s. Portas 80 e 443 livres, nenhum outro servidor web.", pf.OS, pf.Arch, sudoText(pf.Sudo)), "")
 
 	// 3. DNS
 	rec, err := r.dns(ctx, p)
@@ -302,7 +305,7 @@ func (r *runner) install(ctx context.Context, p Params) (*Outcome, error) {
 		return nil, err
 	}
 
-	// 4a. Programa do proxy
+	// 4a. Usuário de serviço e programa do proxy
 	data, sha, err := d.Bins.Get(pf.Arch)
 	if err != nil {
 		return nil, &StepError{Step: "proxy", Msg: err.Error()}
@@ -310,15 +313,11 @@ func (r *runner) install(ctx context.Context, p Params) (*Outcome, error) {
 	if err := r.proxy(ctx, s, p, pf, data, sha); err != nil {
 		return nil, err
 	}
-	// 4b. Caddy
-	if err := r.caddy(ctx, s, p, pf); err != nil {
-		return nil, err
-	}
-	// 4c. Firewall
+	// 4b. Firewall
 	if err := r.firewall(ctx, s, p, pf); err != nil {
 		return nil, err
 	}
-	// 4d. Atualizações automáticas
+	// 4c. Atualizações automáticas
 	if p.Unattended {
 		r.ev("upgrades", "running", "Ligando as atualizações de segurança automáticas (sem reiniciar sozinho)…", "")
 		if _, err := s.must(ctx, "upgrades", "Instalar unattended-upgrades", cmdUnattended()); err != nil {
@@ -342,7 +341,10 @@ func (r *runner) install(ctx context.Context, p Params) (*Outcome, error) {
 	if err := r.pair(ctx, s, p); err != nil {
 		return nil, err
 	}
-	// 6. Teste
+	// 6. Certificado e teste
+	if err := r.cert(ctx, s, p); err != nil {
+		return nil, err
+	}
 	state, detail, err := r.verify(ctx, p, rec)
 	if err != nil {
 		return nil, err
@@ -410,6 +412,9 @@ func (r *runner) dns(ctx context.Context, p Params) ([]string, error) {
 
 func (r *runner) proxy(ctx context.Context, s *session, p Params, pf Preflight, data []byte, sha string) error {
 	r.ev("proxy", "running", "Instalando o bethstudio-proxy…", "")
+	if _, err := s.must(ctx, "proxy", "Criar o usuário de serviço "+ProxyUser, cmdCreateUser()); err != nil {
+		return err
+	}
 	if pf.ProxySHA == sha {
 		r.ev("proxy", "info", "O programa do servidor já é esta versão; só reconfigurando o serviço.", "")
 	} else {
@@ -432,35 +437,35 @@ func (r *runner) proxy(ctx context.Context, s *session, p Params, pf Preflight, 
 	if _, err := s.must(ctx, "proxy", "Criar e iniciar o serviço bethstudio-proxy", cmdProxyService(p.Domain)); err != nil {
 		return err
 	}
-	r.ev("proxy", "ok", "Serviço bethstudio-proxy instalado e ativo (escuta só em "+ProxyListen+").", "")
+	r.ev("proxy", "ok", "Serviço bethstudio-proxy instalado e ativo: HTTPS nas portas 80 e 443, como o usuário "+ProxyUser+" (não root).", "")
 	return nil
 }
 
-func (r *runner) caddy(ctx context.Context, s *session, p Params, pf Preflight) error {
-	r.ev("caddy", "running", "Instalando e configurando o Caddy (HTTPS automático)…", "")
-	if pf.CaddyExists {
-		r.ev("caddy", "info", "O Caddy já foi instalado por este assistente; só atualizando a configuração.", "")
-	} else {
-		if _, err := s.must(ctx, "caddy", "Preparar o apt", cmdPrereqs()); err != nil {
-			return err
+// cert espera o certificado Let's Encrypt sair. O proxy o pede sozinho ao
+// subir e guarda no cache em disco; o assistente só confere, por SSH, se o
+// arquivo já existe. Não precisa de endpoint novo nem de segredo.
+func (r *runner) cert(ctx context.Context, s *session, p Params) error {
+	d := r.d
+	r.ev("cert", "running", "Esperando o certificado HTTPS (Let's Encrypt) de "+p.Domain+"…", "")
+	for i := 0; i < d.tries(); i++ {
+		res, err := s.priv(ctx, cmdCertReady(p.Domain))
+		if err == nil && res.Code == 0 && strings.Contains(res.Stdout, "ready") {
+			r.ev("cert", "ok", "Certificado emitido e guardado no servidor. A renovação é automática.", "")
+			return nil
 		}
-		if _, err := s.must(ctx, "caddy", "Instalar o Caddy", cmdInstallCaddy()); err != nil {
-			return err
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		d.sleep(d.interval())
+	}
+	hint := "O servidor não registrou o certificado."
+	if res, err := s.priv(ctx, cmdProxyLogsShort()); err == nil {
+		if t := strings.TrimSpace(res.Stdout); t != "" {
+			hint = "Últimas linhas do serviço:\n" + s.secrets.Clean(t)
 		}
 	}
-	path, err := s.r.Upload(ctx, uploadName("caddyfile"), []byte(Caddyfile(p.Domain)), 0o644)
-	if err != nil {
-		return &StepError{Step: "caddy", Msg: err.Error()}
-	}
-	defer s.r.Run(ctx, "rm -f "+shQuote(path), "")
-	if _, err := s.must(ctx, "caddy", "Validar a configuração do Caddy", cmdValidateCaddy(path)); err != nil {
-		return err
-	}
-	if _, err := s.must(ctx, "caddy", "Aplicar a configuração do Caddy", cmdApplyCaddyfile(path)); err != nil {
-		return err
-	}
-	r.ev("caddy", "ok", "Caddy ativo para "+p.Domain+" (certificado Let's Encrypt automático, HTTP→HTTPS, WebSocket).", "")
-	return nil
+	return &StepError{Step: "cert", Msg: "O certificado ainda não saiu",
+		Hint: hint + "\nConfira: o nome " + p.Domain + " aponta para este servidor (DNS, sem a nuvem laranja) e as portas 80 e 443 estão abertas no firewall do provedor. O serviço tenta de novo sozinho; rode o assistente de novo para refazer o teste."}
 }
 
 func (r *runner) firewall(ctx context.Context, s *session, p Params, pf Preflight) error {
@@ -539,10 +544,7 @@ func (r *runner) verify(ctx context.Context, p Params, _ []string) (string, stri
 		d.sleep(d.interval())
 	}
 	if herr != nil || !(status < 500 || status == 503) {
-		hint := "O Caddy leva alguns segundos para obter o certificado. Rode de novo para refazer o teste; veja \"Ver estado e logs\"."
-		if p.Proxied {
-			hint = "Com a nuvem laranja a zona precisa estar em SSL/TLS → Full (strict) na Cloudflare (em Flexible dá laço de redirecionamento). Ou refaça com \"somente DNS\"."
-		}
+		hint := "O certificado já saiu no servidor, mas este PC ainda não vê o HTTPS válido. Confira o DNS e rode de novo para refazer o teste; veja \"Ver estado e logs\"."
 		msg := "HTTPS ainda não responde direito"
 		if herr != nil {
 			msg += ": " + herr.Error()
@@ -668,8 +670,8 @@ func Status(ctx context.Context, d Deps, p Params, logs bool, emit Emit) (string
 	return out, nil
 }
 
-// Remove desfaz a instalação: serviço, dados do proxy, configuração do Caddy
-// (se for a do assistente) e os registros DNS que o assistente criou.
+// Remove desfaz a instalação: serviço, programa, dados do proxy (certificados
+// incluídos), usuário de serviço e os registros DNS que o assistente criou.
 func Remove(ctx context.Context, d Deps, p Params, emit Emit) error {
 	r := &runner{d: d, emit: emit, red: NewRedactor(p.Secrets()...)}
 	if err := r.remove(ctx, p); err != nil {
@@ -684,11 +686,11 @@ func (r *runner) remove(ctx context.Context, p Params) error {
 		return err
 	}
 	defer s.r.Close()
-	r.ev("remove", "running", "Removendo o serviço, o programa e a configuração do Caddy do Beth…", "")
+	r.ev("remove", "running", "Removendo o serviço, o programa, os dados e o usuário de serviço do Beth…", "")
 	if _, err := s.must(ctx, "remove", "Remover do servidor", cmdRemove()); err != nil {
 		return err
 	}
-	r.ev("remove", "ok", "Servidor limpo do Beth. O Caddy, o ufw e os pacotes continuam instalados (não apago pacotes).", "")
+	r.ev("remove", "ok", "Servidor limpo do Beth. O ufw e os pacotes continuam instalados e as portas abertas continuam abertas (não apago pacotes nem mexo no firewall).", "")
 	if strings.TrimSpace(p.CFToken) != "" {
 		r.ev("dns", "running", "Removendo os registros DNS criados pelo assistente…", "")
 		api := r.d.CF(p.CFToken)
@@ -724,18 +726,13 @@ type PlanStep struct {
 func Plan(p Params) []PlanStep {
 	domain := NormalizeDomain(p.Domain)
 	dnsMode := "somente DNS (nuvem cinza)"
-	if p.Proxied {
-		dnsMode = "com proxy da Cloudflare (nuvem laranja; exige SSL/TLS Full strict na zona)"
-	}
 	steps := []PlanStep{
 		{ID: "connect", Title: "Conectar por SSH", Detail: "Confere que a impressão digital é a que você confirmou. Nada é aceito às cegas."},
-		{ID: "preflight", Title: "Verificar o servidor (só leitura)", Detail: "Debian 11/12/13 ou Ubuntu 22.04/24.04/26.04, amd64 ou arm64, systemd, root ou sudo, portas 80/443 livres, sem nginx/apache/Caddy alheio. Se algo não servir, para e explica; não apaga nada.",
+		{ID: "preflight", Title: "Verificar o servidor (só leitura)", Detail: "Debian 11/12/13 ou Ubuntu 22.04/24.04/26.04, amd64 ou arm64, systemd, root ou sudo, portas 80/443 livres, sem nginx/apache/Caddy/Docker no meio. Se algo não servir, para e explica; não apaga nada.",
 			Commands: []string{cmdOSRelease, cmdArch, cmdPorts, cmdServices}},
-		{ID: "dns", Title: "Cloudflare: registro DNS", Detail: "Cria ou atualiza " + domain + " (A, e AAAA se o servidor tiver IPv6) " + dnsMode + ". Só mexe em registros marcados com \"" + WizardComment + "\"."},
-		{ID: "proxy", Title: "Instalar o bethstudio-proxy", Detail: "Envia o programa embutido neste Studio por SFTP, confere o SHA-256 no servidor e cria o serviço systemd (escuta só em " + ProxyListen + ").",
-			Commands: []string{cmdVerifySHA("<sha256>", "<arquivo enviado>"), cmdStopProxy(), cmdInstallProxyBin("<arquivo enviado>"), cmdProxyService(domain)}},
-		{ID: "caddy", Title: "Instalar o Caddy (HTTPS automático)", Detail: "Do repositório oficial do Caddy (apt). Certificado Let's Encrypt, redirecionamento HTTP→HTTPS, WebSocket e cabeçalhos HSTS/nosniff.",
-			Commands: []string{cmdPrereqs(), cmdInstallCaddy(), cmdValidateCaddy("<Caddyfile enviado>"), cmdApplyCaddyfile("<Caddyfile enviado>"), "Caddyfile:\n" + Caddyfile(domain)}},
+		{ID: "dns", Title: "Cloudflare: registro DNS", Detail: "Cria ou atualiza " + domain + " (A, e AAAA se o servidor tiver IPv6) " + dnsMode + " (a nuvem laranja não é usada: atrapalharia o certificado). Só mexe em registros marcados com \"" + WizardComment + "\"."},
+		{ID: "proxy", Title: "Instalar o bethstudio-proxy", Detail: "Cria o usuário de serviço " + ProxyUser + " (sem shell), envia o programa embutido neste Studio por SFTP, confere o SHA-256 no servidor e cria o serviço systemd. O programa atende HTTPS sozinho nas portas 80 e 443, sem root (só a permissão de abrir essas portas). Nenhum outro programa é instalado no servidor.",
+			Commands: []string{cmdCreateUser(), cmdVerifySHA("<sha256>", "<arquivo enviado>"), cmdStopProxy(), cmdInstallProxyBin("<arquivo enviado>"), cmdProxyService(domain)}},
 		{ID: "firewall", Title: "Firewall (ufw)", Detail: "Libera a porta do SSH antes de ligar, depois 80 e 443. O resto fica fechado.",
 			Commands: []string{cmdFirewall([]int{p.Port})}},
 	}
@@ -743,8 +740,9 @@ func Plan(p Params) []PlanStep {
 		steps = append(steps, PlanStep{ID: "upgrades", Title: "Atualizações de segurança automáticas", Detail: "unattended-upgrades, sem reiniciar sozinho.", Commands: []string{cmdUnattended()}})
 	}
 	steps = append(steps,
+		PlanStep{ID: "cert", Title: "Esperar o certificado HTTPS", Detail: "O serviço pede o certificado à Let's Encrypt sozinho (desafio nas portas 80/443) e o guarda em " + ProxyData + "/certs. O assistente só confere se o arquivo apareceu.", Commands: []string{cmdCertReady(domain)}},
 		PlanStep{ID: "pair", Title: "Parear este Studio", Detail: "Lê o segredo da ligação do servidor e salva neste Studio (cofre do Windows). O segredo nunca aparece na tela nem em log.", Commands: []string{cmdLinkSec}},
-		PlanStep{ID: "verify", Title: "Teste de ponta a ponta", Detail: "DNS resolve, HTTPS com certificado válido, o proxy responde e a ligação PC↔servidor sobe."},
+		PlanStep{ID: "verify", Title: "Teste de ponta a ponta", Detail: "DNS resolve, HTTPS com certificado válido visto deste PC, o proxy responde e a ligação PC↔servidor sobe."},
 	)
 	return steps
 }

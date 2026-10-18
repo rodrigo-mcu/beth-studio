@@ -20,7 +20,7 @@ const (
 )
 
 // fakeVPS simula um servidor Debian/Ubuntu: responde aos comandos fixos do
-// assistente e mantém o estado (proxy instalado, Caddy instalado…).
+// assistente e mantém o estado (proxy instalado e de pé, usuário, certificado…).
 type fakeVPS struct {
 	mu           sync.Mutex
 	osrel        string
@@ -30,9 +30,12 @@ type fakeVPS struct {
 	sudoPass     string
 	ports        []string // linhas extras do ss
 	services     string
-	caddyForeign bool
 	proxySHA     string
-	caddyInst    bool
+	proxyUp      bool   // serviço rodando (escuta 80 e 443)
+	userHome     string // pasta pessoal do usuário bethstudio ("" = não existe)
+	certAfter    int    // quantas consultas dizem "waiting" antes do certificado sair
+	certNever    bool   // o certificado nunca sai
+	certPolls    int
 	failOn       string // substring: o próximo comando que a contiver falha (uma vez)
 	failErr      string
 	cmds         []string
@@ -47,7 +50,7 @@ func newFakeVPS() *fakeVPS {
 		osrel:    "NAME=\"Ubuntu\"\nID=ubuntu\nVERSION_ID=\"24.04\"\n",
 		uname:    "x86_64\n",
 		uid:      "0\n",
-		services: "inactive\ninactive\ninactive\ninactive\ninactive\n",
+		services: "inactive\ninactive\ninactive\ninactive\ninactive\ninactive\n",
 		uploads:  map[string][]byte{},
 		sshdPort: 22,
 	}
@@ -60,11 +63,8 @@ func (f *fakeVPS) listeners() string {
 	for _, p := range f.ports {
 		b.WriteString(p + "\n")
 	}
-	if f.proxySHA != "" {
-		b.WriteString("LISTEN 0 4096 127.0.0.1:8787 0.0.0.0:* users:((\"bethstudio-proxy\",pid=9,fd=3))\n")
-	}
-	if f.caddyInst {
-		b.WriteString("LISTEN 0 4096 *:80 *:* users:((\"caddy\",pid=7,fd=3))\nLISTEN 0 4096 *:443 *:* users:((\"caddy\",pid=7,fd=4))\n")
+	if f.proxyUp {
+		b.WriteString("LISTEN 0 4096 *:80 *:* users:((\"bethstudio-proxy\",pid=9,fd=3))\nLISTEN 0 4096 *:443 *:* users:((\"bethstudio-proxy\",pid=9,fd=4))\n")
 	}
 	return b.String()
 }
@@ -103,26 +103,34 @@ func (f *fakeVPS) Run(_ context.Context, cmd string, stdin string) (Result, erro
 		return ok(f.listeners())
 	case has("systemctl is-active nginx"):
 		return ok(f.services)
-	case has("caddy=$v"):
-		switch {
-		case f.caddyForeign:
-			return ok("caddy=1 ours=0 marker=0\n")
-		case f.caddyInst:
-			return ok("caddy=1 ours=0 marker=1\n")
-		}
-		return ok("caddy=0 ours=0 marker=0\n")
+	case cmd == cmdUserHome:
+		return ok(f.userHome + "\n")
 	case has("sha256sum " + ProxyBin):
 		return ok(f.proxySHA + "\n")
 	case has("sha256sum -c -"):
 		return ok("ok\n")
 	case has("install -m 0755"):
 		f.proxySHA = f.lastSHA
-	case has("install -y -qq caddy"):
-		f.caddyInst = true
+	case has("useradd --system"):
+		if f.userHome == "" {
+			f.userHome = ProxyData
+		}
+	case has("-tls -domain"):
+		f.proxyUp = true
+	case has("[ -s "):
+		f.certPolls++
+		if f.certNever || f.certPolls <= f.certAfter {
+			return ok("waiting\n")
+		}
+		return ok("ready\n")
+	case has("journalctl -u bethstudio-proxy"):
+		return ok("bethstudio-proxy[9]: certificado de agentes.exemplo.com ainda não saiu: acme: authorization error (dns)\n")
 	case has("link-secret"):
 		return ok(testLinkSec + "\n")
 	case has("rm -rf " + ProxyData):
 		f.proxySHA = ""
+		f.proxyUp = false
+		f.userHome = ""
 	}
 	return ok("")
 }
@@ -282,7 +290,7 @@ func TestInstallCaminhoFeliz(t *testing.T) {
 	if out.URL != "https://agentes.exemplo.com" || !strings.HasPrefix(out.QR, "data:image/png;base64,") || out.Link != "up" {
 		t.Fatalf("%+v", out)
 	}
-	for _, s := range []string{"connect", "preflight", "dns", "proxy", "caddy", "firewall", "upgrades", "pair", "verify"} {
+	for _, s := range []string{"connect", "preflight", "dns", "proxy", "firewall", "upgrades", "cert", "pair", "verify"} {
 		if !h.stepStatus(s, "ok") {
 			t.Errorf("passo %s sem ok:\n%s", s, h.allText())
 		}
@@ -293,8 +301,32 @@ func TestInstallCaminhoFeliz(t *testing.T) {
 	if h.studio.domain != "agentes.exemplo.com" || h.studio.secret != testLinkSec || h.studio.password != testPhonePass {
 		t.Fatalf("pareamento: %+v", h.studio)
 	}
-	if string(h.vps.uploads[uploadName("caddyfile")]) != Caddyfile("agentes.exemplo.com") {
-		t.Fatal("Caddyfile enviado diferente do esperado")
+	// nada de Caddy, apt extra nem chave GPG: só o binário do proxy foi enviado
+	if len(h.vps.uploads) != 1 || h.vps.uploads[uploadName("proxy")] == nil {
+		t.Fatalf("uploads: %v", h.vps.uploads)
+	}
+	for _, c := range h.vps.cmds {
+		if c == cmdServices {
+			continue // só leitura: confere se há outro servidor web ativo
+		}
+		for _, bad := range []string{"caddy", "Caddy", "apt-get update", "gpg", "sources.list.d", "keyrings", "curl "} {
+			if strings.Contains(c, bad) {
+				t.Fatalf("comando com %q: %s", bad, c)
+			}
+		}
+	}
+	// usuário de serviço antes do binário; unit em modo TLS; cert esperado depois do firewall
+	if iu, ib, is := h.vps.index("useradd --system"), h.vps.index("install -m 0755"), h.vps.index("-tls -domain agentes.exemplo.com"); iu < 0 || iu > ib || ib > is {
+		t.Fatalf("ordem usuário/binário/serviço: %d %d %d", iu, ib, is)
+	}
+	if !h.vps.ran("-data " + ProxyData + " -service") || h.vps.ran("-listen") {
+		t.Fatal("o serviço precisa subir em modo -tls, sem -listen")
+	}
+	if h.vps.index("ufw --force enable") > h.vps.index("[ -s ") || h.vps.index("[ -s ") < 0 {
+		t.Fatal("o certificado só é esperado com o firewall pronto")
+	}
+	if !h.vps.ran("ufw allow 80/tcp") || !h.vps.ran("ufw allow 443/tcp") || h.vps.ran("8787") {
+		t.Fatal("portas")
 	}
 	// firewall: libera o SSH antes de ligar
 	var fw string
@@ -340,7 +372,7 @@ func TestInstallServidorSujoPorta80(t *testing.T) {
 func TestInstallDockerProxyEServicoWeb(t *testing.T) {
 	h := newHarness(t)
 	h.vps.ports = []string{"LISTEN 0 4096 *:443 *:* users:((\"docker-proxy\",pid=5,fd=6))"}
-	h.vps.services = "active\ninactive\ninactive\ninactive\ninactive\n"
+	h.vps.services = "active\ninactive\ninactive\ninactive\ninactive\ninactive\n"
 	_, err := h.install()
 	if err == nil || !strings.Contains(err.Error(), "Docker") || !strings.Contains(err.Error(), "nginx") {
 		t.Fatalf("%v", err)
@@ -366,24 +398,99 @@ func TestInstallDistroNaoSuportada(t *testing.T) {
 	}
 }
 
-func TestInstallCaddyAlheio(t *testing.T) {
+func TestInstallRecusaQualquerServidorWebNoLugar(t *testing.T) {
+	// um Caddy (ou qualquer outro) já ocupando 80/443 é só mais um programa na porta: o servidor não está limpo
 	h := newHarness(t)
-	h.vps.caddyForeign = true
+	h.vps.ports = []string{"LISTEN 0 4096 *:80 *:* users:((\"caddy\",pid=7,fd=3))", "LISTEN 0 4096 *:443 *:* users:((\"caddy\",pid=7,fd=4))"}
+	h.vps.services = "inactive\ninactive\ninactive\ninactive\ninactive\nactive\n"
 	_, err := h.install()
-	if err == nil || !strings.Contains(err.Error(), "Caddy") || h.vps.ran("apt-get") {
+	if err == nil || !strings.Contains(err.Error(), "porta 80") || !strings.Contains(err.Error(), "caddy") || h.vps.ran("apt-get") || h.vps.ran("useradd") {
 		t.Fatalf("%v", err)
+	}
+}
+
+func TestInstallUsuarioBethstudioAlheio(t *testing.T) {
+	h := newHarness(t)
+	h.vps.userHome = "/home/bethstudio"
+	_, err := h.install()
+	if err == nil || !strings.Contains(err.Error(), "usuário bethstudio") || h.vps.ran("useradd") || h.vps.ran("install -m") {
+		t.Fatalf("%v", err)
+	}
+}
+
+func TestInstallNuvemLaranjaRecusada(t *testing.T) {
+	h := newHarness(t)
+	h.params.Proxied = true
+	_, err := h.install()
+	if err == nil || !strings.Contains(err.Error(), "nuvem laranja") {
+		t.Fatalf("%v", err)
+	}
+	if len(h.vps.cmds) != 0 || len(h.cf.records) != 0 {
+		t.Fatal("nada deveria ter sido feito")
+	}
+}
+
+func TestInstallEsperaCertificadoDemorado(t *testing.T) {
+	h := newHarness(t)
+	h.vps.certAfter = 1
+	h.deps.Tries = 3
+	if _, err := h.install(); err != nil {
+		t.Fatalf("%v\n%s", err, h.allText())
+	}
+	if h.vps.certPolls != 2 {
+		t.Fatalf("consultas ao cache: %d", h.vps.certPolls)
+	}
+}
+
+func TestInstallCertificadoNaoSai(t *testing.T) {
+	h := newHarness(t)
+	h.vps.certNever = true
+	_, err := h.install()
+	var se *StepError
+	if !errors.As(err, &se) || se.Step != "cert" || !strings.Contains(se.Hint, "acme: authorization error") || !strings.Contains(se.Hint, "80 e 443") {
+		t.Fatalf("%v", err)
+	}
+	if h.stepStatus("verify", "running") {
+		t.Fatal("não deveria chegar ao teste final")
+	}
+	h.noSecrets()
+	// o estado local já existe: Remover funciona mesmo com a falha
+	if sv, _ := h.deps.Store.Load(); sv == nil {
+		t.Fatal("estado não salvo")
+	}
+}
+
+func TestInstallIdempotente(t *testing.T) {
+	h := newHarness(t)
+	if _, err := h.install(); err != nil {
+		t.Fatal(err)
+	}
+	h.events = nil
+	h.vps.cmds = nil
+	h.vps.uploads = map[string][]byte{}
+	if _, err := h.install(); err != nil {
+		t.Fatalf("segunda rodada (80/443 ocupadas pelo nosso proxy): %v\n%s", err, h.allText())
+	}
+	if len(h.cf.records) != 1 {
+		t.Fatalf("DNS duplicado: %+v", h.cf.records)
+	}
+	if len(h.vps.uploads) != 0 {
+		t.Fatal("o binário igual não precisa ser reenviado")
+	}
+	if !strings.Contains(h.allText(), "já é esta versão") {
+		t.Fatal(h.allText())
 	}
 }
 
 func TestInstallFalhaNoMeioERetomada(t *testing.T) {
 	h := newHarness(t)
-	h.vps.failOn = "caddy validate"
-	h.vps.failErr = "Error: parsing caddyfile"
+	h.vps.failOn = "-tls -domain"
+	h.vps.failErr = "Error: unit inválida"
 	_, err := h.install()
-	if err == nil || !strings.Contains(err.Error(), "Validar a configuração do Caddy") {
+	if err == nil || !strings.Contains(err.Error(), "Criar e iniciar o serviço bethstudio-proxy") {
 		t.Fatalf("%v", err)
 	}
-	if !h.stepStatus("caddy", "error") {
+	if !h.stepStatus("proxy", "error") {
 		t.Fatal(h.allText())
 	}
 	if len(h.cf.records) != 1 {
@@ -399,18 +506,8 @@ func TestInstallFalhaNoMeioERetomada(t *testing.T) {
 		t.Fatalf("DNS duplicado: %+v", h.cf.records)
 	}
 	txt := h.allText()
-	if !strings.Contains(txt, "já foi instalado por este assistente") || !strings.Contains(txt, "já é esta versão") {
+	if !strings.Contains(txt, "já é esta versão") {
 		t.Fatalf("a retomada deveria reaproveitar o que existe:\n%s", txt)
-	}
-	// o apt do Caddy rodou uma vez só
-	n := 0
-	for _, c := range h.vps.cmds {
-		if strings.Contains(c, "install -y -qq caddy") {
-			n++
-		}
-	}
-	if n != 1 {
-		t.Fatalf("Caddy instalado %d vezes", n)
 	}
 }
 
@@ -459,11 +556,11 @@ func TestInstallSudoComSenhaNaoVazaSegredos(t *testing.T) {
 	h.params.Password = testSSHPass
 	h.vps.uid = "1000\n"
 	h.vps.sudoPass = testSSHPass
-	h.vps.failOn = "install -y -qq caddy"
+	h.vps.failOn = "useradd --system"
 	h.vps.failErr = "E: falha, a senha " + testSSHPass + " apareceu na saída, token " + testToken
 	_, err := h.install()
 	if err == nil {
-		t.Fatal("deveria falhar no apt")
+		t.Fatal("deveria falhar ao criar o usuário")
 	}
 	if strings.Contains(err.Error(), testSSHPass) || strings.Contains(err.Error(), testToken) {
 		t.Fatalf("segredo no erro devolvido: %v", err)
@@ -522,15 +619,6 @@ func TestInstallTesteFinalFalha(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "HTTPS") {
 		t.Fatalf("%v", err)
 	}
-	h2 := newHarness(t)
-	h2.params.Proxied = true
-	h2.net = fakeNet{ips: []string{"104.16.0.1"}, err: errors.New("stopped after 10 redirects")}
-	h2.rebuild()
-	_, err = h2.install()
-	var se *StepError
-	if !errors.As(err, &se) || !strings.Contains(se.Hint, "Full (strict)") {
-		t.Fatalf("%v", err)
-	}
 	h3 := newHarness(t)
 	h3.studio.link = "down"
 	if _, err := h3.install(); err == nil || !strings.Contains(err.Error(), "ligação") {
@@ -550,8 +638,14 @@ func TestPlanNaoTemSegredos(t *testing.T) {
 			t.Fatalf("segredo no plano: %s", s)
 		}
 	}
-	if len(steps) < 8 || !strings.Contains(b.String(), "reverse_proxy 127.0.0.1:8787") {
+	txt := b.String()
+	if len(steps) < 8 || !strings.Contains(txt, "-tls -domain agentes.exemplo.com") || !strings.Contains(txt, "useradd --system") || !strings.Contains(txt, "certs") {
 		t.Fatalf("plano incompleto: %d", len(steps))
+	}
+	for _, bad := range []string{"reverse_proxy", "Caddyfile", "cloudsmith", "gpg"} {
+		if strings.Contains(txt, bad) {
+			t.Fatalf("o plano ainda fala em %q", bad)
+		}
 	}
 }
 
@@ -607,8 +701,11 @@ func TestUpdateStatusRemove(t *testing.T) {
 	if sv, _ := h.deps.Store.Load(); sv != nil {
 		t.Fatal("estado deveria ser apagado")
 	}
-	if h.vps.ran("apt-get remove") || h.vps.ran("apt-get purge") {
-		t.Fatal("não deve desinstalar pacotes")
+	if h.vps.ran("apt-get remove") || h.vps.ran("apt-get purge") || h.vps.ran("ufw delete") || h.vps.ran("ufw disable") {
+		t.Fatal("não deve desinstalar pacotes nem mexer no firewall")
+	}
+	if !h.vps.ran("userdel "+ProxyUser) || !h.vps.ran("rm -rf "+ProxyData) || h.vps.userHome != "" || h.vps.proxyUp {
+		t.Fatal("deveria remover usuário de serviço, dados (certificados) e serviço")
 	}
 	h.noSecrets()
 	// sem servidor salvo
