@@ -2,3 +2,7 @@
 /webui/dist/*
 !/webui/dist/.gitkeep
 web-settings.json
+
+# binarios do bethstudio-proxy embutidos pelo build (vpsinstall)
+/vpsinstall/bins/bethstudio-proxy-linux-*
+/vpsinstall/bins/SHA256SUMS
