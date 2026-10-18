@@ -72,6 +72,18 @@ func TestPairTokenExpires(t *testing.T) {
 	}
 }
 
+func TestNewLinkInvalidatesPrevious(t *testing.T) {
+	a, _ := newTestPhone(t)
+	first, _, _ := a.pairCreate()
+	second, _, _ := a.pairCreate()
+	if _, err := a.pairRedeem("1.1.1.1", "", first); err != errPairInvalid {
+		t.Fatalf("link antigo ainda vale: %v", err)
+	}
+	if _, err := a.pairRedeem("1.1.1.1", "", second); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestPairWrongToken(t *testing.T) {
 	a, _ := newTestPhone(t)
 	good, _, _ := a.pairCreate()
@@ -131,8 +143,8 @@ func TestPairRateLimit(t *testing.T) {
 func TestDevicesStoreOnlyHashes(t *testing.T) {
 	a, _ := newTestPhone(t)
 	pair, _, _ := a.pairCreate()
-	pending, _, _ := a.pairCreate()
 	sess, _ := a.pairRedeem("1.1.1.1", "", pair)
+	pending, _, _ := a.pairCreate()
 	b, err := os.ReadFile(filepath.Join(a.dir, phoneDevicesFile))
 	if err != nil {
 		t.Fatal(err)

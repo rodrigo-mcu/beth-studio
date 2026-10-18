@@ -24,7 +24,6 @@ import (
 // em si só existe no cookie do celular e no QR code por 5 minutos.
 const (
 	pairTTL         = 5 * time.Minute
-	pairMaxPending  = 5
 	deviceIdleMax   = 90 * 24 * time.Hour  // sem uso: a sessão expira
 	deviceAbsMax    = 365 * 24 * time.Hour // idade máxima da sessão
 	deviceTouchSave = 10 * time.Minute     // só grava o "último uso" de tempos em tempos
@@ -392,11 +391,8 @@ func (a *phoneAuth) pairCreate() (string, time.Time, error) {
 	}
 	exp := a.clock().Add(pairTTL)
 	a.mu.Lock()
-	a.prunePairsLocked()
-	a.pairs = append(a.pairs, pairEntry{Hash: hashToken(tok), Expires: exp})
-	if len(a.pairs) > pairMaxPending {
-		a.pairs = a.pairs[len(a.pairs)-pairMaxPending:]
-	}
+	// Um link por vez: gerar outro invalida o anterior.
+	a.pairs = []pairEntry{{Hash: hashToken(tok), Expires: exp}}
 	a.mu.Unlock()
 	a.saveDevices()
 	remoteLog("celular: link de pareamento gerado")
