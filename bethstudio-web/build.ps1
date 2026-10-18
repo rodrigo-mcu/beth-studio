@@ -67,6 +67,24 @@ try {
     if (-not (Test-Path (Join-Path $root 'voicesample\sample.wav'))) {
         Invoke-Checked 'makesample' { powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\makesample.ps1') }
     }
+    # bethstudio-proxy para Linux (amd64 e arm64), embutido no Studio pelo
+    # assistente "Instalar servidor" (vpsinstall\bins). O assistente confere o
+    # SHA-256 deste arquivo antes de usar e de novo no servidor, depois do envio.
+    $bins = Join-Path $root 'vpsinstall\bins'
+    New-Item -ItemType Directory -Force $bins | Out-Null
+    $sums = @()
+    foreach ($arch in 'amd64', 'arm64') {
+        $name = "bethstudio-proxy-linux-$arch"
+        $out = Join-Path $bins $name
+        $env:CGO_ENABLED = '0'; $env:GOOS = 'linux'; $env:GOARCH = $arch
+        try {
+            Invoke-Checked "go build proxy $arch" { go build -p $goP -trimpath -ldflags "-s -w" -o $out ./cmd/bethstudio-proxy }
+        } finally {
+            Remove-Item Env:\CGO_ENABLED, Env:\GOOS, Env:\GOARCH -ErrorAction SilentlyContinue
+        }
+        $sums += ('{0}  {1}' -f (Get-FileHash $out -Algorithm SHA256).Hash.ToLower(), $name)
+    }
+    [IO.File]::WriteAllText((Join-Path $bins 'SHA256SUMS'), (($sums -join "`n") + "`n"))
     Invoke-Checked 'go vet' { go vet -p $goP -unsafeptr=false ./... }
     Invoke-Checked 'go build' { go build -p $goP -trimpath -ldflags "-H windowsgui -s -w -X main.buildTime=$(Get-Date -Format s)$verFlag" -o bethstudio-web.exe . }
     # bethstudio-tool.exe: o mesmo pacote como programa de CONSOLE (sem
