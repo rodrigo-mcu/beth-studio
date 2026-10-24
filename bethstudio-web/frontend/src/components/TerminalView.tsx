@@ -1,4 +1,5 @@
 import { download, downloadName, isRemote } from "@/lib/remote";
+import { wheelGoesToApp } from "@/lib/termWheel";
 import { useCallback, useEffect, useRef, useState, type DragEvent as RDragEvent, type ReactNode } from "react";
 import { Terminal } from "@xterm/xterm";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
@@ -672,6 +673,12 @@ export function TerminalView({
     const onWheel = (e: WheelEvent) => {
       // Listas do painel Aparencia rolam normalmente.
       if ((e.target as Element | null)?.closest?.("[data-own-wheel]")) return;
+      // Programa em tela cheia com mouse ligado e sem historico: a roda e' dele.
+      // O xterm gera o relato de mouse; so' falta contar como entrada de verdade.
+      if (!e.ctrlKey && wheelGoesToApp({ tracking: trackingOn(), scrollback: cur.scrollback })) {
+        lastUserInput.current = Date.now();
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       // Ctrl + roda = tamanho da fonte deste terminal (no maximo ~8 passos/s).
