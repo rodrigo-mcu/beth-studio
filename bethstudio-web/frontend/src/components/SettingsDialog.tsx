@@ -17,6 +17,7 @@ import { PhoneDevicesSection } from "./PhoneDevicesSection";
 import { VpsInstallWizard } from "./VpsInstallWizard";
 import { RemoteStudioSection } from "./RemoteStudioSection";
 import { UpdateSection } from "./UpdateSection";
+import { PerformanceSection } from "./PerformanceSection";
 import { isRemote } from "@/lib/remote";
 
 export type SettingsSection = "aparencia" | "terminais" | "celular" | "voz" | "provedores" | "banco" | "uso" | "barra" | "sobre";
@@ -109,6 +110,7 @@ export function SettingsDialog(p: Props) {
             {sec === "terminais" && (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <TerminalsSection conn={p.conn} settings={p.settings} onMessage={p.onMessage} />
+                <PerformanceSection conn={p.conn} onMessage={p.onMessage} />
                 {!isRemote() && <WslInitSettings conn={p.conn} onMessage={p.onMessage} />}
                 <GeneralAppearance {...common} sections={["notify"]} />
               </div>

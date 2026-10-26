@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
-import { Loader2, Mic, Settings2, Square, X } from "lucide-react";
+import { Copy, History, Loader2, Mic, Send, Settings2, Square, Trash2, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { PaneInfo } from "@/lib/types";
 import { paneLabel } from "@/lib/panes";
@@ -20,6 +20,10 @@ import { LevelBar, MicPicker } from "./MicPicker";
 import { VoiceError, correctStreaming, correctTimeoutMs, errorRecovery, formatSeconds, formatUSD, transcribe, type VoiceErrorKind } from "@/lib/voicePipeline";
 import type { SettingsSection } from "./SettingsDialog";
 import { cn } from "@/lib/utils";
+import { copyText } from "@/lib/clipboard";
+import { SPEAK_HISTORY_KEY, addEntry, isEntryList, newEntryId, preview, removeEntry, updateEntry, type SpeakEntry } from "@/lib/speakHistory";
+
+const loadHistory = () => loadPref<SpeakEntry[]>(SPEAK_HISTORY_KEY, [], isEntryList);
 
 type Phase = "loading" | "privacy" | "recording" | "transcribing" | "correcting" | "review" | "error";
 
@@ -67,6 +71,11 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
   const [warn, setWarn] = useState<string | null>(null);
   const [cost, setCost] = useState<number | null>(null);
   const [overLimit, setOverLimit] = useState<string | null>(null);
+  const [history, setHistory] = useState<SpeakEntry[]>(loadHistory);
+  const [showHistory, setShowHistory] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [histNote, setHistNote] = useState("");
+  const entryId = useRef(""); // fala atual no histórico
   const [manualRetry, setManualRetry] = useState(false); // "Corrigir novamente": so' a correção, sem regravar
   const work = useRef<AbortController | null>(null); // transcricao/correcao em andamento
   const skipCorrection = useRef(false);
@@ -138,9 +147,17 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
     acRef.current = null;
   };
 
-  const send = (body: string, pOn: boolean, p: string) => {
+  /** Grava/atualiza o histórico (localStorage) e a lista na tela. */
+  const commit = (fn: (l: SpeakEntry[]) => SpeakEntry[]) => {
+    const next = fn(loadHistory());
+    savePref(SPEAK_HISTORY_KEY, next);
+    setHistory(next);
+  };
+
+  const send = (body: string, pOn: boolean, p: string, id = entryId.current) => {
     const msg = composeMessage(pOn, p, body);
     if (!msg.trim()) return;
+    if (id) commit((l) => updateEntry(l, id, { text: body, sent: true }));
     conn.paste(pane, msg); // bracketed paste, sem Enter
     propsRef.current.onSent("Texto colado no terminal — revise e aperte Enter no agente");
     propsRef.current.onClose();
@@ -204,6 +221,18 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
           }
         }
       }
+      // guarda ANTES de enviar: se o envio falhar ou o agente cortar o texto, dá para copiar daqui
+      entryId.current = newEntryId();
+      commit((l) =>
+        addEntry(l, {
+          id: entryId.current,
+          at: Date.now(),
+          text: final,
+          original: final !== tr.text ? tr.text : undefined,
+          target: info ? paneLabel(info) : `terminal ${pane}`,
+          sent: false,
+        }),
+      );
       setCost(spent);
       setInfo2(note);
       const pOn = s.settings.prefix_enabled !== false;
@@ -430,6 +459,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
         log(`corrigir novamente: ok em ${c.ms} ms (1º trecho ${c.ttfb_ms} ms), ${c.model}`);
         setCorrected(c.text);
         setText(c.text);
+        if (entryId.current) commit((l) => updateEntry(l, entryId.current, { text: c.text }));
         setCost((v) => (v ?? 0) + (c.cost_usd || 0));
         setInfo2((prev) => `${prev} · corrigido de novo por ${c.model} em ${formatSeconds(c.ms)}`);
       })
@@ -499,6 +529,14 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
         >
           <Mic size={16} className="text-accent-text" />
           <div className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-1">Falar para {info ? paneLabel(info) : `terminal ${pane}`}</div>
+          <button
+            className={cn("flex items-center gap-1 rounded p-1 text-text-2 hover:bg-bg-hover hover:text-text-1", showHistory && "bg-bg-hover text-text-1")}
+            title="Histórico das últimas transcrições"
+            onClick={() => setShowHistory((v) => !v)}
+          >
+            <History size={15} />
+            {history.length > 0 && <span className="text-[11px]">{history.length}</span>}
+          </button>
           <button className="rounded p-1 text-text-2 hover:bg-bg-hover hover:text-text-1" title="Configurar voz e provedores" onClick={() => onOpenSettings()}>
             <Settings2 size={15} />
           </button>
@@ -700,6 +738,55 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 {cost !== null && ` · custo desta fala: ${formatUSD(cost)}`} · trechos marcados [? ] ficam para o agente ver a dúvida · é colado sem Enter:
                 confirme no próprio agente
               </div>
+            </div>
+          )}
+          {showHistory && (
+            <div className="rounded border border-border bg-bg-panel">
+              <div className="flex items-center gap-2 border-b border-border px-2 py-1.5 text-[11px] text-text-3">
+                Últimas transcrições (guardadas só neste computador)
+                <div className="flex-1" />
+                {histNote && <span className="text-status-ok">{histNote}</span>}
+                {history.length > 0 && (
+                  <button className="text-accent-text hover:underline" onClick={() => commit(() => [])}>
+                    limpar tudo
+                  </button>
+                )}
+              </div>
+              {history.length === 0 && <div className="p-3 text-[12px] text-text-3">Nada ainda: cada fala transcrita aparece aqui, mesmo se o envio falhar.</div>}
+              <ul className="max-h-64 divide-y divide-border overflow-y-auto">
+                {history.map((h) => (
+                  <li key={h.id} className="p-2 text-[12px]">
+                    <div className="flex items-center gap-2">
+                      <button className="min-w-0 flex-1 truncate text-left text-text-1 hover:underline" title="Ver o texto inteiro" onClick={() => setOpenId(openId === h.id ? null : h.id)}>
+                        {preview(h.text)}
+                      </button>
+                      <span className="shrink-0 text-[11px] text-text-3">
+                        {new Date(h.at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · {h.text.length} car.{h.sent ? " · enviado" : ""}
+                      </span>
+                      <button
+                        className="rounded p-1 text-text-2 hover:bg-bg-hover hover:text-text-1"
+                        title="Copiar o texto"
+                        onClick={() => void copyText(h.text).then((ok) => { setHistNote(ok ? "copiado" : "não foi possível copiar"); window.setTimeout(() => setHistNote(""), 2000); })}
+                      >
+                        <Copy size={13} />
+                      </button>
+                      <button
+                        className="rounded p-1 text-text-2 hover:bg-bg-hover hover:text-text-1"
+                        title="Colar de novo neste terminal (sem Enter e sem o aviso de voz)"
+                        onClick={() => send(h.text, false, "", h.id)}
+                      >
+                        <Send size={13} />
+                      </button>
+                      <button className="rounded p-1 text-text-2 hover:bg-bg-hover hover:text-text-1" title="Remover do histórico" onClick={() => commit((l) => removeEntry(l, h.id))}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                    {openId === h.id && (
+                      <textarea readOnly value={h.text} className="mt-2 h-40 w-full resize-y rounded border border-border bg-bg-term p-2 text-[12px] text-text-1 outline-none" />
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

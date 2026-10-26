@@ -38,7 +38,9 @@ import { cn } from "@/lib/utils";
 import { IconButton } from "./IconButton";
 import { PasteDialog } from "./PasteDialog";
 import { ScrollBar } from "./ScrollBar";
-import { screenWrite } from "@/lib/screen";
+import { createScreenWriter } from "@/lib/screen";
+import { attachRenderer, type RendererHandle } from "@/lib/termWebgl";
+import { readIncrementalWrite } from "@/lib/termRenderer";
 import { openExternal } from "@/lib/links";
 import { resolveLinkPath, type PaneLinkCtx } from "@/lib/localFile";
 import { markScreen } from "@/lib/startup";
@@ -176,6 +178,7 @@ export function TerminalView({
   const termElRef = useRef<HTMLDivElement>(null);
   const repairViewRef = useRef<() => void>(() => {});
   const termRef = useRef<Terminal | null>(null);
+  const rendererRef = useRef<RendererHandle | null>(null);
   const lastUserInput = useRef(0);
   const readOnlyRef = useRef(readOnly);
   readOnlyRef.current = readOnly;
@@ -470,6 +473,10 @@ export function TerminalView({
     term.loadAddon(new Unicode11Addon());
     term.unicode.activeVersion = "11";
     term.open(el);
+    // WebGL quando a GPU permite (muito mais leve que o DOM em PC fraco); cai
+    // para DOM sozinho se falhar. Ver lib/termRenderer.ts.
+    rendererRef.current = attachRenderer(term);
+    const screenWriter = createScreenWriter(readIncrementalWrite());
     let linkTip: HTMLDivElement | null = null;
     const hideLinkTip = () => {
       linkTip?.remove();
@@ -839,13 +846,15 @@ export function TerminalView({
       if (disposed || writing) return;
       if (repairPending) {
         term.reset();
+        screenWriter.reset();
         repairPending = false;
       }
       const next = latestScreen;
       if (!next) return;
       latestScreen = null;
       writing = true;
-      term.write(screenWrite(next), () => {
+      // So' as linhas que mudaram (o xterm refaz menos; ver lib/screen.ts)
+      term.write(screenWriter.write(next), () => {
         writing = false;
         pumpScreen();
       });
@@ -918,6 +927,8 @@ export function TerminalView({
       screenEl?.removeEventListener("mouseup", markMouse);
       screenEl?.removeEventListener("mousemove", markMouse);
       hideLinkTip();
+      rendererRef.current?.dispose();
+      rendererRef.current = null;
       term.dispose();
       termRef.current = null;
     };
@@ -943,6 +954,7 @@ export function TerminalView({
         const css = cssFamily(family);
         term.options.fontFamily = "monospace";
         term.options.fontFamily = css;
+        rendererRef.current?.refreshAtlas();
         term.refresh(0, term.rows - 1);
         fitRef.current();
       })

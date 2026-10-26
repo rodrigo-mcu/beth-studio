@@ -146,9 +146,10 @@ impl EchoMeter {
             v.sort_unstable();
             let pick = |q: f64| v[((v.len() - 1) as f64 * q).round() as usize];
             let slow = v.iter().filter(|&&x| x >= 100).count();
-            let title = self.titles.get(&pane_id).map(|s| s.as_str()).unwrap_or("");
+            // Patch 0201: a fixed label, never the free-text title.
+            let prog = program_label(self.titles.get(&pane_id).map(|s| s.as_str()).unwrap_or(""));
             lines.push_str(&format!(
-                "{stamp} pid={} pane={pane_id} keys={} echo[p50={} p95={} max={} >=100ms={slow}] host_rpc_max={rpc_max} title={title:?}
+                "{stamp} pid={} pane={pane_id} keys={} echo[p50={} p95={} max={} >=100ms={slow}] host_rpc_max={rpc_max} prog={prog}
 ",
                 std::process::id(),
                 v.len(),
@@ -163,6 +164,7 @@ impl EchoMeter {
         let Ok(dir) = wtinator::session::session_dir() else {
             return;
         };
+        scrub_old_titles(&dir);
         let path = dir.join("bridge-latency.log");
         if std::fs::metadata(&path).map_or(false, |m| m.len() > 1024 * 1024) {
             let _ = std::fs::rename(&path, dir.join("bridge-latency.1.log"));
@@ -172,6 +174,34 @@ impl EchoMeter {
         }
     }
 }
+/// Patch 0201: what the latency log says about a pane's program. A terminal
+/// title is free text (it can carry what the user typed, even a password), so
+/// the log keeps only one of these fixed labels.
+fn program_label(title: &str) -> &'static str {
+    const KNOWN: [&str; 14] = [
+        "claude", "grok", "cursor", "codex", "gemini", "kimi", "opencode", "aider", "powershell", "pwsh", "wsl", "ssh",
+        "cmd.exe", "bash",
+    ];
+    let t = title.to_lowercase();
+    KNOWN.iter().copied().find(|k| t.contains(*k)).unwrap_or("other")
+}
+
+/// Patch 0201: logs written before this patch carry `title=` lines. Delete
+/// them once per process; the file is only a diagnostic, nothing reads it back.
+fn scrub_old_titles(dir: &std::path::Path) {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        for name in ["bridge-latency.log", "bridge-latency.1.log"] {
+            let path = dir.join(name);
+            if let Ok(bytes) = std::fs::read(&path) {
+                if bytes.windows(7).any(|w| w == b" title=") {
+                    let _ = std::fs::remove_file(&path);
+                }
+            }
+        }
+    });
+}
+
 /// The pane list is re-sent at most this often when it changes.
 const LIST_EVERY: Duration = Duration::from_secs(2);
 
@@ -1249,4 +1279,35 @@ fn parse_hex_color(s: &str) -> Option<wezterm_term::color::SrgbaTuple> {
         _ => return None,
     };
     Some(wezterm_term::color::RgbColor::new_8bpc(r, g, b).into())
+}
+
+#[cfg(test)]
+mod latency_log_privacy_tests {
+    use super::{program_label, scrub_old_titles};
+
+    #[test]
+    fn label_never_echoes_the_title() {
+        assert_eq!(program_label("\u{2819} - Thinking - acessa o pc root@10.0.0.1 senha mcu - grok"), "grok");
+        assert_eq!(program_label("\u{2733} Claude Code"), "claude");
+        assert_eq!(
+            program_label(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"),
+            "powershell"
+        );
+        assert_eq!(program_label("minha senha 1234"), "other");
+        assert_eq!(program_label(""), "other");
+    }
+
+    #[test]
+    fn scrub_removes_old_logs_with_titles_and_keeps_new_ones() {
+        let dir = std::env::temp_dir().join(format!("bs-scrub-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let old = dir.join("bridge-latency.log");
+        let new = dir.join("bridge-latency.1.log");
+        std::fs::write(&old, "2026-10-16 12:49:54 pid=1 pane=1 keys=2 echo[p50=1] host_rpc_max=1 title=\"x\"\n").unwrap();
+        std::fs::write(&new, "2026-10-24 12:49:54 pid=1 pane=1 keys=2 echo[p50=1] host_rpc_max=1 prog=grok\n").unwrap();
+        scrub_old_titles(&dir);
+        assert!(!old.exists(), "log with title= must be deleted");
+        assert!(new.exists(), "log without titles must stay");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

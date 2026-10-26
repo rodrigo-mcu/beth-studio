@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-26
+
+### Added
+- **Falar**: history of the last 20 transcriptions inside the voice window (copy, paste again, remove, clear). Each speech is saved right after transcription, before being pasted into the terminal.
+- **Configurações > Terminais > Desempenho**: choose how the terminal is drawn (Automático, Sempre WebGL, Modo compatível) and set up the Windows Defender exclusions for the Studio folders, with a step-by-step guide, a button that opens Windows Security and a button that asks for administrator permission (UAC) to add or remove them. Never available in the remote browser or read-only mode.
+
+### Changed
+- The terminal uses the WebGL renderer when the graphics card allows it, with automatic fallback to the DOM renderer (`@xterm/addon-webgl` 0.19.0). Terminals beyond 8 at once use DOM.
+- The terminal redraws only the lines that changed instead of the whole screen on every frame.
+- With the window hidden in the tray or minimized, the Studio's WebView2 is set to not visible and to low memory use, and back to normal when shown. Turn off with `BETHSTUDIO_WEBVIEW_NO_BG=1`.
+- Patch 0201: `bridge-latency.log` records `prog=<program>` instead of the terminal title; old logs with titles are deleted once.
+
+### Fixed
+- A hyperlink (OSC 8) still open at the end of the last screen line no longer leaks to the first line of the next frame (the whole line was drawn underlined).
+
 ## [0.3.0] - 2026-10-18
 
 ### Added

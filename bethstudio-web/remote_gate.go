@@ -55,6 +55,10 @@ func remoteBlocked(sub, method string) bool {
 	if strings.HasPrefix(sub, "/api/vps/") {
 		return true
 	}
+	// Exclusões do antivírus deste PC (pede UAC no PC): nunca pelo Studio remoto.
+	if strings.HasPrefix(sub, "/api/perf/") {
+		return true
+	}
 	// GET /api/about lista os arquivos; POST abre o Explorer no PC.
 	if sub == "/api/about" && method != http.MethodGet && method != http.MethodHead {
 		return true

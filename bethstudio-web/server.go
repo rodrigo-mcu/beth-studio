@@ -189,6 +189,8 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		s.serveUpdatePrepareSetup(w, r, remoteKey)
 	case "/api/update/open-setup":
 		s.serveUpdateOpenSetup(w, r, remoteKey)
+	case "/api/perf/defender", "/api/perf/defender/apply", "/api/perf/defender/remove", "/api/perf/defender/open-security":
+		s.servePerfDefender(w, r, remoteKey)
 	case "/api/diag":
 		// diagnostico da UI (--diag): so' vai para o log
 		b, _ := io.ReadAll(http.MaxBytesReader(w, r.Body, 16<<10))

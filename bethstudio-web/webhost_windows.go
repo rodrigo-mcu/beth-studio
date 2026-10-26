@@ -214,6 +214,10 @@ func openInSystemBrowser(raw string) {
 }
 
 func hostWndProc(hwnd, msg, wp, lp uintptr) uintptr {
+	// escondida na bandeja ou minimizada: WebView2 em segundo plano (webview_power_windows.go)
+	if bg, ok := webviewVisibilityFor(uint32(msg), wp); ok {
+		setWebviewBackground(bg)
+	}
 	switch msg {
 	case wmSize:
 		if hostChromium != nil {
