@@ -44,6 +44,7 @@ import { Loader2 } from "lucide-react";
 import { KillDialog } from "@/components/KillDialog";
 import { SeparateDialog } from "@/components/SeparateDialog";
 import { SpeakDialog } from "@/components/SpeakDialog";
+import { ZoomBadge } from "@/components/ZoomBadge";
 import { VoiceSettingsDialog } from "@/components/VoiceSettingsDialog";
 import { useAgentAlerts, useNotifyPrefs } from "@/lib/notify";
 import { aloneInHostTab } from "@/lib/hostFit";
@@ -947,6 +948,7 @@ export function App() {
         allPanes={(snap.panes ?? []).map((x) => ({ id: x.pane_id, label: paneLabel(x) }))}
         activePanes={activeLeaves.filter((l) => !l.leaf.gone && !L.isPlaceholder(l.leaf.pane) && paneById.has(l.leaf.pane)).map((l) => l.leaf.pane)}
       />
+      <ZoomBadge />
       {speakPane !== null && (
         <SpeakDialog
           conn={conn}

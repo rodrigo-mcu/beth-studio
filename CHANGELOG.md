@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- Indicator for the whole-screen zoom: a "Zoom N%" pill when it is not 100% (click to reset) and a "Redefinir para 100%" button in Configurações > Aparência.
+
 ## [0.3.1] - 2026-10-26
 
 ### Added

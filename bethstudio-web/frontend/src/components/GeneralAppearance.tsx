@@ -6,6 +6,7 @@ import { FACTORY_THEME_NAME, FALLBACK_FAMILY, setDefault, setPane, type Catalog 
 import { LIGHT, NAVY_DARK, VSCODE_DARK, deriveUI, normalizeUIMode, type UIColors, type UIMode } from "@/lib/uiTheme";
 import { paneLabel } from "@/lib/panes";
 import { cn } from "@/lib/utils";
+import { isDefaultZoom, resetPageZoom, usePageZoom, zoomLabel } from "@/lib/pageZoom";
 import type { NotifyPrefs } from "@/lib/notify";
 import { FontPicker, Swatch, ThemePicker } from "./Pickers";
 
@@ -59,6 +60,7 @@ export function GeneralAppearance({
   const def = settings?.default ?? {};
   const defFamily = def.font_family || settings?.gui_default_font || FALLBACK_FAMILY;
   const defSize = def.font_size ?? 0;
+  const pageZoom = usePageZoom();
   const custom = Object.entries(settings?.panes ?? {}).filter(([, p]) => p.theme || p.font_family || p.font_size);
   const live = new Map((panes ?? []).map((p) => [p.pane_id, p]));
 
@@ -234,6 +236,12 @@ export function GeneralAppearance({
                   <Plus size={13} />
                 </button>
               </div>
+            </Row>
+            <Row label="Zoom da tela">
+              <span className="font-mono text-text-1">{zoomLabel(pageZoom)}</span>
+              <Btn disabled={isDefaultZoom(pageZoom)} onClick={resetPageZoom} title="Volta a tela inteira para 100% (o mesmo que Ctrl+0)">
+                Redefinir para 100%
+              </Btn>
             </Row>
 
             <div className="mt-3 flex items-center gap-2">

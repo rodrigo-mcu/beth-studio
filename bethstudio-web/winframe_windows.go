@@ -96,6 +96,9 @@ func applyFrame(hwnd uintptr) {
 
 // windowCommand: mensagens da pagina ("win:...").
 func windowCommand(msg string) {
+	if zoomCommand(msg) {
+		return
+	}
 	h := hostHwnd
 	if h == 0 {
 		return
