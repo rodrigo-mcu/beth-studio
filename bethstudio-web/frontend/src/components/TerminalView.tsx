@@ -39,7 +39,7 @@ import { IconButton } from "./IconButton";
 import { PasteDialog } from "./PasteDialog";
 import { ScrollBar } from "./ScrollBar";
 import { createScreenWriter } from "@/lib/screen";
-import { attachRenderer, type RendererHandle } from "@/lib/termWebgl";
+import { attachRenderer, preloadRenderer, type RendererHandle } from "@/lib/termWebgl";
 import { readIncrementalWrite } from "@/lib/termRenderer";
 import { openExternal } from "@/lib/links";
 import { resolveLinkPath, type PaneLinkCtx } from "@/lib/localFile";
@@ -55,6 +55,9 @@ import { sftpApi } from "@/lib/sshApi";
 import { registerTerm } from "@/lib/termFocus";
 import { ZONE_ICON } from "./SplitShellMenu";
 import { SPLIT_ZONES, ZONE_LABEL, type SplitZone } from "@/lib/splitSpawn";
+
+// addon WebGL já carregado quando o primeiro terminal abrir (e nas trocas de aba)
+preloadRenderer();
 
 // Teclado so' e' repassado se houve uma tecla de verdade ha' pouco: assim
 // nenhuma resposta automatica do xterm.js vira entrada no pane do host.
@@ -475,7 +478,11 @@ export function TerminalView({
     term.open(el);
     // WebGL quando a GPU permite (muito mais leve que o DOM em PC fraco); cai
     // para DOM sozinho se falhar. Ver lib/termRenderer.ts.
-    rendererRef.current = attachRenderer(term);
+    rendererRef.current = attachRenderer(term, () => {
+      // a célula mudou de tamanho: refaz o ajuste da fonte e do grid
+      fitRef.current();
+      hostFitRef.current("font");
+    });
     const screenWriter = createScreenWriter(readIncrementalWrite());
     let linkTip: HTMLDivElement | null = null;
     const hideLinkTip = () => {

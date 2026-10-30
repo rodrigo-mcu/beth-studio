@@ -10,6 +10,8 @@ use ntapi::ntwow64::RTL_USER_PROCESS_PARAMETERS32;
 use std::ffi::OsString;
 use std::mem::MaybeUninit;
 use std::os::windows::ffi::OsStringExt;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use winapi::shared::minwindef::{DWORD, FILETIME, LPVOID, MAX_PATH};
 use winapi::shared::ntdef::{FALSE, NT_SUCCESS};
 use winapi::um::handleapi::CloseHandle;
@@ -45,6 +47,25 @@ impl Snapshot {
             Some(snapshot) => snapshot.iter().collect(),
             None => vec![],
         }
+    }
+
+    /// Patch 0202: one snapshot shared by every caller for SHARED_TTL.
+    /// A snapshot costs ~85 ms with ~600 processes, and each pane took its
+    /// own on every refresh (30 panes, every 2 s: 6+ cores on the host).
+    /// The lock is held while a fresh one is taken, so callers that arrive
+    /// together wait and reuse it instead of taking their own.
+    pub fn shared_entries() -> Arc<Vec<PROCESSENTRY32W>> {
+        const SHARED_TTL: Duration = Duration::from_millis(1000);
+        static SHARED: Mutex<Option<(Instant, Arc<Vec<PROCESSENTRY32W>>)>> = Mutex::new(None);
+        let mut shared = SHARED.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some((at, entries)) = &*shared {
+            if at.elapsed() < SHARED_TTL {
+                return Arc::clone(entries);
+            }
+        }
+        let entries = Arc::new(Self::entries());
+        *shared = Some((Instant::now(), Arc::clone(&entries)));
+        entries
     }
 }
 
@@ -358,7 +379,7 @@ impl LocalProcessInfo {
 
     pub fn with_root_pid(pid: u32) -> Option<Self> {
         log::trace!("LocalProcessInfo::with_root_pid({}), getting snapshot", pid);
-        let procs = Snapshot::entries();
+        let procs = Snapshot::shared_entries();
         log::trace!("Got snapshot");
 
         fn build_proc(info: &PROCESSENTRY32W, procs: &[PROCESSENTRY32W]) -> LocalProcessInfo {

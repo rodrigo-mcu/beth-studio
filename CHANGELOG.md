@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - Indicator for the whole-screen zoom: a "Zoom N%" pill when it is not 100% (click to reset) and a "Redefinir para 100%" button in Configurações > Aparência.
 
+### Fixed
+- Patch 0202: the host no longer takes a snapshot of every process on the machine once per pane every 2 s. All panes share one snapshot per second; with 30 panes and ~580 processes the host went from ~6 cores to 0.04 while the Studio is open.
+- Switching between terminal tabs no longer flickers or leaves the text scaled wrong when the WebGL renderer loads.
+
 ## [0.3.1] - 2026-10-26
 
 ### Added

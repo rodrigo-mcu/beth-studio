@@ -13,6 +13,23 @@ export interface RendererHandle {
 
 let liveGl = 0; // terminais que seguram uma vaga de WebGL (inclui os ainda carregando)
 
+// O addon carrega uma vez só. Trocar de aba recria o terminal: com o módulo
+// já carregado, o WebGL entra na hora, sem passar pelo DOM. A troca DOM ->
+// WebGL depois de aberto fazia a tela piscar e mudava o tamanho da célula
+// sem reajustar (texto encolhido num canto).
+type WebglModule = typeof import("@xterm/addon-webgl");
+let webglMod: WebglModule | null = null;
+let webglLoad: Promise<WebglModule> | null = null;
+function loadWebgl(): Promise<WebglModule> {
+  webglLoad ??= import("@xterm/addon-webgl").then((m) => (webglMod = m));
+  return webglLoad;
+}
+
+/** Começa a baixar o addon cedo (antes do primeiro terminal), se for usar WebGL. */
+export function preloadRenderer() {
+  if (chooseRenderer(readRendererPref(), probeGl(), liveGl) === "webgl") void loadWebgl().catch(() => undefined);
+}
+
 function applyMode(term: Terminal, mode: RendererMode) {
   const o = MODE_OPTIONS[mode];
   term.options.minimumContrastRatio = o.minimumContrastRatio;
@@ -21,8 +38,12 @@ function applyMode(term: Terminal, mode: RendererMode) {
   term.element?.setAttribute("data-renderer", mode);
 }
 
-/** Chamar DEPOIS de term.open(). Comeca em DOM e troca para WebGL quando o addon carrega. */
-export function attachRenderer(term: Terminal): RendererHandle {
+/**
+ * Chamar DEPOIS de term.open(). Com o addon já carregado, liga o WebGL na
+ * hora; senão começa em DOM e troca quando carregar. `onChange` roda quando
+ * o renderizador troca depois de aberto (o tamanho da célula muda: reajustar).
+ */
+export function attachRenderer(term: Terminal, onChange?: () => void): RendererHandle {
   let mode: RendererMode = "dom";
   let holdsSlot = false;
   let disposed = false;
@@ -48,28 +69,35 @@ export function attachRenderer(term: Terminal): RendererHandle {
     addon = null;
     release();
     mode = "dom";
-    if (!disposed) applyMode(term, "dom");
+    if (!disposed) {
+      applyMode(term, "dom");
+      onChange?.();
+    }
   };
 
   applyMode(term, "dom");
   if (chooseRenderer(readRendererPref(), probeGl(), liveGl) === "webgl") {
     holdsSlot = true;
     liveGl++;
-    import("@xterm/addon-webgl")
-      .then(({ WebglAddon }) => {
-        if (disposed) return release();
-        try {
-          const a = new WebglAddon();
-          a.onContextLoss(() => fallback("contexto perdido"));
-          term.loadAddon(a);
-          addon = a;
-          mode = "webgl";
-          applyMode(term, "webgl");
-        } catch (e) {
-          fallback(e instanceof Error ? e.message : "erro ao iniciar");
-        }
-      })
-      .catch((e) => fallback(e instanceof Error ? e.message : "addon nao carregou"));
+    const start = ({ WebglAddon }: WebglModule, late: boolean) => {
+      if (disposed) return release();
+      try {
+        const a = new WebglAddon();
+        a.onContextLoss(() => fallback("contexto perdido"));
+        term.loadAddon(a);
+        addon = a;
+        mode = "webgl";
+        applyMode(term, "webgl");
+        if (late) onChange?.();
+      } catch (e) {
+        fallback(e instanceof Error ? e.message : "erro ao iniciar");
+      }
+    };
+    if (webglMod) start(webglMod, false);
+    else
+      loadWebgl()
+        .then((m) => start(m, true))
+        .catch((e) => fallback(e instanceof Error ? e.message : "addon nao carregou"));
   }
 
   return {
