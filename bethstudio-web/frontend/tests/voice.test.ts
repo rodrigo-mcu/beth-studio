@@ -52,3 +52,9 @@ test("tempo e mensagens de microfone", () => {
   assert.match(micErrorMessage("NotAllowedError"), /Privacidade/);
   assert.match(micErrorMessage("NotFoundError"), /Nenhum microfone/);
 });
+
+test("texto longo vai para arquivo: só acima do limite", async () => {
+  const { LONG_PASTE_CHARS, isLongPaste } = await import("../src/lib/voice.ts");
+  assert.equal(isLongPaste("x".repeat(LONG_PASTE_CHARS)), false);
+  assert.equal(isLongPaste("x".repeat(LONG_PASTE_CHARS + 1)), true);
+});

@@ -9,7 +9,9 @@ import {
   MAX_RECORD_MS,
   composeMessage,
   formatDuration,
+  isLongPaste,
   loadVoice,
+  pasteAsFile,
   micErrorMessage,
   saveVoice,
   wordDiff,
@@ -158,9 +160,28 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
     const msg = composeMessage(pOn, p, body);
     if (!msg.trim()) return;
     if (id) commit((l) => updateEntry(l, id, { text: body, sent: true }));
-    conn.paste(pane, msg); // bracketed paste, sem Enter
-    propsRef.current.onSent("Texto colado no terminal — revise e aperte Enter no agente");
-    propsRef.current.onClose();
+    const done = (note: string) => {
+      propsRef.current.onSent(note);
+      propsRef.current.onClose();
+    };
+    if (!isLongPaste(msg)) {
+      conn.paste(pane, msg); // bracketed paste, sem Enter
+      done("Texto colado no terminal — revise e aperte Enter no agente");
+      return;
+    }
+    // Texto enorme: alguns agentes recusam a colagem. Grava num arquivo temporário
+    // e cola só uma instrução curta apontando para ele; se falhar, cola o texto mesmo.
+    void pasteAsFile(conn, pane, msg)
+      .then((r) => {
+        log(`texto longo (${msg.length} caracteres) salvo em ${r.path}`);
+        conn.paste(pane, r.text);
+        done("Texto longo salvo em arquivo; a instrução para ler foi colada — revise e aperte Enter no agente");
+      })
+      .catch((e) => {
+        log(`texto longo: não consegui gravar o arquivo (${(e as Error).message}); colando o texto direto`);
+        conn.paste(pane, msg);
+        done("Texto colado no terminal — revise e aperte Enter no agente");
+      });
   };
 
   const process = async (blob: Blob, s: VoiceSnapshot, audioMs: number) => {

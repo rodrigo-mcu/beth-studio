@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-26.
+Last updated: 2026-10-31.
 
 ---
 
@@ -71,6 +71,7 @@ Status legend: 🟢 shipped · ⚪ planned.
 - 🟢 **Log de latência sem títulos** (2026-10-24) — `bridge-latency.log` no longer records terminal titles (they are free text and could hold a typed password). Lines end with `prog=<program>` from a fixed list. Old logs with titles are deleted once.
 - 🟢 **Aviso de zoom da tela** — when the whole-screen zoom (Ctrl + wheel, Ctrl +/-) is not 100%, a small "Zoom 125%" pill appears in the bottom-right corner; click it (or Ctrl+0) to go back to 100%. **Configurações > Aparência > Zoom da tela** shows the current value with a **Redefinir para 100%** button. Only in the Studio window on this computer.
 - 🟢 **Histórico das transcrições** — the **Falar** window keeps the last 20 transcriptions (button with a clock icon in its title bar). Each one is saved as soon as it is transcribed, before it is pasted, so if the paste fails or the agent cuts the text you can open it, copy it or paste it again. Stored only on this computer; each entry can be removed, or all cleared.
+- 🟢 **Texto longo do Falar vai por arquivo** (2026-10-31) — when the text to paste has more than 4000 characters (a long dictation, or an old one pasted again from the history), the **Falar** window does not paste it, because some agents refuse or cut a huge paste. It saves the text in a `.txt` file in the temporary folder (`...\bethstudio\pasted-text\fala-<time>.txt`, kept 7 days; `/mnt/c/...` path in WSL panes) and pastes only a short instruction telling the agent to read that file. If saving fails it pastes the text directly, as before.
 - 🟢 **Janela de voz móvel** — the **Falar** window no longer dims or blocks the screen: it floats, and you drag it by its title bar to move it off the text you are reading. It remembers where you left it and stays inside the window. Clicking outside never cancels it; only the buttons or Esc (while the window has focus) do.
 
 ## 1. Removed in Phase B (native window)

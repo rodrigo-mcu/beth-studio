@@ -78,7 +78,13 @@ export interface VoiceSnapshot {
 
 // --- API ---------------------------------------------------------------
 
-export const loadVoice = (conn: Connection) => conn.api<VoiceSnapshot>("/api/voice");
+/** Acima disto o Falar não cola o texto: grava num arquivo e cola só uma instrução (alguns agentes recusam colagem enorme). */
+export const LONG_PASTE_CHARS = 4000;
+export const isLongPaste = (msg: string) => msg.length > LONG_PASTE_CHARS;
+export const pasteAsFile = (conn: Connection, pane: number, text: string) =>
+  conn.api<{ path: string; text: string }>("/api/paste-text", { pane_id: pane, text });
+
+export const loadVoice =(conn: Connection) => conn.api<VoiceSnapshot>("/api/voice");
 export const saveVoice = (conn: Connection, v: VoiceSettings) => conn.api<VoiceSnapshot>("/api/voice/settings", v);
 export const saveKey = (conn: Connection, provider: string, key: string) => conn.api<VoiceSnapshot>("/api/voice/key", { provider, key });
 

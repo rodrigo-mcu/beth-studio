@@ -27,6 +27,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
@@ -300,6 +301,76 @@ func (s *server) servePaste(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"path": path, "text": text, "wsl": wsl})
+}
+
+// textDir: where long dictated texts go when the agent will not take a huge
+// paste. Same root as imageDir, own folder.
+var textDir = func() string {
+	return filepath.Join(filepath.Dir(imageDir()), "pasted-text")
+}
+
+const (
+	maxPasteTextBytes = 4 << 20
+	textFileKeep      = 7 * 24 * time.Hour
+)
+
+// pasteTextInstruction is the short text pasted instead of the long one.
+func pasteTextInstruction(path string, wsl bool) string {
+	return "Mensagem longa ditada por voz, salva no arquivo " + filePathText(path, wsl) +
+		" — leia o arquivo inteiro e trate o conteúdo dele como a minha mensagem."
+}
+
+// savePastedText writes text to a new .txt file and drops old ones.
+func savePastedText(text string) (string, error) {
+	dir := textDir()
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	if old, err := os.ReadDir(dir); err == nil {
+		for _, e := range old {
+			if info, err := e.Info(); err == nil && !e.IsDir() && time.Since(info.ModTime()) > textFileKeep {
+				_ = os.Remove(filepath.Join(dir, e.Name()))
+			}
+		}
+	}
+	path := filepath.Join(dir, fmt.Sprintf("fala-%d.txt", nowMillis()))
+	return path, os.WriteFile(path, []byte(text), 0o644)
+}
+
+// servePasteText handles POST /api/paste-text (JSON {pane_id, text}). It only
+// saves the file and returns the short instruction; the page pastes it.
+func (s *server) servePasteText(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+	if s.hub.readOnly {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "modo somente leitura: colar desabilitado"})
+		return
+	}
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, "use application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+	var req struct {
+		Pane int    `json:"pane_id"`
+		Text string `json:"text"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxPasteTextBytes)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido ou texto grande demais"})
+		return
+	}
+	if req.Pane < 0 || strings.TrimSpace(req.Text) == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "pane_id ou texto inválido"})
+		return
+	}
+	path, err := savePastedText(req.Text)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	wsl := s.hub.paneLooksWSL(req.Pane)
+	writeJSON(w, http.StatusOK, map[string]any{"path": path, "text": pasteTextInstruction(path, wsl), "wsl": wsl})
 }
 
 // servePasteClipboard handles POST /api/paste-clipboard?pane_id=N.

@@ -134,6 +134,8 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		_, _ = w.Write([]byte("ok\n"))
 	case "/api/paste-image", "/api/paste-file":
 		s.servePaste(w, r)
+	case "/api/paste-text":
+		s.servePasteText(w, r)
 	case "/api/paste-clipboard":
 		if remoteKey != "" {
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "colar arquivo do Explorer só no computador"})

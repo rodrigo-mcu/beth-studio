@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/image/bmp"
 )
@@ -257,6 +258,59 @@ func TestPasteFileCopy(t *testing.T) {
 	_ = json.Unmarshal(rr.Body.Bytes(), &out)
 	if filepath.Dir(out.Path) != dir || !strings.HasPrefix(out.Text, "/mnt/") {
 		t.Fatalf("traversal/wsl: %+v", out)
+	}
+}
+
+func TestPasteTextSavesFileAndReturnsInstruction(t *testing.T) {
+	s, rec, _ := pasteServer(t, false)
+	tdir := t.TempDir()
+	oldT := textDir
+	textDir = func() string { return tdir }
+	t.Cleanup(func() { textDir = oldT })
+
+	old := filepath.Join(tdir, "fala-1.txt")
+	if err := os.WriteFile(old, []byte("velho"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	past := time.Now().Add(-textFileKeep - time.Hour)
+	_ = os.Chtimes(old, past, past)
+
+	long := strings.Repeat("texto longo ", 1000)
+	body, _ := json.Marshal(map[string]any{"pane_id": 1, "text": long})
+	rr := post(s, "/api/paste-text", "application/json", body)
+	if rr.Code != 200 {
+		t.Fatalf("%d %s", rr.Code, rr.Body)
+	}
+	var out struct{ Path, Text string }
+	_ = json.Unmarshal(rr.Body.Bytes(), &out)
+	if b, err := os.ReadFile(out.Path); err != nil || string(b) != long {
+		t.Fatalf("arquivo: %v", err)
+	}
+	if !strings.Contains(out.Text, out.Path) || len(out.Text) > 400 {
+		t.Fatalf("instrução: %q", out.Text)
+	}
+	if _, err := os.Stat(old); err == nil {
+		t.Fatal("arquivo antigo devia ter sido apagado")
+	}
+	if len(rec.reqs) != 0 {
+		t.Fatal("o endpoint não cola; quem cola é a página")
+	}
+
+	// pane WSL: caminho vira /mnt/...
+	body, _ = json.Marshal(map[string]any{"pane_id": 2, "text": "oi"})
+	rr = post(s, "/api/paste-text", "application/json", body)
+	_ = json.Unmarshal(rr.Body.Bytes(), &out)
+	if !strings.Contains(out.Text, "/mnt/") {
+		t.Fatalf("wsl: %q", out.Text)
+	}
+
+	body, _ = json.Marshal(map[string]any{"pane_id": 1, "text": "  "})
+	if rr := post(s, "/api/paste-text", "application/json", body); rr.Code != http.StatusBadRequest {
+		t.Fatalf("vazio: %d", rr.Code)
+	}
+	ro, _, _ := pasteServer(t, true)
+	if rr := post(ro, "/api/paste-text", "application/json", body); rr.Code != http.StatusForbidden {
+		t.Fatalf("somente leitura: %d", rr.Code)
 	}
 }
 
