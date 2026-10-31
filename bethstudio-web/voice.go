@@ -185,7 +185,10 @@ const defaultCorrectionPrompt = "Você corrige textos ditados por voz e transcri
 	"Não traduza, não resuma, não responda ao conteúdo, não acrescente nem remova ideias. Mantenha o idioma original ({idioma}). " +
 	"Termos do projeto e termos técnicos, com a grafia correta: {vocabulario}. " +
 	"Termos técnicos costumam chegar escritos como soam em português: corrija essas variantes fonéticas para a grafia correta (só quando o contexto for técnico). Exemplos:\n{foneticos}\n" +
-	"Se um trecho estiver ambíguo, mantenha a forma mais provável e marque-o entre [? ]. Devolva somente o texto corrigido."
+	"Ruído no final: o reconhecimento de voz costuma inventar, no fim do áudio (chiado, silêncio, respiração, ruído de fundo), letras soltas, sílabas sem sentido e frases que o falante nunca disse, como \"Obrigado por assistir\", \"Legendas pela comunidade\", \"Até a próxima\", \"Tchau\", \"Inscreva-se no canal\", \"Thank you\" ou o nome de quem legendou. " +
+		"Apague do final do texto qualquer letra isolada, interjeição repetida ou frase que não tenha relação com o assunto ditado antes, e também frases repetidas em laço. Na dúvida sobre o último trecho, prefira cortá-lo a mantê-lo. " +
+		"Nunca complete, continue nem invente frases para fechar o texto: ele termina onde a ideia do falante termina. " +
+		"Se um trecho do meio estiver ambíguo, mantenha a forma mais provável e marque-o entre [? ]. Devolva somente o texto corrigido, sem comentários."
 
 const defaultVoicePrefix = "[Mensagem ditada por voz e transcrita automaticamente — pode conter erros de reconhecimento. Se algo parecer estranho ou ambíguo, pergunte antes de agir.]"
 

@@ -109,6 +109,17 @@ func TestSystemPromptVariables(t *testing.T) {
 	}
 }
 
+// O chiado no fim do áudio gera letras e frases inventadas; o prompt padrão
+// precisa mandar cortá-las e proibir que o modelo complete o texto.
+func TestDefaultPromptCutsTrailingNoise(t *testing.T) {
+	p := buildSystemPrompt("", "pt", "")
+	for _, want := range []string{"Ruído no final", "Obrigado por assistir", "prefira cortá-lo", "Nunca complete"} {
+		if !strings.Contains(p, want) {
+			t.Fatalf("prompt sem %q: %s", want, p)
+		}
+	}
+}
+
 // fake provider: records what it received and answers like the real API.
 type fakeProv struct {
 	t      *testing.T
