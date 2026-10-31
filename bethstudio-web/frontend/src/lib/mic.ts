@@ -48,8 +48,12 @@ export function resolveMic(devices: MicDevice[], saved: MicChoice | undefined): 
   return { deviceId: "", label: "", found: false };
 }
 
-export function audioConstraints(deviceId: string): MediaTrackConstraints {
-  const base: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+export function audioConstraints(deviceId: string, t?: { agc: boolean; ns: boolean; echo: boolean }): MediaTrackConstraints {
+  const base: MediaTrackConstraints = {
+    echoCancellation: t ? t.echo : true,
+    noiseSuppression: t ? t.ns : true,
+    autoGainControl: t ? t.agc : true,
+  };
   return deviceId ? { ...base, deviceId: { exact: deviceId } } : base;
 }
 

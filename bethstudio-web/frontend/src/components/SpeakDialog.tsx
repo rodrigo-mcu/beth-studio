@@ -17,8 +17,26 @@ import {
   wordDiff,
   type VoiceSnapshot,
 } from "@/lib/voice";
-import { SilenceWatch, audioConstraints, blobProblem, micLog, pickMimeType, resolveMic, rmsLevel, type MicChoice, type MicDevice } from "@/lib/mic";
-import { LevelBar, MicPicker } from "./MicPicker";
+import { SilenceWatch, audioConstraints, blobProblem, micLog, pickMimeType, resolveMic, type MicChoice, type MicDevice } from "@/lib/mic";
+import {
+  DEFAULT_TUNING,
+  GAIN_DB_MAX,
+  GAIN_DB_MIN,
+  MIC_TUNING_KEY,
+  PeakHold,
+  dbToGain,
+  formatGainDb,
+  formatLevelDb,
+  gainToDb,
+  isMicTuning,
+  levelHint,
+  normalizeTuning,
+  peakOf,
+  rmsOfFloat,
+  type MicTuning,
+} from "@/lib/micTuning";
+import { MicPicker } from "./MicPicker";
+import { LevelScope, type ScopeHandle } from "./LevelScope";
 import { VoiceError, correctStreaming, correctTimeoutMs, errorRecovery, formatSeconds, formatUSD, transcribe, type VoiceErrorKind } from "@/lib/voicePipeline";
 import type { SettingsSection } from "./SettingsDialog";
 import { cn } from "@/lib/utils";
@@ -58,7 +76,14 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
   const [errorKind, setErrorKind] = useState<VoiceErrorKind>("");
   const lastAudio = useRef<{ blob: Blob; audioMs: number } | null>(null); // p/ "Tentar novamente" sem regravar
   const [elapsed, setElapsed] = useState(0);
-  const [level, setLevel] = useState(0);
+  const [readout, setReadout] = useState<{ hold: number; now: number }>({ hold: 0, now: 0 });
+  const [tuning, setTuning] = useState<MicTuning>(() => normalizeTuning(loadPref<MicTuning>(MIC_TUNING_KEY, DEFAULT_TUNING, isMicTuning)));
+  const [showTuning, setShowTuning] = useState(false);
+  const tuningRef = useRef(tuning);
+  tuningRef.current = tuning;
+  const scopeRef = useRef<ScopeHandle>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const trackRef = useRef<MediaStreamTrack | null>(null);
   const [silent, setSilent] = useState(false);
   const [micName, setMicName] = useState("");
   const [mic, setMic] = useState<MicChoice>({ id: "", label: "" });
@@ -147,6 +172,29 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
     streamRef.current = null;
     void acRef.current?.close().catch(() => undefined);
     acRef.current = null;
+    gainRef.current = null;
+    trackRef.current = null;
+  };
+
+  /** Muda o volume de entrada ao vivo e lembra para as próximas falas. */
+  const setGainDb = (db: number) => {
+    const next = { ...tuningRef.current, gain: dbToGain(db) };
+    setTuning(next);
+    savePref(MIC_TUNING_KEY, next);
+    const gn = gainRef.current;
+    if (gn) gn.gain.value = next.gain;
+  };
+
+  /** Liga/desliga um processamento do navegador; vale já na gravação em curso. */
+  const toggleProc = (key: "agc" | "ns" | "echo") => {
+    const next = { ...tuningRef.current, [key]: !tuningRef.current[key] };
+    setTuning(next);
+    savePref(MIC_TUNING_KEY, next);
+    const tr = trackRef.current;
+    if (tr && tr.readyState === "live") {
+      const c: MediaTrackConstraints = { echoCancellation: next.echo, noiseSuppression: next.ns, autoGainControl: next.agc };
+      tr.applyConstraints(c).catch((e) => log(`ajuste de áudio ao vivo recusado (${(e as Error).name}); vale na próxima gravação`));
+    }
   };
 
   /** Grava/atualiza o histórico (localStorage) e a lista na tela. */
@@ -290,7 +338,8 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
     setError(null);
     setSilent(false);
     setElapsed(0);
-    setLevel(0);
+    setReadout({ hold: 0, now: 0 });
+    scopeRef.current?.clear();
     try {
       let deviceId = "";
       if (choice.id) {
@@ -299,7 +348,8 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
         if (!r.found) log(`microfone salvo "${choice.label}" não encontrado; usando o padrão`);
       }
       log(`getUserMedia (${deviceId ? `"${choice.label}"` : "padrão do Windows"})`);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints(deviceId) });
+      const tn = tuningRef.current;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints(deviceId, tn) });
       if (closed.current) {
         stream.getTracks().forEach((t) => t.stop());
         busy.current = false;
@@ -307,12 +357,39 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
       }
       streamRef.current = stream;
       const track = stream.getAudioTracks()[0];
+      trackRef.current = track ?? null;
+      // Grafo de áudio: microfone -> ganho -> (medidor + gravador). O gravador
+      // pega a saída do ganho, então o volume escolhido vai para o áudio enviado.
+      // Se o AudioContext falhar, grava o fluxo cru (sem ganho e sem medidor).
+      let recStream: MediaStream = stream;
+      let an: AnalyserNode | null = null;
+      try {
+        const ac = new AudioContext();
+        acRef.current = ac;
+        void ac.resume().catch(() => undefined);
+        const src = ac.createMediaStreamSource(stream);
+        const gn = ac.createGain();
+        gn.gain.value = dbToGain(gainToDb(tn.gain));
+        gainRef.current = gn;
+        an = ac.createAnalyser();
+        an.fftSize = 1024;
+        const dest = ac.createMediaStreamDestination();
+        src.connect(gn);
+        gn.connect(an);
+        gn.connect(dest);
+        recStream = dest.stream;
+      } catch (e) {
+        log(`grafo de áudio falhou (${(e as Error).message ?? "?"}); gravando sem ganho e sem medidor`);
+        gainRef.current = null;
+        an = null;
+        recStream = stream;
+      }
       const name = track?.label || choice.label || "microfone padrão";
       setMicName(name);
       log(`getUserMedia ok: "${name}" (enabled=${track?.enabled}, muted=${track?.muted}, estado=${track?.readyState})`);
       const mime = pickMimeType((m) => MediaRecorder.isTypeSupported(m));
       log(`MediaRecorder mimeType "${mime || "(padrão do navegador)"}"`);
-      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const rec = new MediaRecorder(recStream, mime ? { mimeType: mime } : undefined);
       const chunks: Blob[] = [];
       let bytes = 0;
       rec.ondataavailable = (e) => {
@@ -348,22 +425,28 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
       log(`start (estado ${rec.state})`);
       setPhase("recording");
       // nivel, tempo e aviso de silencio
-      const ac = new AudioContext();
-      acRef.current = ac;
-      const an = ac.createAnalyser();
-      an.fftSize = 1024;
-      ac.createMediaStreamSource(stream).connect(an);
-      const buf = new Uint8Array(an.fftSize);
+      const buf = new Float32Array(an?.fftSize ?? 1024);
       const watch = new SilenceWatch();
+      const holder = new PeakHold();
       const t0 = Date.now();
       let warned = false;
+      let lastShown = 0;
       const tick = () => {
         if (recRef.current !== rec || rec.state !== "recording") return;
-        an.getByteTimeDomainData(buf);
-        const l = rmsLevel(buf);
-        setLevel(l);
+        let l = 0;
+        if (an) {
+          an.getFloatTimeDomainData(buf);
+          const pk = peakOf(buf);
+          l = rmsOfFloat(buf);
+          const hold = holder.feed(pk, performance.now());
+          scopeRef.current?.push(pk, l, hold);
+          if (performance.now() - lastShown >= 100) {
+            lastShown = performance.now();
+            setReadout({ hold, now: pk });
+          }
+        }
         const now = Date.now();
-        const quiet = watch.feed(l, now);
+        const quiet = an ? watch.feed(l, now) : false;
         setSilent(quiet);
         if (quiet && !warned) {
           warned = true;
@@ -612,7 +695,71 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 <span className="truncate">Gravando com {micName}</span>
               </div>
               <div className="font-mono text-[22px] text-text-1">{formatDuration(elapsed)}</div>
-              <LevelBar level={level} className="h-3 w-72 max-w-full" />
+              <div className="w-full max-w-[460px] space-y-1.5">
+                <LevelScope ref={scopeRef} />
+                {(() => {
+                  const hint = levelHint(readout.hold);
+                  return (
+                    <div className="flex items-center justify-between gap-2 text-[12px]">
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          hint.tone === "ok" && "text-status-ok",
+                          hint.tone === "warn" && "text-status-warn",
+                          hint.tone === "err" && "text-status-err",
+                          hint.tone === "idle" && "text-text-3",
+                        )}
+                      >
+                        {hint.text}
+                      </span>
+                      <span className="shrink-0 font-mono text-text-2" title="Pico retido (dBFS). 0 dB é o máximo antes de estourar.">
+                        pico {formatLevelDb(readout.hold)}
+                      </span>
+                    </div>
+                  );
+                })()}
+                <div className="flex items-center gap-2 text-[12px] text-text-2">
+                  <span className="shrink-0">Volume de entrada</span>
+                  <input
+                    type="range"
+                    className="min-w-0 flex-1 accent-[var(--accent,#3B82F6)]"
+                    min={GAIN_DB_MIN}
+                    max={GAIN_DB_MAX}
+                    step={1}
+                    value={gainToDb(tuning.gain)}
+                    onChange={(e) => setGainDb(Number(e.target.value))}
+                    title="Aumenta ou diminui o volume do que é gravado, na hora"
+                  />
+                  <span className="w-14 shrink-0 text-right font-mono text-text-1">{formatGainDb(gainToDb(tuning.gain))}</span>
+                  <button
+                    className="shrink-0 rounded px-1.5 py-0.5 text-text-2 hover:bg-bg-hover hover:text-text-1 disabled:opacity-40"
+                    disabled={gainToDb(tuning.gain) === 0}
+                    onClick={() => setGainDb(0)}
+                    title="Voltar para 0 dB"
+                  >
+                    0 dB
+                  </button>
+                </div>
+                <button className="text-[11px] text-accent-text hover:underline" onClick={() => setShowTuning((v) => !v)}>
+                  {showTuning ? "Esconder ajustes de áudio" : "Ajustes de áudio"}
+                </button>
+                {showTuning && (
+                  <div className="space-y-1 rounded border border-border bg-bg-panel p-2 text-[12px] text-text-1">
+                    {(
+                      [
+                        ["agc", "Controle automático de ganho", "O navegador sobe e desce o volume sozinho. Desligue se o volume pulando atrapalha."],
+                        ["ns", "Supressão de ruído", "Reduz ventilador e chiado. Desligue se estiver cortando o início das palavras."],
+                        ["echo", "Cancelamento de eco", "Só faz diferença se o som do computador volta para o microfone."],
+                      ] as const
+                    ).map(([k, label, tip]) => (
+                      <label key={k} className="flex cursor-pointer items-center gap-2" title={tip}>
+                        <input type="checkbox" checked={tuning[k]} onChange={() => toggleProc(k)} />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
               {silent ? (
                 <div className="rounded bg-status-warn/15 px-2 py-1 text-[12px] font-semibold text-status-warn">
                   Nenhum som captado — verifique o microfone selecionado
