@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Beth Studio: the interface can freeze, the terminals keep running</title>
-<meta name="description" content="Beth Studio's interface can freeze or close without taking your terminals down. Dictate by voice with no separate app, organize tabs and splits your way, and follow your AI agents from your phone.">
+<meta name="description" content="Beth Studio's interface can freeze or close without taking your terminals down. Dictate by voice with no separate app, organize tabs and splits your way, follow your AI agents from your phone, and let the Windows Claude talk to the WSL2 one.">
 <meta name="color-scheme" content="light dark">
 <link rel="alternate" hreflang="pt-BR" href="../index.html">
 <link rel="alternate" hreflang="en" href="index.html">
@@ -23,6 +23,7 @@
       <a href="#nao-cai">Resilient</a>
       <a href="#how-it-works">How it works</a>
       <a href="#voice">Voice</a>
+      <a href="#bridge">Bridge</a>
       <a href="#long-days">Long days</a>
       <a href="#features">Features</a>
       <a href="#heavy-use">Heavy use</a>
@@ -235,7 +236,7 @@
           <p>You record with the microphone, the audio is transcribed and, if you want, corrected by a language model before it is pasted into the terminal.</p>
           <svg class="wave" viewBox="0 0 240 36" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="14" width="5" height="8" rx="2"/><rect x="12" y="9" width="5" height="18" rx="2"/><rect x="22" y="4" width="5" height="28" rx="2"/><rect x="32" y="11" width="5" height="14" rx="2"/><rect x="42" y="2" width="5" height="32" rx="2"/><rect x="52" y="8" width="5" height="20" rx="2"/><rect x="62" y="13" width="5" height="10" rx="2"/><rect x="72" y="5" width="5" height="26" rx="2"/><rect x="82" y="10" width="5" height="16" rx="2"/><rect x="92" y="15" width="5" height="6" rx="2"/><rect x="102" y="7" width="5" height="22" rx="2"/><rect x="112" y="3" width="5" height="30" rx="2"/><rect x="122" y="12" width="5" height="12" rx="2"/><rect x="132" y="6" width="5" height="24" rx="2"/><rect x="142" y="14" width="5" height="8" rx="2"/><rect x="152" y="9" width="5" height="18" rx="2"/><rect x="162" y="4" width="5" height="28" rx="2"/><rect x="172" y="13" width="5" height="10" rx="2"/><rect x="182" y="8" width="5" height="20" rx="2"/><rect x="192" y="15" width="5" height="6" rx="2"/><rect x="202" y="10" width="5" height="16" rx="2"/><rect x="212" y="5" width="5" height="26" rx="2"/><rect x="222" y="14" width="5" height="8" rx="2"/><rect x="232" y="16" width="5" height="4" rx="2"/></svg>
           <ol class="vsteps">
-            <li><b>Record</b><span>Click Speak (the button is labeled in Portuguese, “Falar”). A bar shows the sound level and warns if no sound is picked up. Recording lasts up to 10 minutes.</span></li>
+            <li><b>Record</b><span>Click Speak (the button is labeled in Portuguese, “Falar”). A wave shows the sound in real time, with the held peak and a hint when it is too low, clipping or silent. You can adjust the input volume on the spot and pause the recording. Recording lasts up to 10 minutes.</span></li>
             <li><b>Transcribe</b><span>When you stop, the audio goes to the transcription provider you chose.</span></li>
             <li class="opt"><b>Correct, if you want</b><span>A language model fixes recognition errors. It is off by default. If it takes too long, Studio uses the uncorrected text.</span></li>
             <li><b>Review</b><span>See what the correction changed and switch between the original and the corrected text.</span></li>
@@ -246,6 +247,9 @@
             <li>The cost of each call is logged on this computer only, without storing audio or text. You can set a monthly limit warning.</li>
             <li>The voice model and the database model are configured separately, in Settings.</li>
             <li>The voice panel does not close on an outside click while it records, transcribes, corrects or shows the text for review.</li>
+            <li>Input volume goes from −12 to +12 dB and really goes into the audio that is sent. Automatic gain control, noise suppression and echo cancellation are switched on and off right there.</li>
+            <li>Pause is for when someone shouts near the microphone: what is said while paused does not enter the audio, and the timer does not count the paused time.</li>
+            <li>Text longer than 4000 characters is not pasted directly, because some agents refuse a huge paste. Studio saves the text in a temporary file and pastes only a short instruction telling the agent to read that file.</li>
           </ul>
         </article>
 
@@ -303,6 +307,69 @@
         <h3>Where the audio and the text go</h3>
         <p>The audio goes to the transcription provider you configured, and the transcribed text goes to the correction provider, if you turned correction on. With local providers, the data stays at the address you set, by default the computer itself. On the phone, the audio reaches your PC first.</p>
         <p>Beth Studio does not keep the audio or the text: it keeps only the settings and the cost log.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="bridge" class="voice" aria-labelledby="h-bridge">
+    <div class="wrap">
+      <p class="sec-label">03 / agent bridge</p>
+      <h2 class="title" id="h-bridge">Windows Claude talks to WSL2 Claude</h2>
+      <p class="sub">Many people run one AI agent on Windows and another inside WSL2, on the same computer. By default they cannot see each other: according to the Claude Code documentation, its message passing between sessions does not cross that boundary. Studio builds the bridge, with no outside program.</p>
+
+      <div class="vgrid">
+        <article class="vblock" aria-labelledby="h-buse">
+          <span class="badge">Windows and WSL2</span>
+          <h3 id="h-buse">Turn it on and use it, no config files</h3>
+          <p>Everything happens under <em>Settings &gt; Ponte de agentes</em> (the screen is in Portuguese), with ready commands to copy and paste if you prefer to do it by hand.</p>
+          <ol class="vsteps">
+            <li><b>Turn the bridge on</b><span>Tick “Ligar a ponte”. It is off by default.</span></li>
+            <li><b>Register on each side</b><span>One button registers the bridge in the Windows Claude and another in the WSL2 one, with check and remove. The equivalent command is shown to copy.</span></li>
+            <li class="opt"><b>Listen on its own</b><span>Turns on a notice in each side's Claude so it wakes up by itself when a message arrives, even when idle. Studio keeps a copy of the original file and you can turn it off any time.</span></li>
+            <li><b>Ask</b><span>Open Claude and say, for example: “talk to the agent in WSL and ask if the build passed”. In WSL it works the other way: “ask the Windows agent…”.</span></li>
+          </ol>
+          <ul class="facts">
+            <li>The screen lists, live, who is on the bridge right now, from Windows and from WSL2.</li>
+            <li>Each agent appears under its <strong>Claude session name</strong>, the same one <code>/list-agents</code> shows (for example, “MOBI VMS”). Call it however you like: “mobi vms”, “mobi-vms”, “wsl”, or by the project folder. If more than one fits, nothing is sent and the list shows name, side and folder.</li>
+            <li>When you resume the conversation, the agent comes back with the same name and the messages that were waiting.</li>
+            <li>Without “listen on its own”, the other side only receives while it is waiting; just tell it to keep listening to the bridge.</li>
+          </ul>
+        </article>
+
+        <article class="vblock" aria-labelledby="h-bhow">
+          <span class="badge">How it works</span>
+          <h3 id="h-bhow">Studio is the mail carrier</h3>
+          <figure class="diagram">
+            <svg viewBox="0 0 320 246" role="img" aria-labelledby="dgB-t dgB-d">
+              <title id="dgB-t">Diagram: bridge between Windows Claude and WSL2 Claude</title>
+              <desc id="dgB-d">Windows Claude and WSL2 Claude exchange messages in both directions through Beth Studio, which keeps the messages and wakes an idle agent.</desc>
+              <rect class="d-ui" x="16" y="8" width="288" height="44" rx="6"/>
+              <text class="d-t" x="160" y="35" text-anchor="middle">Claude on Windows</text>
+              <line class="d-link" x1="160" y1="52" x2="160" y2="86"/>
+              <polygon class="d-arrow" points="160,48 154,58 166,58"/>
+              <polygon class="d-arrow" points="160,90 154,80 166,80"/>
+              <rect class="d-host" x="16" y="90" width="288" height="68" rx="6"/>
+              <text class="d-t" x="160" y="110" text-anchor="middle">Beth Studio</text>
+              <rect class="d-chip" x="22" y="120" width="84" height="26" rx="4"/><text class="d-m" x="64" y="137" text-anchor="middle">send</text>
+              <rect class="d-chip" x="118" y="120" width="84" height="26" rx="4"/><text class="d-m" x="160" y="137" text-anchor="middle">wait</text>
+              <rect class="d-chip" x="214" y="120" width="84" height="26" rx="4"/><text class="d-m" x="256" y="137" text-anchor="middle">wake</text>
+              <line class="d-link" x1="160" y1="158" x2="160" y2="192"/>
+              <polygon class="d-arrow" points="160,154 154,164 166,164"/>
+              <polygon class="d-arrow" points="160,196 154,186 166,186"/>
+              <rect class="d-ui" x="16" y="194" width="288" height="44" rx="6"/>
+              <text class="d-t" x="160" y="221" text-anchor="middle">Claude on WSL2</text>
+            </svg>
+            <figcaption>Simplified diagram, not a screenshot.</figcaption>
+          </figure>
+          <p>Each Claude gets three tools: see who is on the bridge, send a message, and wait for messages. The program that provides them is <code>bethstudio-tool.exe</code>, which already ships with Studio. The WSL2 Claude runs it through Windows itself, so the whole conversation stays inside the computer, with no network and no server.</p>
+        </article>
+      </div>
+
+      <div class="where">
+        <h3>What the bridge does not do</h3>
+        <p>A message that arrives over the bridge comes from <strong>another agent, not from you</strong>, and is delivered marked that way. It does not count as authorization: the agent that receives it still needs your permission to delete, commit, push or deploy. Secrets such as passwords and keys should not go over the bridge.</p>
+        <p>The bridge exists only in the PC's Studio: it does not appear in Studio in the browser or on the phone, and stays off until you turn it on. Each Claude needs the bridge registered; sessions that were already open before registering must be reopened.</p>
+        <p>“Listen on its own” uses a documented Claude Code feature (a background notice that wakes an idle session). It changes each side's Claude settings file, but only after your click, with a copy of the original, and it goes away with “Desligar” (turn off).</p>
       </div>
     </div>
   </section>
@@ -398,7 +465,7 @@
 
   <section id="long-days" aria-labelledby="h-long">
     <div class="wrap">
-      <p class="sec-label">03 / long sessions</p>
+      <p class="sec-label">04 / long sessions</p>
       <h2 class="title" id="h-long">For long working days</h2>
       <p class="sub">A long day in the terminal tends to follow the same script: long texts for the agent, waiting, freezes, and files going back and forth. Each item below deals with one of those, and all of them already exist in the product.</p>
       <ul class="long-list">
@@ -410,13 +477,14 @@
         <li><b>06</b><div><h3>Images and files for the agent</h3><p>Paste a screenshot or a file copied in Explorer: Studio saves a copy and pastes its path. On the phone, attach an image to the message.</p></div></li>
         <li><b>07</b><div><h3>Built-in task manager</h3><p>CPU, memory, GPU and disk, plus what each terminal consumes, to tell whether the weight is in the interface or in the programs you run.</p></div></li>
         <li><b>08</b><div><h3>Terminals that come back after a crash</h3><p>If the host itself goes down, Studio starts it again and recreates the terminals in the same tabs and folders.</p></div></li>
+        <li><b>09</b><div><h3>Windows and WSL2 agents talking to each other</h3><p>Ask the Claude on one side to talk to the one on the other. The message goes through Studio, the idle agent wakes up and the answer comes back. See <a href="#bridge">the agent bridge</a>.</p></div></li>
       </ul>
     </div>
   </section>
 
   <section id="features" aria-labelledby="h-feat">
     <div class="wrap">
-      <p class="sec-label">04 / everything it does</p>
+      <p class="sec-label">05 / everything it does</p>
       <h2 class="title" id="h-feat">Features</h2>
       <p class="sub">A terminal and the tools around it, in one program. Today Beth Studio runs on Windows only.</p>
       <p class="legend"><span><span class="tag win">Windows only</span> relies on Windows features</span><span><span class="tag pc">PC only</span> not available on the phone or in Studio through the browser</span></p>
@@ -465,6 +533,8 @@
           <li><h4>AI providers</h4><p>Several transcription and correction providers, including local ones. Keys are encrypted by Windows, or read from environment variables. Code sign-in with your account for Grok Build and Codex, for correction and the database assistant.<br><span class="tag win">Windows only</span></p></li>
           <li><h4>AI usage and cost</h4><p>Each paid call becomes a local log line, with no audio or text, with totals, a per-day chart, filtering, CSV export and a monthly limit warning.</p></li>
           <li><h4>Full voice test</h4><p>Runs the whole path (microphone, transcription, correction and final text) without sending anything to the terminal, showing time and cost for each step.</p></li>
+          <li><h4>Wave, volume and pause while recording</h4><p>Sound wave with held peak and level hint, input volume from −12 to +12 dB, switches for automatic gain, noise and echo, and a Pause / Continue button. Long texts go through a temporary file instead of a direct paste.<br><span class="tag pc">PC only</span></p></li>
+          <li><h4>Agent bridge (Windows and WSL2)</h4><p>The Windows Claude and the WSL2 Claude exchange messages through Studio, with button-based registration, a list of who is on the bridge, and the “listen on its own” option that wakes an idle agent. See the section <a href="#bridge">Windows Claude talks to WSL2 Claude</a>.<br><span class="tag win">Windows only</span> <span class="tag pc">PC only</span></p></li>
         </ul>
       </div>
 
@@ -506,7 +576,7 @@
 
   <section id="heavy-use" class="heavy" aria-labelledby="h-heavy">
     <div class="wrap">
-      <p class="sec-label">05 / real use</p>
+      <p class="sec-label">06 / real use</p>
       <h2 class="title" id="h-heavy">Built for heavy use</h2>
       <p class="quote">The author uses Beth Studio every day with about 35 terminals open at the same time.</p>
       <p>That means WSL2 and PowerShell sessions, several AI agents and long builds. <strong>In the author's experience</strong>, typing stays smooth in that setup, and the built-in monitor showed that the bottleneck was not WSL2.</p>
@@ -516,7 +586,7 @@
 
   <section id="download" aria-labelledby="h-download">
     <div class="wrap">
-      <p class="sec-label">06 / install</p>
+      <p class="sec-label">07 / install</p>
       <h2 class="title" id="h-download">Download and install</h2>
       <p class="sub">From the repository's Releases page. Requires Windows 10 or 11.</p>
       <div class="dl">

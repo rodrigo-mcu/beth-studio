@@ -161,6 +161,9 @@ func main() {
 		log.Printf("bethstudio-web: variáveis de sessão de agente fora dos terminais: %s", strings.Join(droppedEnv, ", "))
 	}
 	log.Printf("bethstudio-web: servindo em %s", base)
+	// Ponte de agentes (ponte.go): publica <dados>\ponte.json se estiver ligada.
+	ponteSetAddr(dataDir(), base, token)
+	defer ponteUnpublish()
 	fmt.Fprintln(os.Stdout, url)
 
 	if *noWindow {

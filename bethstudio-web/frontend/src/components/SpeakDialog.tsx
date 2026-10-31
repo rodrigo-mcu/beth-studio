@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
-import { Copy, History, Loader2, Mic, Send, Settings2, Square, Trash2, X } from "lucide-react";
+import { Copy, History, Loader2, Mic, Pause, Play, Send, Settings2, Square, Trash2, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { PaneInfo } from "@/lib/types";
 import { paneLabel } from "@/lib/panes";
@@ -35,6 +35,7 @@ import {
   rmsOfFloat,
   type MicTuning,
 } from "@/lib/micTuning";
+import { RecClock } from "@/lib/recClock";
 import { MicPicker } from "./MicPicker";
 import { LevelScope, type ScopeHandle } from "./LevelScope";
 import { VoiceError, correctStreaming, correctTimeoutMs, errorRecovery, formatSeconds, formatUSD, transcribe, type VoiceErrorKind } from "@/lib/voicePipeline";
@@ -107,6 +108,8 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
   const work = useRef<AbortController | null>(null); // transcricao/correcao em andamento
   const skipCorrection = useRef(false);
   const recStart = useRef(0);
+  const clockRef = useRef<RecClock | null>(null); // tempo gravado, sem as pausas
+  const [paused, setPaused] = useState(false);
   const recRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const acRef = useRef<AudioContext | null>(null);
@@ -415,24 +418,27 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
           setPhase("error");
           return;
         }
-        const audioMs = Date.now() - recStart.current;
+        const audioMs = clockRef.current ? clockRef.current.elapsed(Date.now()) : Date.now() - recStart.current;
+        setPaused(false);
         lastAudio.current = { blob, audioMs };
         void process(blob, s, audioMs);
       };
       recRef.current = rec;
       rec.start(250);
       recStart.current = Date.now();
+      clockRef.current = new RecClock(recStart.current);
+      setPaused(false);
       log(`start (estado ${rec.state})`);
       setPhase("recording");
       // nivel, tempo e aviso de silencio
       const buf = new Float32Array(an?.fftSize ?? 1024);
       const watch = new SilenceWatch();
       const holder = new PeakHold();
-      const t0 = Date.now();
       let warned = false;
       let lastShown = 0;
       const tick = () => {
-        if (recRef.current !== rec || rec.state !== "recording") return;
+        // pausado continua no laço: o medidor segue vivo para ver quando o barulho passou
+        if (recRef.current !== rec || (rec.state !== "recording" && rec.state !== "paused")) return;
         let l = 0;
         if (an) {
           an.getFloatTimeDomainData(buf);
@@ -446,13 +452,14 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
           }
         }
         const now = Date.now();
-        const quiet = an ? watch.feed(l, now) : false;
+        // na pausa o silêncio é esperado: não avisa e zera a contagem
+        const quiet = an ? watch.feed(rec.state === "paused" ? 1 : l, now) : false;
         setSilent(quiet);
         if (quiet && !warned) {
           warned = true;
           log("aviso: nenhum som captado por 3 s");
         }
-        const el = now - t0;
+        const el = clockRef.current?.elapsed(now) ?? 0;
         setElapsed(el);
         if (el >= MAX_RECORD_MS) rec.stop();
         else requestAnimationFrame(tick);
@@ -502,16 +509,34 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
       closed.current = true;
       work.current?.abort();
       discard.current = true;
-      if (recRef.current?.state === "recording") recRef.current.stop();
+      if (recRef.current && recRef.current.state !== "inactive") recRef.current.stop();
       streamRef.current?.getTracks().forEach((t) => t.stop());
       busy.current = false;
     };
   }, [conn]);
 
   const stop = () => {
-    if (recRef.current?.state === "recording") {
-      log("parar (usuário)");
+    const st = recRef.current?.state;
+    if (recRef.current && (st === "recording" || st === "paused")) {
+      log(`parar (usuário${st === "paused" ? ", estava pausado" : ""})`);
       recRef.current.stop();
+    }
+  };
+  /** Pausa/continua: o áudio dito na pausa não entra na gravação. */
+  const togglePause = () => {
+    const rec = recRef.current;
+    const clock = clockRef.current;
+    if (!rec || !clock) return;
+    if (rec.state === "recording") {
+      rec.pause();
+      clock.pause(Date.now());
+      setPaused(true);
+      log("pausar (usuário)");
+    } else if (rec.state === "paused") {
+      rec.resume();
+      clock.resume(Date.now());
+      setPaused(false);
+      log("continuar (usuário)");
     }
   };
   const cancel = () => {
@@ -600,7 +625,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
     setSnap(s2);
     void saveVoice(conn, next).catch(() => undefined);
     const rec = recRef.current;
-    if (rec?.state === "recording") {
+    if (rec && (rec.state === "recording" || rec.state === "paused")) {
       discard.current = true;
       const prev = rec.onstop;
       rec.onstop = (ev) => {
@@ -689,12 +714,12 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
             <div className="flex flex-col items-center gap-3 py-2">
               <div className="flex max-w-full items-center gap-2 text-[14px] font-semibold text-text-1">
                 <span className="relative inline-flex h-3 w-3 shrink-0">
-                  <span className="absolute inset-0 animate-ping rounded-full bg-[#DC2626] opacity-75" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-[#DC2626]" />
+                  {!paused && <span className="absolute inset-0 animate-ping rounded-full bg-[#DC2626] opacity-75" />}
+                  <span className={cn("relative inline-flex h-3 w-3 rounded-full", paused ? "bg-status-warn" : "bg-[#DC2626]")} />
                 </span>
-                <span className="truncate">Gravando com {micName}</span>
+                <span className="truncate">{paused ? "Pausado" : "Gravando"} com {micName}</span>
               </div>
-              <div className="font-mono text-[22px] text-text-1">{formatDuration(elapsed)}</div>
+              <div className={cn("font-mono text-[22px]", paused ? "text-status-warn" : "text-text-1")}>{formatDuration(elapsed)}</div>
               <div className="w-full max-w-[460px] space-y-1.5">
                 <LevelScope ref={scopeRef} />
                 {(() => {
@@ -760,7 +785,11 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   </div>
                 )}
               </div>
-              {silent ? (
+              {paused ? (
+                <div className="rounded bg-status-warn/15 px-2 py-1 text-center text-[12px] font-semibold text-status-warn">
+                  Pausado — o que for dito agora NÃO entra na gravação. Aperte Continuar quando o ambiente estiver calmo.
+                </div>
+              ) : silent ? (
                 <div className="rounded bg-status-warn/15 px-2 py-1 text-[12px] font-semibold text-status-warn">
                   Nenhum som captado — verifique o microfone selecionado
                 </div>
@@ -769,7 +798,17 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   Fale normalmente; a barra se mexe com a sua voz (máx. {MAX_RECORD_MS / 60000} min) · {sttName}
                 </div>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  className={cn(
+                    "flex items-center gap-1.5 rounded px-4 py-1.5 font-semibold",
+                    paused ? "bg-status-ok text-white hover:opacity-90" : "bg-bg-hover text-text-1 hover:bg-border",
+                  )}
+                  onClick={togglePause}
+                  title={paused ? "Voltar a gravar" : "Pausa a gravação: nada do que for dito entra no áudio"}
+                >
+                  {paused ? <Play size={13} fill="currentColor" /> : <Pause size={13} fill="currentColor" />} {paused ? "Continuar" : "Pausar"}
+                </button>
                 <button className="flex items-center gap-1.5 rounded bg-[#DC2626] px-4 py-1.5 font-semibold text-white hover:bg-[#B91C1C]" onClick={stop}>
                   <Square size={13} fill="currentColor" /> Parar e transcrever
                 </button>

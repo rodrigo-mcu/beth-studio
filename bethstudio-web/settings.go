@@ -80,6 +80,8 @@ type webSettings struct {
 	PaneNames map[string]*PaneName `json:"pane_names,omitempty"`
 	// Comando de inicialização do WSL por distro (chave em minúsculas): wsl_init_cfg.go.
 	WSLInit map[string]WSLInitCfg `json:"wsl_init,omitempty"`
+	// Ponte de agentes Windows <-> WSL (ponte.go).
+	Ponte *PonteSettings `json:"ponte,omitempty"`
 }
 
 type SidebarPrefs struct {

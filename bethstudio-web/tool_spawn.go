@@ -15,6 +15,7 @@ package main
 
 import (
 	"errors"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -33,6 +34,14 @@ var toolKinds = map[string]struct {
 // toolHelperMain: chamado no inicio de main(). handled=false = siga o fluxo
 // normal do bethstudio-web.
 func toolHelperMain(args []string) (code int, handled bool) {
+	// Ponte de agentes (ponte_mcp.go): servidor MCP no stdio.
+	if len(args) >= 1 && args[0] == ponteMCPFlag {
+		return ponteMCPMain(args[1:], os.Stdin, os.Stdout), true
+	}
+	// Hook "ouvir sozinho" (ponte_hook.go): acorda a sessão parada.
+	if len(args) >= 1 && args[0] == ponteHookFlag {
+		return ponteHookMain(args[1:], os.Stdin, os.Stderr), true
+	}
 	if len(args) != 2 {
 		return 0, false
 	}
