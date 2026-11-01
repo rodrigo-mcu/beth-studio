@@ -705,7 +705,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
         className={cn(
           "pointer-events-auto absolute flex max-h-[84vh] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl",
           // gravando: cartão compacto, para não cobrir o texto que se quer ler atrás
-          phase === "recording" ? "w-[min(380px,94vw)]" : "w-[min(640px,94vw)]",
+          phase === "recording" ? "w-[min(356px,94vw)]" : "w-[min(640px,94vw)]",
         )}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
@@ -735,7 +735,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
             <X size={16} />
           </button>
         </div>
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+        <div className={cn("min-h-0 flex-1 overflow-y-auto", phase === "recording" ? "space-y-2 p-3" : "space-y-3 p-4")}>
           {phase === "loading" && <Busy text="Preparando…" />}
           {phase === "privacy" && snap && (
             <div className="space-y-3">
@@ -785,7 +785,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 <span className={cn("shrink-0 font-mono text-[18px]", paused ? "text-status-warn" : "text-text-1")}>{formatDuration(elapsed)}</span>
               </div>
               <div className="w-full space-y-1">
-                <LevelScope ref={scopeRef} className="h-12" />
+                <LevelScope ref={scopeRef} className="h-10" />
                 {(() => {
                   const hint = levelHint(readout.hold);
                   return (
@@ -820,14 +820,14 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                     title="Aumenta ou diminui o volume do que é gravado, na hora"
                   />
                   <span className="w-14 shrink-0 text-right font-mono text-text-1">{formatGainDb(gainToDb(tuning.gain))}</span>
+                  {gainToDb(tuning.gain) !== 0 && (
                   <button
                     className="shrink-0 rounded px-1.5 py-0.5 text-text-2 hover:bg-bg-hover hover:text-text-1 disabled:opacity-40"
-                    disabled={gainToDb(tuning.gain) === 0}
                     onClick={() => setGainDb(0)}
                     title="Voltar para 0 dB"
                   >
                     0 dB
-                  </button>
+                  </button>)}
                 </div>
                 <button className="text-[11px] text-accent-text hover:underline" onClick={() => setShowTuning((v) => !v)}>
                   {showTuning ? "Esconder microfone e ajustes" : "Microfone e ajustes de áudio"}
@@ -864,10 +864,10 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   Nenhum som captado — verifique o microfone selecionado
                 </div>
               ) : null}
-              <div className="flex w-full flex-wrap justify-center gap-1.5">
+              <div className="flex w-full justify-center gap-1.5">
                 <button
                   className={cn(
-                    "flex items-center gap-1.5 rounded px-3 py-1.5 font-semibold",
+                    "flex items-center gap-1.5 rounded px-2.5 py-1 text-[12px] font-semibold",
                     paused ? "bg-status-ok text-white hover:opacity-90" : "bg-bg-hover text-text-1 hover:bg-border",
                   )}
                   onClick={togglePause}
@@ -876,16 +876,16 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   {paused ? <Play size={13} fill="currentColor" /> : <Pause size={13} fill="currentColor" />} {paused ? "Continuar" : "Pausar"}
                 </button>
                 <button
-                  className="flex items-center gap-1.5 rounded bg-bg-hover px-3 py-1.5 text-text-1 hover:bg-border"
+                  className="flex items-center gap-1.5 rounded bg-bg-hover px-2.5 py-1 text-[12px] text-text-1 hover:bg-border"
                   onClick={restartRecording}
                   title="Descarta o que foi gravado até agora e começa de novo (útil quando a captação não pegou)"
                 >
                   <RotateCcw size={13} /> Reiniciar
                 </button>
-                <button className="flex items-center gap-1.5 rounded bg-[#DC2626] px-3 py-1.5 font-semibold text-white hover:bg-[#B91C1C]" onClick={stop} title="Para a gravação e transcreve (máx. 10 min por gravação)">
+                <button className="flex items-center gap-1.5 rounded bg-[#DC2626] px-2.5 py-1 text-[12px] font-semibold text-white hover:bg-[#B91C1C]" onClick={stop} title="Para a gravação e transcreve (máx. 10 min por gravação)">
                   <Square size={13} fill="currentColor" /> Transcrever
                 </button>
-                <button className="rounded bg-bg-hover px-3 py-1.5 text-text-1 hover:bg-border" onClick={cancel}>
+                <button className="rounded bg-bg-hover px-2.5 py-1 text-[12px] text-text-1 hover:bg-border" onClick={cancel}>
                   Cancelar
                 </button>
               </div>
