@@ -855,16 +855,20 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   </div>
                 )}
               </div>
-              {paused ? (
-                <div className="rounded bg-status-warn/15 px-2 py-1 text-center text-[12px] font-semibold text-status-warn">
-                  Pausado — o que for dito agora NÃO entra na gravação. Aperte Continuar quando o ambiente estiver calmo.
-                </div>
-              ) : silent ? (
-                <div className="rounded bg-status-warn/15 px-2 py-1 text-[12px] font-semibold text-status-warn">
-                  Nenhum som captado — verifique o microfone selecionado
-                </div>
-              ) : null}
-              <div className="flex w-full justify-center gap-1.5">
+              {/* espaço fixo para o aviso: a janela não muda de altura quando ele aparece */}
+              <div className="flex h-7 w-full items-center justify-center">
+                {paused ? (
+                  <div className="w-full truncate rounded bg-status-warn/15 px-2 py-1 text-center text-[12px] font-semibold text-status-warn" title="O que for dito durante a pausa não entra na gravação">
+                    Pausado — o que for dito agora não é gravado
+                  </div>
+                ) : silent ? (
+                  <div className="w-full truncate rounded bg-status-warn/15 px-2 py-1 text-center text-[12px] font-semibold text-status-warn" title="Nenhum som captado — verifique o microfone selecionado">
+                    Nenhum som captado — verifique o microfone
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex w-full items-center justify-between gap-1.5">
+                <div className="flex gap-1.5">
                 <button
                   className={cn(
                     "flex items-center gap-1.5 rounded px-2.5 py-1 text-[12px] font-semibold",
@@ -882,13 +886,15 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 >
                   <RotateCcw size={13} /> Reiniciar
                 </button>
+                </div>
                 <button className="flex items-center gap-1.5 rounded bg-[#DC2626] px-2.5 py-1 text-[12px] font-semibold text-white hover:bg-[#B91C1C]" onClick={stop} title="Para a gravação e transcreve (máx. 10 min por gravação)">
                   <Square size={13} fill="currentColor" /> Transcrever
                 </button>
-                <button className="rounded bg-bg-hover px-2.5 py-1 text-[12px] text-text-1 hover:bg-border" onClick={cancel}>
-                  Cancelar
-                </button>
               </div>
+              {/* Cancelar sozinho, no meio e longe do Transcrever: evita o clique errado */}
+              <button className="rounded bg-bg-hover px-4 py-1 text-[12px] text-text-1 hover:bg-border" onClick={cancel}>
+                Cancelar
+              </button>
             </div>
           )}
           {overLimit && phase !== "review" && <div className="rounded bg-status-warn/15 p-2 text-[12px] text-status-warn">{overLimit}</div>}
