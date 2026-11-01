@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, Cable, CircleDollarSign, Database, FolderOpen, Info, KeyRound, LayoutGrid, Mic, Monitor, PanelLeft, Settings, Smartphone, TerminalSquare, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Cable, CircleDollarSign, Eraser, Database, FolderOpen, Info, KeyRound, LayoutGrid, Mic, Monitor, PanelLeft, Settings, Smartphone, TerminalSquare, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { PaneInfo, SettingsEvent } from "@/lib/types";
 import { setDefault, type Catalog } from "@/lib/appearance";
@@ -18,10 +18,11 @@ import { VpsInstallWizard } from "./VpsInstallWizard";
 import { RemoteStudioSection } from "./RemoteStudioSection";
 import { UpdateSection } from "./UpdateSection";
 import { PerformanceSection } from "./PerformanceSection";
+import { TempCleanSection } from "./TempCleanSection";
 import { PonteSection } from "./PonteSection";
 import { isRemote } from "@/lib/remote";
 
-export type SettingsSection = "aparencia" | "terminais" | "celular" | "voz" | "provedores" | "ponte" | "banco" | "uso" | "barra" | "sobre";
+export type SettingsSection = "aparencia" | "terminais" | "celular" | "voz" | "provedores" | "ponte" | "temp" | "banco" | "uso" | "barra" | "sobre";
 
 interface SidebarPrefs {
   collapsed: boolean;
@@ -55,6 +56,7 @@ const NAV: { id: SettingsSection; label: string; icon: ReactNode }[] = [
   { id: "voz", label: "Voz e IA", icon: <Mic size={15} /> },
   { id: "provedores", label: "Provedores de IA", icon: <KeyRound size={15} /> },
   { id: "ponte", label: "Ponte de agentes", icon: <Cable size={15} /> },
+  { id: "temp", label: "Arquivos temporários", icon: <Eraser size={15} /> },
   { id: "banco", label: "Banco de dados", icon: <Database size={15} /> },
   { id: "uso", label: "Uso e custos de IA", icon: <CircleDollarSign size={15} /> },
   { id: "barra", label: "Barra lateral", icon: <PanelLeft size={15} /> },
@@ -139,6 +141,12 @@ export function SettingsDialog(p: Props) {
                 <div className="px-5 py-4 text-[13px] text-text-2">A ponte de agentes se configura só no Studio do PC.</div>
               ) : (
                 <PonteSection conn={p.conn} onMessage={p.onMessage} />
+              ))}
+            {sec === "temp" &&
+              (isRemote() ? (
+                <div className="px-5 py-4 text-[13px] text-text-2">A limpeza de temporários se configura só no Studio do PC.</div>
+              ) : (
+                <TempCleanSection conn={p.conn} onMessage={p.onMessage} />
               ))}
             {sec === "banco" &&<DbAssistSettings conn={p.conn} onProviders={() => setSec("provedores")} />}
             {sec === "uso" && <AIUsageSection conn={p.conn} onMessage={p.onMessage} />}

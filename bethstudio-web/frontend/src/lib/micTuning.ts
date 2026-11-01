@@ -114,3 +114,24 @@ export class PeakHold {
     this.lastNow = 0;
   }
 }
+
+/**
+ * Captação morta: o gravador está rodando mas nenhuma amostra diferente de
+ * zero chegou. Ruído de fundo, mesmo baixo, nunca é zero exato; zero exato
+ * por 2 s é o contexto de áudio parado ou o microfone que o Windows entregou
+ * mudo. `feed` devolve true uma vez, quando dá para desistir e recomeçar.
+ */
+export class CaptureWatch {
+  private seen = false;
+  private fired = false;
+  private readonly deadAfterMs: number;
+  constructor(deadAfterMs = 2000) {
+    this.deadAfterMs = deadAfterMs;
+  }
+  feed(peak: number, elapsedMs: number): boolean {
+    if (peak > 0) this.seen = true;
+    if (this.seen || this.fired || elapsedMs < this.deadAfterMs) return false;
+    this.fired = true;
+    return true;
+  }
+}

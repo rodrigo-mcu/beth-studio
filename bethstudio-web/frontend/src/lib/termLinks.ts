@@ -329,6 +329,52 @@ export function routeTermLink(target: string, ctx: PaneLinkCtx): LinkRoute | nul
   return { kind: "open", path };
 }
 
+/**
+ * O que um texto SELECIONADO é, para o menu do botão direito. Mais estrito
+ * que o clique: uma palavra solta ("hello") viraria uma pasta relativa ao cwd,
+ * então sem separador de caminho, "~", unidade ou extensão não é nada.
+ */
+export function routeSelection(sel: string, ctx: PaneLinkCtx): LinkRoute | null {
+  let t = sel.trim();
+  // caminho longo quebrado em várias linhas na tela: emenda se nenhuma parte tem espaço
+  if (/[\r\n]/.test(t)) {
+    const parts = t.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+    if (parts.length > 4 || parts.some((x) => /\s/.test(x))) return null;
+    t = parts.join("");
+  }
+  if (!t || t.length > 1000) return null;
+  t = t.replace(/^["'`<(\[]+/, "").replace(/["'`>)\],;.:]+$/, "");
+  if (!t) return null;
+  if (/^https?:/i.test(t)) return routeTermLink(t, ctx);
+  const pathLike = /[\\/]/.test(t) || /^~/.test(t) || /^[A-Za-z]:/.test(t) || /\.[A-Za-z0-9]{1,8}$/.test(t);
+  if (!pathLike) return null;
+  return routeTermLink(t, ctx);
+}
+
+/** Itens do menu para uma seleção reconhecida. */
+export type LinkAction = "link" | "folder" | "file" | "default" | "reveal";
+
+export function routeActions(r: LinkRoute): { action: LinkAction; label: string }[] {
+  switch (r.kind) {
+    case "http":
+      return [{ action: "link", label: "Abrir link no navegador" }];
+    case "folder":
+      return [{ action: "folder", label: "Abrir no Explorer" }];
+    case "file":
+      return [
+        { action: "file", label: "Abrir arquivo" },
+        { action: "reveal", label: "Mostrar na pasta" },
+      ];
+    case "open":
+      return [
+        { action: "default", label: "Abrir arquivo" },
+        { action: "reveal", label: "Mostrar na pasta" },
+      ];
+    case "reveal":
+      return [{ action: "reveal", label: "Mostrar na pasta" }];
+  }
+}
+
 export interface ClickMods {
   ctrl: boolean;
   meta: boolean;

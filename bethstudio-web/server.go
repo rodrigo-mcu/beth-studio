@@ -114,6 +114,10 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		s.servePonte(w, r, remoteKey)
 		return
 	}
+	if r.URL.Path == "/api/temp-clean" || r.URL.Path == "/api/temp-clean/run" {
+		s.serveTempClean(w, r, remoteKey)
+		return
+	}
 	if strings.HasPrefix(r.URL.Path, "/api/db/") {
 		s.serveDB(w, r)
 		return

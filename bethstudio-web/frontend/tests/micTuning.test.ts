@@ -80,3 +80,15 @@ test("restrições do navegador seguem as chaves; sem chaves, tudo ligado como a
     deviceId: { exact: "abc" },
   });
 });
+
+import { CaptureWatch } from "../src/lib/micTuning.ts";
+
+test("CaptureWatch: zero exato por 2 s é captação morta (uma vez); qualquer sinal desarma", () => {
+  const w = new CaptureWatch();
+  assert.equal(w.feed(0, 500), false, "cedo demais");
+  assert.equal(w.feed(0, 2100), true);
+  assert.equal(w.feed(0, 2500), false, "só avisa uma vez");
+  const ok = new CaptureWatch();
+  assert.equal(ok.feed(0.0004, 300), false);
+  assert.equal(ok.feed(0, 5000), false, "já viu sinal: silêncio depois não é falha");
+});

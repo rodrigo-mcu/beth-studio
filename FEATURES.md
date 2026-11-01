@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-10-31.
+Last updated: 2026-11-01.
 
 ---
 
@@ -72,7 +72,7 @@ Status legend: 🟢 shipped · ⚪ planned.
 - 🟢 **Aviso de zoom da tela** — when the whole-screen zoom (Ctrl + wheel, Ctrl +/-) is not 100%, a small "Zoom 125%" pill appears in the bottom-right corner; click it (or Ctrl+0) to go back to 100%. **Configurações > Aparência > Zoom da tela** shows the current value with a **Redefinir para 100%** button. Only in the Studio window on this computer.
 - 🟢 **Histórico das transcrições** — the **Falar** window keeps the last 20 transcriptions (button with a clock icon in its title bar). Each one is saved as soon as it is transcribed, before it is pasted, so if the paste fails or the agent cuts the text you can open it, copy it or paste it again. Stored only on this computer; each entry can be removed, or all cleared.
 - 🟢 **Ponte de agentes (Windows ↔ WSL)** (2026-10-31) — **Configurações > Ponte de agentes** lets the Claude Code in Windows talk to the Claude Code in WSL (and the other way round) on this computer, through the Studio, with no extra program. Turn on **Ligar a ponte**, then click **Registrar automaticamente** for the Windows side and for the WSL side (the Studio runs `claude mcp add --scope user beth-ponte ...` on each side; the same commands are shown to copy and paste, plus **Verificar** and **Remover**). Open Claude again on each side and say "fala com o agente no WSL: …". The agents get three tools (`ponte_agentes`, `ponte_enviar`, `ponte_aguardar`). Each agent appears under the **name of its Claude session** (the one `/list-agents` shows, e.g. "MOBI VMS"), read from Claude's own session registry on each side, and you can address it by that name in any spelling ("mobi vms", "mobi-vms"), by `wsl` / `windows`, or by its folder; when more than one fits, nothing is sent and the list shows name, side and folder. A resumed session keeps its name and its waiting messages. **Ouvir sozinho** (one button per side, with a backup of the Claude settings file) makes an idle Claude wake up by itself when a message arrives (a background hook that only says "there is a message", never carries its text); without it the other side answers while it is listening ("fica ouvindo a ponte"). The screen lists who is on the bridge now. For the WSL side, click **Registrar automaticamente** again after updating (it now forwards the session id to the Windows program). A message from the bridge is marked as coming from another agent, never from you, so it does not count as your authorization. Optional and experimental: opening Claude with `--dangerously-load-development-channels server:beth-ponte` makes messages arrive by themselves. Only on the PC (not in the remote Studio or the phone). Design: `docs/superpowers/specs/2026-10-31-ponte-agentes-design.md`.
-- 🟢 **Texto longo do Falar vai por arquivo** (2026-10-31) — when the text to paste has more than 4000 characters (a long dictation, or an old one pasted again from the history), the **Falar** window does not paste it, because some agents refuse or cut a huge paste. It saves the text in a `.txt` file in the temporary folder (`...\bethstudio\pasted-text\fala-<time>.txt`, kept 7 days; `/mnt/c/...` path in WSL panes) and pastes only a short instruction telling the agent to read that file. If saving fails it pastes the text directly, as before.
+- 🟢 **Texto longo do Falar vai por arquivo** (2026-10-31; limit lowered to 100 words and the file now opens with instructions saying it is transcribed audio, 2026-11-01) — when the text to paste has more than 100 words (or 1000 characters) (a long dictation, or an old one pasted again from the history), the **Falar** window does not paste it, because some agents refuse or cut a huge paste. It saves the text in a `.txt` file in the temporary folder (`...\bethstudio\pasted-text\fala-<time>.txt`, kept 7 days; `/mnt/c/...` path in WSL panes) and pastes only a short instruction telling the agent to read that file. If saving fails it pastes the text directly, as before.
 - 🟢 **Captação do Falar: volume de entrada e medidor em onda** (2026-10-31) — while recording, the **Falar** window shows the sound as a scrolling wave (bar = peak, core = average volume, line = held peak, red band at the top = clipping), with the peak in dB and a hint ("Bom nível", "Fraco…", "Estourando…"). A **Volume de entrada** slider (−12 to +12 dB) changes the gain live and the chosen gain goes into the recorded audio that is sent for transcription. **Ajustes de áudio** switches automatic gain control, noise suppression and echo cancellation on or off (they apply to the recording in progress). The choices are remembered on this computer. A **Pausar / Continuar** button stops the recording without ending it (for when someone shouts near the microphone): nothing said while paused goes into the audio, the timer and the maximum length do not count the pause, and the wave keeps moving so you can see when the noise is gone.
 - 🟢 **Janela de voz móvel** — the **Falar** window no longer dims or blocks the screen: it floats, and you drag it by its title bar to move it off the text you are reading. It remembers where you left it and stays inside the window. Clicking outside never cancels it; only the buttons or Esc (while the window has focus) do.
 
@@ -353,6 +353,25 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
   `~/dir`, `C:\dir`) opens that folder in Explorer; in a WSL terminal it
   opens the WSL folder on Windows. The folder path in the terminal header
   does the same (2026-10-15).
+  Right-click on **selected** text that is a link, a folder or a file adds
+  the matching items at the top of the terminal menu: **Abrir link no
+  navegador**, **Abrir no Explorer** (folder), **Abrir arquivo** and
+  **Mostrar na pasta** (file). A loose word without a path separator,
+  `~`, drive or extension is not offered (2026-11-01).
+  **Falar** no longer needs cancel and record again when the microphone
+  does not capture: if no sound at all (exact zero) arrives in the first
+  2 s, it restarts the capture once by itself, without the volume meter; the
+  audio engine is now waited for until it is really running, and Windows
+  not answering the microphone within 8 s shows a clear message (2026-11-01).
+  The recording card is now compact (about 380 px wide, smaller graph, the
+  microphone picker moved under "Microfone e ajustes de áudio") so it does
+  not cover the text behind it, and a **Reiniciar** button throws away the
+  current take and starts a new one without closing the window (2026-11-01).
+  **Configurações > Arquivos temporários**: the images and files pasted
+  into terminals and the long dictation texts (`C:	mpethstudio  clipboard-images` and `pasted-text`) are deleted automatically when older
+  than N days (default 10, 1 to 365; on by default, can be turned off). It
+  runs 1 minute after the Studio opens and every 6 h, only touches files the
+  Studio created, and has an "Apagar os antigos agora" button (2026-11-01).
 - 🟢 **Colar arquivo do Explorer** (Ctrl+V or Colar, 2026-10-01). A file
   copied in Explorer — PDF, video, or anything else — is copied into
   `C:\tmp\bethstudio\clipboard-images` (or `%TEMP%\bethstudio\clipboard-images`

@@ -283,10 +283,10 @@ func TestPasteTextSavesFileAndReturnsInstruction(t *testing.T) {
 	}
 	var out struct{ Path, Text string }
 	_ = json.Unmarshal(rr.Body.Bytes(), &out)
-	if b, err := os.ReadFile(out.Path); err != nil || string(b) != long {
+	if b, err := os.ReadFile(out.Path); err != nil || !strings.HasSuffix(string(b), long) || !strings.Contains(string(b), "ditada por voz e transcrita automaticamente") {
 		t.Fatalf("arquivo: %v", err)
 	}
-	if !strings.Contains(out.Text, out.Path) || len(out.Text) > 400 {
+	if !strings.Contains(out.Text, "Leia o arquivo: "+out.Path) || !strings.Contains(out.Text, "transcrito") || len(out.Text) > 500 {
 		t.Fatalf("instrução: %q", out.Text)
 	}
 	if _, err := os.Stat(old); err == nil {

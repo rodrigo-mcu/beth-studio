@@ -9,6 +9,8 @@ import {
   AppWindow,
   ClipboardPaste,
   Copy,
+  ExternalLink,
+  FileText,
   FolderOpen,
   Grid2x2,
   GripVertical,
@@ -44,7 +46,7 @@ import { readIncrementalWrite } from "@/lib/termRenderer";
 import { openExternal } from "@/lib/links";
 import { resolveLinkPath, type PaneLinkCtx } from "@/lib/localFile";
 import { markScreen } from "@/lib/startup";
-import { fallbackLinksTouching, linkHoverHint, routeTermLink, shouldActivateLink, suppressAppMouseDown, type CellLike, type LinkRow } from "@/lib/termLinks";
+import { fallbackLinksTouching, linkHoverHint, routeActions, routeSelection, routeTermLink, shouldActivateLink, suppressAppMouseDown, type CellLike, type LinkRoute, type LinkRow } from "@/lib/termLinks";
 import { reasonLabel, type AgentInfo } from "@/lib/agents";
 import { IMAGE_TYPES, filesFromTransfer, planUpload, uploadURL } from "@/lib/pasteMedia";
 import { PANE_MIME } from "@/lib/dnd";
@@ -200,6 +202,8 @@ export function TerminalView({
   const [size, setSize] = useState<{ cols: number; rows: number } | null>(null);
   const [hasSelection, setHasSelection] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  // o que a seleção é, se for link, pasta ou arquivo (calculado ao abrir o menu)
+  const [menuRoute, setMenuRoute] = useState<LinkRoute | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [gotScreen, setGotScreen] = useState(false);
@@ -250,6 +254,16 @@ export function TerminalView({
     if (!sel) return;
     flash((await copyText(sel)) ? "Copiado" : "Não foi possível copiar");
   }, [flash]);
+
+  /** Item do menu do botão direito sobre um link, pasta ou arquivo selecionado. */
+  const runMenuLink = (r: LinkRoute, action: string) => {
+    const fail = (e: Error) => flash(e.message);
+    if (r.kind === "http") return void openExternal(conn, r.url);
+    if (action === "file") return onOpenFileRef.current?.(r.path);
+    if (action === "folder") return void conn.api("/api/local-fs/reveal", { path: r.path, open_folder: true }).catch(fail);
+    if (action === "default") return void conn.api("/api/local-file/open-default", { path: r.path }).catch(fail);
+    void conn.api("/api/local-file/reveal", { path: r.path }).catch(fail);
+  };
 
   const sendPaste = useCallback(
     (text: string) => {
@@ -1253,6 +1267,15 @@ Arraste para outra aba ou para a borda de outro terminal`
         style={{ background: colors.background }}
         onContextMenu={(e) => {
           e.preventDefault();
+          const selText = termRef.current?.getSelection() ?? "";
+          const route = routeSelection(selText, paneCtxRef.current);
+          setMenuRoute(route);
+          if (selText.trim()) {
+            // diagnóstico: o que foi selecionado e o que o menu entendeu
+            void conn
+              .api("/api/log", { msg: `menu: seleção=${JSON.stringify(selText.slice(0, 200))} -> ${route ? `${route.kind} ${"url" in route ? route.url : route.path}` : "nada"}` })
+              .catch(() => undefined);
+          }
           setMenu({ x: e.clientX, y: e.clientY });
         }}
         onMouseDown={() => {
@@ -1422,6 +1445,23 @@ Arraste para outra aba ou para a borda de outro terminal`
                     const m = menu;
                     setMenu(null);
                     onNewSplit(z, m.x, m.y);
+                  }}
+                />
+              ))}
+              <div className="my-1 border-t border-border" />
+            </>
+          )}
+          {menuRoute && (
+            <>
+              {routeActions(menuRoute).map((a) => (
+                <MenuItem
+                  key={a.action}
+                  icon={a.action === "link" ? <ExternalLink size={14} /> : a.action === "file" || a.action === "default" ? <FileText size={14} /> : <FolderOpen size={14} />}
+                  label={a.label}
+                  onClick={() => {
+                    const r = menuRoute;
+                    setMenu(null);
+                    runMenuLink(r, a.action);
                   }}
                 />
               ))}

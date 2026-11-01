@@ -79,8 +79,10 @@ export interface VoiceSnapshot {
 // --- API ---------------------------------------------------------------
 
 /** Acima disto o Falar não cola o texto: grava num arquivo e cola só uma instrução (alguns agentes recusam colagem enorme). */
-export const LONG_PASTE_CHARS = 4000;
-export const isLongPaste = (msg: string) => msg.length > LONG_PASTE_CHARS;
+export const LONG_PASTE_WORDS = 100;
+export const LONG_PASTE_CHARS = 1000;
+export const wordCount = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
+export const isLongPaste = (msg: string) => msg.length > LONG_PASTE_CHARS || wordCount(msg) > LONG_PASTE_WORDS;
 export const pasteAsFile = (conn: Connection, pane: number, text: string) =>
   conn.api<{ path: string; text: string }>("/api/paste-text", { pane_id: pane, text });
 
@@ -197,6 +199,8 @@ export function micErrorMessage(name: string): string {
       return "Nenhum microfone encontrado. Conecte um microfone e tente de novo.";
     case "NotReadableError":
       return "O microfone está em uso por outro programa ou indisponível.";
+    case "TimeoutError":
+      return "O Windows não respondeu ao abrir o microfone. Feche e abra o Falar de novo; se repetir, desligue e ligue o microfone nas configurações de som do Windows.";
   }
   return "Não foi possível abrir o microfone.";
 }

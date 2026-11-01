@@ -330,3 +330,29 @@ test("pasta: no pane WSL abre a pasta do WSL no Windows; no pane Windows, Linux 
   assert.deepEqual(routeTermLink("C:/dados/export", { paneKind: "powershell" }), { kind: "folder", path: "C:" + String.fromCharCode(92) + "dados" + String.fromCharCode(92) + "export" });
   assert.match(linkHoverHint(false, "folder"), /abrir a pasta no Explorer/);
 });
+
+// Menu do botão direito: o que o texto selecionado é.
+import { routeActions, routeSelection } from "../src/lib/termLinks.ts";
+
+test("routeSelection: link, pasta e arquivo selecionados dão ações; palavra solta não", () => {
+  const ctx = { paneKind: "powershell", paneCwd: "file://PC/C:/mcu/repo" };
+  assert.deepEqual(routeSelection("https://exemplo.com/a?b=1", ctx), { kind: "http", url: "https://exemplo.com/a?b=1" });
+  assert.deepEqual(routeSelection('"C:\\mcu\\repo\\tcw".', ctx), { kind: "folder", path: "C:\\mcu\\repo\\tcw" });
+  assert.equal(routeSelection("README.md", ctx)?.kind, "file");
+  assert.equal(routeSelection("hello", ctx), null, "palavra solta não vira pasta do cwd");
+  assert.equal(routeSelection("linha1\nC:\\x\\y", ctx), null, "várias linhas");
+  assert.equal(routeSelection("   ", ctx), null);
+});
+
+test("routeActions: um item por destino, e arquivo ganha 'Mostrar na pasta'", () => {
+  assert.deepEqual(routeActions({ kind: "http", url: "https://a.b" }).map((a) => a.label), ["Abrir link no navegador"]);
+  assert.deepEqual(routeActions({ kind: "folder", path: "C:\\x" }).map((a) => a.label), ["Abrir no Explorer"]);
+  assert.deepEqual(routeActions({ kind: "file", path: "C:\\x\\a.md" }).map((a) => a.label), ["Abrir arquivo", "Mostrar na pasta"]);
+  assert.deepEqual(routeActions({ kind: "reveal", path: "C:\\x\\a.exe" }).map((a) => a.label), ["Mostrar na pasta"]);
+});
+
+test("routeSelection: caminho quebrado em linhas é emendado; texto com espaços em várias linhas não", () => {
+  const ctx = { paneKind: "powershell", paneCwd: "file://PC/C:/mcu/repo" };
+  assert.deepEqual(routeSelection("C:\\mcu\\repo\\clientes\\tcw\\\nfrontend\\static", ctx), { kind: "folder", path: "C:\\mcu\\repo\\clientes\\tcw\\frontend\\static" });
+  assert.equal(routeSelection("veja a pasta\nC:\\mcu", ctx), null);
+});

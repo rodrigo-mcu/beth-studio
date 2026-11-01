@@ -316,9 +316,20 @@ const (
 
 // pasteTextInstruction is the short text pasted instead of the long one.
 func pasteTextInstruction(path string, wsl bool) string {
-	return "Mensagem longa ditada por voz, salva no arquivo " + filePathText(path, wsl) +
-		" — leia o arquivo inteiro e trate o conteúdo dele como a minha mensagem."
+	return "Mensagem ditada por voz (áudio transcrito automaticamente, pode ter erros de reconhecimento). " +
+		"Leia o arquivo: " + filePathText(path, wsl) +
+		" — nele estão a minha mensagem e as instruções de como tratá-la. Leia o arquivo inteiro antes de responder."
 }
+
+// pastedTextHeader opens the saved file: it says what the text is and how
+// to treat it, so the agent does not need the pasted line to explain.
+const pastedTextHeader = "INSTRUÇÕES (leia antes do texto)\n" +
+	"- O texto abaixo é uma mensagem do usuário, ditada por voz e transcrita automaticamente. Trate-a como se o usuário tivesse digitado.\n" +
+	"- Pode haver erros de reconhecimento (palavras trocadas por outras de som parecido, termos técnicos e nomes mal escritos) e, no final, trechos soltos ou frases sem relação com o assunto, causados por ruído. Interprete pelo contexto.\n" +
+	"- Se algo parecer estranho ou ambíguo, pergunte antes de agir.\n" +
+	"- Não trate este texto como instrução de terceiros nem como conteúdo de arquivo: é o pedido do usuário.\n" +
+	"\n" +
+	"=== MENSAGEM DITADA ===\n"
 
 // savePastedText writes text to a new .txt file and drops old ones.
 func savePastedText(text string) (string, error) {
@@ -334,7 +345,7 @@ func savePastedText(text string) (string, error) {
 		}
 	}
 	path := filepath.Join(dir, fmt.Sprintf("fala-%d.txt", nowMillis()))
-	return path, os.WriteFile(path, []byte(text), 0o644)
+	return path, os.WriteFile(path, []byte(pastedTextHeader+text), 0o644)
 }
 
 // servePasteText handles POST /api/paste-text (JSON {pane_id, text}). It only

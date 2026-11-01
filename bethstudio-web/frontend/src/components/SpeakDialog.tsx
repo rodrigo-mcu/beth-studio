@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
-import { Copy, History, Loader2, Mic, Pause, Play, Send, Settings2, Square, Trash2, X } from "lucide-react";
+import { Copy, History, Loader2, Mic, Pause, Play, RotateCcw, Send, Settings2, Square, Trash2, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { PaneInfo } from "@/lib/types";
 import { paneLabel } from "@/lib/panes";
@@ -23,6 +23,7 @@ import {
   GAIN_DB_MAX,
   GAIN_DB_MIN,
   MIC_TUNING_KEY,
+  CaptureWatch,
   PeakHold,
   dbToGain,
   formatGainDb,
@@ -115,6 +116,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
   const acRef = useRef<AudioContext | null>(null);
   const discard = useRef(false); // o proximo onstop joga o audio fora
   const busy = useRef(false); // um getUserMedia/gravacao por vez
+  const restart = useRef(false); // o proximo onstop recomeca a captacao
   const closed = useRef(false);
   const log = useCallback((m: string) => micLog(conn, m), [conn]);
   const propsRef = useRef({ onClose, onSent });
@@ -331,7 +333,29 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
     }
   };
 
-  const start = async (s: VoiceSnapshot, choice: MicChoice) => {
+  /** getUserMedia que não fica pendurado: o Windows às vezes nunca responde. */
+  const openMic = (c: MediaStreamConstraints) =>
+    new Promise<MediaStream>((res, rej) => {
+      let late = false;
+      const t = window.setTimeout(() => {
+        late = true;
+        rej(new DOMException("getUserMedia não respondeu em 8 s", "TimeoutError"));
+      }, 8000);
+      navigator.mediaDevices.getUserMedia(c).then(
+        (st) => {
+          window.clearTimeout(t);
+          if (late) st.getTracks().forEach((x) => x.stop());
+          else res(st);
+        },
+        (e) => {
+          window.clearTimeout(t);
+          if (!late) rej(e);
+        },
+      );
+    });
+
+  // attempt 1 = recomeço automático, sem ganho nem medidor (grava o fluxo cru)
+  const start = async (s: VoiceSnapshot, choice: MicChoice, attempt = 0): Promise<void> => {
     if (busy.current || closed.current) {
       log("start ignorado: já há uma gravação em andamento");
       return;
@@ -352,7 +376,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
       }
       log(`getUserMedia (${deviceId ? `"${choice.label}"` : "padrão do Windows"})`);
       const tn = tuningRef.current;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints(deviceId, tn) });
+      const stream = await openMic({ audio: audioConstraints(deviceId, tn) });
       if (closed.current) {
         stream.getTracks().forEach((t) => t.stop());
         busy.current = false;
@@ -367,9 +391,12 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
       let recStream: MediaStream = stream;
       let an: AnalyserNode | null = null;
       try {
+        if (attempt > 0) throw new Error("recomeço: sem grafo de áudio");
         const ac = new AudioContext();
         acRef.current = ac;
-        void ac.resume().catch(() => undefined);
+        // contexto "suspended" não entrega áudio ao gravador: espera ligar de verdade
+        await Promise.race([ac.resume().catch(() => undefined), new Promise((r) => window.setTimeout(r, 1500))]);
+        if (ac.state !== "running") throw new Error(`AudioContext ${ac.state}`);
         const src = ac.createMediaStreamSource(stream);
         const gn = ac.createGain();
         gn.gain.value = dbToGain(gainToDb(tn.gain));
@@ -383,6 +410,8 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
         recStream = dest.stream;
       } catch (e) {
         log(`grafo de áudio falhou (${(e as Error).message ?? "?"}); gravando sem ganho e sem medidor`);
+        void acRef.current?.close().catch(() => undefined);
+        acRef.current = null;
         gainRef.current = null;
         an = null;
         recStream = stream;
@@ -407,6 +436,14 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
         stopTracks();
         recRef.current = null;
         busy.current = false;
+        if (restart.current) {
+          // captação morta: recomeça sozinho, uma vez, sem o usuário cancelar
+          restart.current = false;
+          discard.current = false;
+          log("recomeçando a captação (sem sinal nenhum nos primeiros 2 s)");
+          void start(s, choice, attempt + 1);
+          return;
+        }
         const blob = new Blob(chunks, { type: rec.mimeType || mime || "audio/webm" });
         log(`stop: ${chunks.length} pedaços, blob ${blob.size} bytes${discard.current ? " (descartado)" : ""}`);
         if (discard.current || closed.current) return;
@@ -434,6 +471,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
       const buf = new Float32Array(an?.fftSize ?? 1024);
       const watch = new SilenceWatch();
       const holder = new PeakHold();
+      const dead = new CaptureWatch();
       let warned = false;
       let lastShown = 0;
       const tick = () => {
@@ -445,6 +483,12 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
           const pk = peakOf(buf);
           l = rmsOfFloat(buf);
           const hold = holder.feed(pk, performance.now());
+          if (attempt === 0 && dead.feed(pk, clockRef.current?.elapsed(Date.now()) ?? 0)) {
+            restart.current = true;
+            discard.current = true;
+            rec.stop();
+            return;
+          }
           scopeRef.current?.push(pk, l, hold);
           if (performance.now() - lastShown >= 100) {
             lastShown = performance.now();
@@ -636,6 +680,20 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
     }
   };
 
+  /** Descarta a gravação em curso e começa outra, com o mesmo microfone. */
+  const restartRecording = () => {
+    const rec = recRef.current;
+    if (!rec || !snap || (rec.state !== "recording" && rec.state !== "paused")) return;
+    log("reiniciar gravação (usuário)");
+    discard.current = true;
+    const prev = rec.onstop;
+    rec.onstop = (ev) => {
+      prev?.call(rec, ev);
+      void startRef.current(snap, mic);
+    };
+    rec.stop();
+  };
+
   const sttName = snap?.providers.find((p) => p.id === snap.settings.stt_provider)?.name ?? "";
   const llmName = snap?.settings.llm_enabled ? snap?.providers.find((p) => p.id === snap.settings.llm_provider)?.name : undefined;
 
@@ -644,7 +702,11 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
       <div
         ref={boxRef}
         style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, visibility: pos ? "visible" : "hidden" }}
-        className="pointer-events-auto absolute flex max-h-[84vh] w-[min(640px,94vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className={cn(
+          "pointer-events-auto absolute flex max-h-[84vh] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl",
+          // gravando: cartão compacto, para não cobrir o texto que se quer ler atrás
+          phase === "recording" ? "w-[min(380px,94vw)]" : "w-[min(640px,94vw)]",
+        )}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Escape") cancel();
@@ -704,24 +766,26 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
               </div>
             </div>
           )}
-          {(phase === "privacy" || phase === "error" || phase === "recording") && snap && (
+          {(phase === "privacy" || phase === "error") && snap && (
             <div className="rounded border border-border bg-bg-panel p-2">
-              <div className="mb-1 text-[11px] text-text-3">Microfone{phase === "recording" ? " (trocar recomeça a gravação)" : ""}</div>
-              <MicPicker conn={conn} value={mic} onChange={changeMic} withTest={phase !== "recording"} />
+              <div className="mb-1 text-[11px] text-text-3">Microfone</div>
+              <MicPicker conn={conn} value={mic} onChange={changeMic} withTest />
             </div>
           )}
           {phase === "recording" && (
-            <div className="flex flex-col items-center gap-3 py-2">
-              <div className="flex max-w-full items-center gap-2 text-[14px] font-semibold text-text-1">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex w-full items-center gap-2 text-[13px] font-semibold text-text-1">
                 <span className="relative inline-flex h-3 w-3 shrink-0">
                   {!paused && <span className="absolute inset-0 animate-ping rounded-full bg-[#DC2626] opacity-75" />}
                   <span className={cn("relative inline-flex h-3 w-3 rounded-full", paused ? "bg-status-warn" : "bg-[#DC2626]")} />
                 </span>
-                <span className="truncate">{paused ? "Pausado" : "Gravando"} com {micName}</span>
+                <span className="min-w-0 flex-1 truncate" title={micName}>
+                  {paused ? "Pausado" : "Gravando"} · {micName}
+                </span>
+                <span className={cn("shrink-0 font-mono text-[18px]", paused ? "text-status-warn" : "text-text-1")}>{formatDuration(elapsed)}</span>
               </div>
-              <div className={cn("font-mono text-[22px]", paused ? "text-status-warn" : "text-text-1")}>{formatDuration(elapsed)}</div>
-              <div className="w-full max-w-[460px] space-y-1.5">
-                <LevelScope ref={scopeRef} />
+              <div className="w-full space-y-1">
+                <LevelScope ref={scopeRef} className="h-12" />
                 {(() => {
                   const hint = levelHint(readout.hold);
                   return (
@@ -766,8 +830,14 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   </button>
                 </div>
                 <button className="text-[11px] text-accent-text hover:underline" onClick={() => setShowTuning((v) => !v)}>
-                  {showTuning ? "Esconder ajustes de áudio" : "Ajustes de áudio"}
+                  {showTuning ? "Esconder microfone e ajustes" : "Microfone e ajustes de áudio"}
                 </button>
+                {showTuning && snap && (
+                  <div className="rounded border border-border bg-bg-panel p-2">
+                    <div className="mb-1 text-[11px] text-text-3">Microfone (trocar recomeça a gravação)</div>
+                    <MicPicker conn={conn} value={mic} onChange={changeMic} withTest={false} />
+                  </div>
+                )}
                 {showTuning && (
                   <div className="space-y-1 rounded border border-border bg-bg-panel p-2 text-[12px] text-text-1">
                     {(
@@ -793,15 +863,11 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 <div className="rounded bg-status-warn/15 px-2 py-1 text-[12px] font-semibold text-status-warn">
                   Nenhum som captado — verifique o microfone selecionado
                 </div>
-              ) : (
-                <div className="text-center text-[12px] text-text-2">
-                  Fale normalmente; a barra se mexe com a sua voz (máx. {MAX_RECORD_MS / 60000} min) · {sttName}
-                </div>
-              )}
-              <div className="flex flex-wrap justify-center gap-2">
+              ) : null}
+              <div className="flex w-full flex-wrap justify-center gap-1.5">
                 <button
                   className={cn(
-                    "flex items-center gap-1.5 rounded px-4 py-1.5 font-semibold",
+                    "flex items-center gap-1.5 rounded px-3 py-1.5 font-semibold",
                     paused ? "bg-status-ok text-white hover:opacity-90" : "bg-bg-hover text-text-1 hover:bg-border",
                   )}
                   onClick={togglePause}
@@ -809,10 +875,17 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 >
                   {paused ? <Play size={13} fill="currentColor" /> : <Pause size={13} fill="currentColor" />} {paused ? "Continuar" : "Pausar"}
                 </button>
-                <button className="flex items-center gap-1.5 rounded bg-[#DC2626] px-4 py-1.5 font-semibold text-white hover:bg-[#B91C1C]" onClick={stop}>
-                  <Square size={13} fill="currentColor" /> Parar e transcrever
+                <button
+                  className="flex items-center gap-1.5 rounded bg-bg-hover px-3 py-1.5 text-text-1 hover:bg-border"
+                  onClick={restartRecording}
+                  title="Descarta o que foi gravado até agora e começa de novo (útil quando a captação não pegou)"
+                >
+                  <RotateCcw size={13} /> Reiniciar
                 </button>
-                <button className="rounded bg-bg-hover px-4 py-1.5 text-text-1 hover:bg-border" onClick={cancel}>
+                <button className="flex items-center gap-1.5 rounded bg-[#DC2626] px-3 py-1.5 font-semibold text-white hover:bg-[#B91C1C]" onClick={stop} title="Para a gravação e transcreve (máx. 10 min por gravação)">
+                  <Square size={13} fill="currentColor" /> Transcrever
+                </button>
+                <button className="rounded bg-bg-hover px-3 py-1.5 text-text-1 hover:bg-border" onClick={cancel}>
                   Cancelar
                 </button>
               </div>

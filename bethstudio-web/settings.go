@@ -82,6 +82,8 @@ type webSettings struct {
 	WSLInit map[string]WSLInitCfg `json:"wsl_init,omitempty"`
 	// Ponte de agentes Windows <-> WSL (ponte.go).
 	Ponte *PonteSettings `json:"ponte,omitempty"`
+	// Limpeza automatica dos temporarios do Studio (tempclean.go).
+	TempClean *TempCleanSettings `json:"temp_clean,omitempty"`
 }
 
 type SidebarPrefs struct {

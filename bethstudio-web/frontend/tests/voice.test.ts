@@ -54,7 +54,9 @@ test("tempo e mensagens de microfone", () => {
 });
 
 test("texto longo vai para arquivo: só acima do limite", async () => {
-  const { LONG_PASTE_CHARS, isLongPaste } = await import("../src/lib/voice.ts");
+  const { LONG_PASTE_CHARS, LONG_PASTE_WORDS, isLongPaste } = await import("../src/lib/voice.ts");
   assert.equal(isLongPaste("x".repeat(LONG_PASTE_CHARS)), false);
   assert.equal(isLongPaste("x".repeat(LONG_PASTE_CHARS + 1)), true);
+  assert.equal(isLongPaste(Array(LONG_PASTE_WORDS).fill("oi").join(" ")), false);
+  assert.equal(isLongPaste(Array(LONG_PASTE_WORDS + 1).fill("oi").join(" ")), true);
 });
