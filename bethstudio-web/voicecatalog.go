@@ -421,7 +421,7 @@ func serveUILog(w http.ResponseWriter, r *http.Request) {
 	log.Printf("ui: %s", msg)
 	// terminal que muda de aba: vai também para o host-life.log, onde se
 	// investiga "por que o terminal apareceu aqui?"
-	if strings.HasPrefix(msg, "layout: ") {
+	if strings.HasPrefix(msg, "layout: ") || strings.HasPrefix(msg, "menu: ") {
 		lifeLog(msg)
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})

@@ -257,7 +257,14 @@ export function TerminalView({
 
   /** Item do menu do botão direito sobre um link, pasta ou arquivo selecionado. */
   const runMenuLink = (r: LinkRoute, action: string) => {
-    const fail = (e: Error) => flash(e.message);
+    const where = "url" in r ? r.url : r.path;
+    const note = (m: string) => void conn.api("/api/log", { msg: `menu: ${m}` }).catch(() => undefined);
+    note(`clique ${action} ${r.kind} ${where}`);
+    const fail = (e: Error) => {
+      note(`erro ${action}: ${e.message}`);
+      flash(e.message);
+    };
+    if (action === "folder") flash("Abrindo a pasta no Explorer…");
     if (r.kind === "http") return void openExternal(conn, r.url);
     if (action === "file") return onOpenFileRef.current?.(r.path);
     if (action === "folder") return void conn.api("/api/local-fs/reveal", { path: r.path, open_folder: true }).catch(fail);

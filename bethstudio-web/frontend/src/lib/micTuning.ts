@@ -77,9 +77,9 @@ export function formatLevelDb(level: number): string {
 
 /** Texto curto de orientação a partir do pico retido. */
 export function levelHint(hold: number): { tone: "ok" | "warn" | "err" | "idle"; text: string } {
-  if (hold >= CLIP_LEVEL) return { tone: "err", text: "Estourando — abaixe o volume de entrada" };
+  if (hold >= CLIP_LEVEL) return { tone: "err", text: "Estourando" };
   if (hold < 0.04) return { tone: "idle", text: "Sem sinal" };
-  if (hold < 0.2) return { tone: "warn", text: "Fraco — fale mais perto ou aumente o volume" };
+  if (hold < 0.2) return { tone: "warn", text: "Fraco" };
   if (hold > 0.9) return { tone: "warn", text: "Quase estourando" };
   return { tone: "ok", text: "Bom nível" };
 }

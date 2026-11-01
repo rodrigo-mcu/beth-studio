@@ -789,10 +789,10 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 {(() => {
                   const hint = levelHint(readout.hold);
                   return (
-                    <div className="flex items-center justify-between gap-2 text-[12px]">
+                    <div className="flex h-5 items-center justify-between gap-2 whitespace-nowrap text-[12px]">
                       <span
                         className={cn(
-                          "font-semibold",
+                          "min-w-0 truncate font-semibold",
                           hint.tone === "ok" && "text-status-ok",
                           hint.tone === "warn" && "text-status-warn",
                           hint.tone === "err" && "text-status-err",
@@ -801,7 +801,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                       >
                         {hint.text}
                       </span>
-                      <span className="shrink-0 font-mono text-text-2" title="Pico retido (dBFS). 0 dB é o máximo antes de estourar.">
+                      <span className="w-24 shrink-0 text-right font-mono text-text-2" title="Pico retido (dBFS). 0 dB é o máximo antes de estourar.">
                         pico {formatLevelDb(readout.hold)}
                       </span>
                     </div>
