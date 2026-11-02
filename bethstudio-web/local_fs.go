@@ -193,8 +193,11 @@ func localFSRoots() []string {
 // pasta pai). Aceita "~" + separador (pasta do usuário) e o UNC do WSL (a
 // distro em wsl.localhost). Só abre o que existe e é pasta.
 var openFolderLocal = func(dir string) error {
+	// Sem hideChildWindow: explorer.exe nao e' um exe de console. Com
+	// CREATE_NO_WINDOW / HideWindow ele cria a janela de pasta com SW_HIDE,
+	// ou seja, um processo explorer.exe novo, invisivel e que nunca fecha.
+	// Cada "abrir pasta" deixava um host extra vivo.
 	cmd := exec.Command("explorer.exe", dir)
-	hideChildWindow(&cmd.SysProcAttr)
 	return cmd.Start()
 }
 

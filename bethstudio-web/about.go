@@ -131,6 +131,8 @@ func revealInExplorer(path string, exists bool) error {
 		}
 		cmd = exec.Command("explorer.exe", dir)
 	}
-	hideChildWindow(&cmd.SysProcAttr)
+	// Sem hideChildWindow: explorer.exe nao e' exe de console. Com
+	// CREATE_NO_WINDOW / HideWindow a janela de pasta nasce com SW_HIDE e o
+	// processo explorer.exe fica vivo, invisivel, para sempre.
 	return cmd.Start()
 }
