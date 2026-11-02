@@ -288,6 +288,18 @@ impl Pane for LocalPane {
         }
     }
 
+    fn kill_tree(&self) {
+        let pid = match &*self.process.lock() {
+            ProcessState::Running { pid: Some(pid), .. } => Some(*pid),
+            _ => None,
+        };
+        if let Some(pid) = pid {
+            let n = crate::proctree::kill_descendants(pid);
+            log::info!("kill_tree: pane {} pid {}: {} descendant(s) ended", self.pane_id, pid, n);
+        }
+        self.kill();
+    }
+
     fn is_dead(&self) -> bool {
         let mut proc = self.process.lock();
 

@@ -57,6 +57,7 @@ winapi = { workspace=true, features = [
     "psapi",
     "processthreadsapi",
     "tlhelp32",
+    "winnt",
 ]}
 
 [dev-dependencies]

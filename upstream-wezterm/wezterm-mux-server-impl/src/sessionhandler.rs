@@ -482,7 +482,7 @@ impl SessionHandler {
                             let pane = mux
                                 .get_pane(pane_id)
                                 .ok_or_else(|| anyhow!("no such pane {}", pane_id))?;
-                            pane.kill();
+                            pane.kill_tree();
                             mux.remove_pane(pane_id);
                             maybe_push_pane_changes(&pane, sender, per_pane)?;
                             Ok(Pdu::UnitResponse(UnitResponse {}))

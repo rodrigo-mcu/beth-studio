@@ -9,6 +9,8 @@ import {
   PanelLeftOpen,
   Pencil,
   Plus,
+  Power,
+  RotateCw,
   Type,
   X,
 } from "lucide-react";
@@ -62,6 +64,11 @@ interface Props {
   onSpeak?: () => void;
   /** os botoes de ferramenta estao na barra lateral (nao repetir aqui) */
   hideActions?: boolean;
+  /**
+   * "Matar terminal…" / "Reiniciar este terminal…" do terminal em foco da aba
+   * (null = aba sem terminal vivo ou somente leitura). `restartBlocked`: por que nao da' para reiniciar.
+   */
+  tabTerminal?: (tabId: string) => { onKill: () => void; onRestart?: () => void; restartBlocked?: string } | null;
 }
 
 /** Abas do web (so' do web: nao mudam nada no Beth Studio). */
@@ -90,6 +97,7 @@ export function TabBar({
   status,
   onSpeak,
   hideActions,
+  tabTerminal,
 }: Props) {
   const drag = useDrag();
   const [editing, setEditing] = useState<string | null>(null);
@@ -406,6 +414,36 @@ export function TabBar({
           >
             <X size={14} /> Fechar aba
           </button>
+          {(() => {
+            const term = tabTerminal?.(menu.id);
+            if (!term) return null;
+            return (
+              <>
+                <div className="my-1 border-t border-border" />
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover disabled:cursor-default disabled:text-text-3 disabled:hover:bg-transparent"
+                  disabled={!term.onRestart}
+                  title={term.restartBlocked ?? "Abre um shell novo do mesmo tipo e na mesma pasta, no mesmo lugar, e encerra este (pede confirmação)"}
+                  onClick={() => {
+                    setMenu(null);
+                    term.onRestart?.();
+                  }}
+                >
+                  <RotateCw size={14} /> Reiniciar este terminal…
+                </button>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-status-err hover:bg-status-err/10"
+                  title="Encerra o terminal em foco e tudo o que ele abriu, e o tira da aba (pede confirmação)"
+                  onClick={() => {
+                    setMenu(null);
+                    term.onKill();
+                  }}
+                >
+                  <Power size={14} /> Matar terminal…
+                </button>
+              </>
+            );
+          })()}
           {onReopenClosed && (
             <button
               className="flex w-full items-center gap-2 border-t border-border px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover"

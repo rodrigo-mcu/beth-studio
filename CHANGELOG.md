@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 - Indicator for the whole-screen zoom: a "Zoom N%" pill when it is not 100% (click to reset) and a "Redefinir para 100%" button in Configurações > Aparência.
+- Tab right-click menu: **Reiniciar este terminal…** and **Matar terminal…** for the terminal in focus in that tab, both with confirmation. Reiniciar opens a new shell of the same type in the same folder and place (tab name kept) before ending the old one, and leaves the old one alone if the new shell does not open. Matar ends the terminal, takes it out of the tab and closes the tab if it was the only one.
+
+### Changed
+- Patch 0203: ending a terminal (**Encerrar terminal…**, **Matar**, **Reiniciar**) ends everything it started (agents, MCP servers, `wsl.exe`), not only the shell. The Studio, the host and the bridge are never ended. (Host update needed.)
+- With the side panel collapsed, the tool icons (SSH e Serial, files, Falar, Buscar, Tarefas, Banco de dados, Configurações) are a column in the narrow left strip instead of the top-right corner of the tab bar.
 
 ### Fixed
 - Patch 0202: the host no longer takes a snapshot of every process on the machine once per pane every 2 s. All panes share one snapshot per second; with 30 panes and ~580 processes the host went from ~6 cores to 0.04 while the Studio is open.

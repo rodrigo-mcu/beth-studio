@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Activity, Database, FilePlus, FileText, LogOut, Mic, Search, Server, Settings } from "lucide-react";
 import { isRemote, remoteLogout } from "@/lib/remote";
 
-/** Botao de ferramenta do Studio (barra lateral; na barra de abas quando a lateral esta recolhida). */
+/** Botao de ferramenta do Studio (barra lateral; na faixa de icones quando a lateral esta recolhida). */
 export interface StudioAction {
   id: string;
   label: string;

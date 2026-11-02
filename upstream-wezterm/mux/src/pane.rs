@@ -251,6 +251,11 @@ pub trait Pane: Downcast + Send + Sync {
     fn perform_actions(&self, _actions: Vec<termwiz::escape::Action>) {}
     fn is_dead(&self) -> bool;
     fn kill(&self) {}
+    /// Beth Studio (patch 0203): like `kill`, plus every process the pane's
+    /// shell started. Only the explicit `KillPane` request uses it.
+    fn kill_tree(&self) {
+        self.kill()
+    }
     fn palette(&self) -> ColorPalette;
     /// WezTerminator (patch 0016.3): replace the cached palette.
     /// Default implementation is a no-op so that client (remote)

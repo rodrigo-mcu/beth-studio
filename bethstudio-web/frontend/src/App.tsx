@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { AlertTriangle, Lock, PanelLeftOpen, Search as SearchIcon, Settings as SettingsIcon, TerminalSquare, X } from "lucide-react";
+import { AlertTriangle, Lock, PanelLeftOpen, TerminalSquare, X } from "lucide-react";
 import { Connection } from "@/lib/connection";
 import { loadCatalog } from "@/lib/appearance";
 import type { PaneInfo, SettingsEvent, StatusEvent } from "@/lib/types";
@@ -39,9 +39,10 @@ import { useWindowState } from "@/lib/windowFrame";
 import { isRemote, openRemoteTab } from "@/lib/remote";
 import { RemoteConnectedBadge } from "@/components/RemoteStudioSection";
 import { returnFocus, withTabFocus } from "@/lib/termFocus";
-import { splitAround, splitSpawn, type SplitZone } from "@/lib/splitSpawn";
+import { sameShellId, splitAround, splitSpawn, type SplitZone } from "@/lib/splitSpawn";
+import { restartPane } from "@/lib/restartPane";
 import { Loader2 } from "lucide-react";
-import { KillDialog } from "@/components/KillDialog";
+import { KillDialog, type KillMode } from "@/components/KillDialog";
 import { SeparateDialog } from "@/components/SeparateDialog";
 import { SpeakDialog } from "@/components/SpeakDialog";
 import { ZoomBadge } from "@/components/ZoomBadge";
@@ -298,7 +299,7 @@ export function App() {
   const [toolScreen, setToolScreen] = useState<ToolKind | null>(null);
   /** SSH/serial aberto a partir de "Novo terminal à direita/…": o pane nasce nesse split. */
   const [splitTool, setSplitTool] = useState<{ pane: number; zone: SplitZone } | null>(null);
-  const [killTarget, setKillTarget] = useState<number | null>(null);
+  const [killTarget, setKillTarget] = useState<{ pane: number; mode: KillMode } | null>(null);
   const [separateTarget, setSeparateTarget] = useState<number | null>(null);
   const [speakPane, setSpeakPane] = useState<number | null>(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -477,6 +478,47 @@ export function App() {
     if (!layout) return;
     commit(L.closeTab(layout, id));
   };
+  // Menu da aba: "Matar terminal…" e "Reiniciar este terminal…" agem no terminal em foco da aba.
+  const tabFocusedPane = (tabId: string): number | null => {
+    const t = layout ? L.tabById(layout, tabId) : undefined;
+    const live = L.leaves(t?.root ?? null).filter((l) => !l.leaf.gone && !L.isPlaceholder(l.leaf.pane) && paneById.has(l.leaf.pane));
+    const f = focus[tabId];
+    return live.some((l) => l.leaf.pane === f) ? f : (live[0]?.leaf.pane ?? null);
+  };
+  const tabTerminal = readOnly
+    ? undefined
+    : (tabId: string) => {
+        const pane = tabFocusedPane(tabId);
+        if (pane === null) return null;
+        const shell = sameShellId(paneById.get(pane), snap.shells);
+        return {
+          onKill: () => setKillTarget({ pane, mode: "matar" }),
+          onRestart: shell ? () => setKillTarget({ pane, mode: "reiniciar" }) : undefined,
+          restartBlocked: shell ? undefined : "Só dá para reiniciar PowerShell, pwsh, cmd, WSL, Git Bash e MobaXterm",
+        };
+      };
+  const matarDone = (pane: number) => {
+    const l = getLayout();
+    if (l) commit(L.detachPaneClosingEmpty(l, pane));
+  };
+  const restartTerminal = (pane: number, end: (pane: number) => boolean) => {
+    const info = paneById.get(pane);
+    const shell = sameShellId(info, snap.shells);
+    if (!info || !shell) return;
+    const name = storedName(pane);
+    void restartPane({ spawn: (o) => conn.spawn(o), untilListed, getLayout, commit, end: (p) => void end(p) }, info, shell)
+      .then((np) => {
+        const l = getLayout();
+        const at = l ? L.findPane(l, np) : null;
+        if (at) focusPane(at.tabId, np);
+        if (name)
+          void conn
+            .api<SettingsEvent>("/api/settings/pane-names", { pane_ids: [np], name })
+            .then((s) => conn.setSettings(s))
+            .catch(() => undefined);
+      })
+      .catch((e: Error) => onError(`Não foi possível reiniciar o terminal (ele continua como estava): ${e.message}`));
+  };
   const reopenClosedAt = (index: number) => {
     if (!layout) return;
     const r = L.restoreClosed(layout, index, alivePanes());
@@ -634,7 +676,7 @@ export function App() {
         splitWith: act.splitWith,
         unorganize: act.unorganize,
         detach: readOnly || isRemote() ? undefined : act.detach,
-        askKill: readOnly ? undefined : (pane: number) => setKillTarget(pane),
+        askKill: readOnly ? undefined : (pane: number) => setKillTarget({ pane, mode: "encerrar" }),
         askSeparate: readOnly ? undefined : (pane: number) => setSeparateTarget(pane),
         inHostSplit: (pane: number) => !aloneInHostTab(snap.panes, pane) && paneById.has(pane),
         newSplit: readOnly ? undefined : (pane: number, zone: SplitZone, x: number, y: number) => setSplitMenu({ pane, x, y, zone }),
@@ -762,17 +804,17 @@ export function App() {
 
       <div className="flex min-h-0 flex-1">
         {sidebarCollapsed ? (
-          <aside className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-border bg-bg-panel pb-2">
+          <aside className="flex w-12 shrink-0 flex-col items-center gap-1 overflow-y-auto overflow-x-hidden border-r border-border bg-bg-panel pb-2 [scrollbar-width:none]">
             <AppTitle compact />
             <IconButton label="Mostrar a barra lateral" onClick={() => saveSidebar({ collapsed: false })}>
               <PanelLeftOpen size={16} />
             </IconButton>
-            <IconButton label="Buscar terminal" onClick={() => setPalette(true)}>
-              <SearchIcon size={16} />
-            </IconButton>
-            <IconButton label="Configurações" onClick={() => openSettings("aparencia")}>
-              <SettingsIcon size={16} />
-            </IconButton>
+            <div className="my-0.5 w-6 shrink-0 border-t border-border" />
+            {studioActions.map((a) => (
+              <IconButton key={a.id} label={a.title} onClick={a.onClick}>
+                {a.icon}
+              </IconButton>
+            ))}
             {waitingCount > 0 && (
               <button
                 className="mt-1 flex h-7 min-w-7 items-center justify-center gap-1 rounded-full bg-status-warn/20 px-1.5 text-[11px] font-bold text-status-warn ring-1 ring-status-warn/50 hover:bg-status-warn/30"
@@ -877,12 +919,13 @@ export function App() {
               onOpenFile={openFileDialog}
               onNewFile={() => newScratch(focusedFolder())}
               onSpeak={readOnly || focusedPane === null ? undefined : () => setSpeakPane(focusedPane)}
-              hideActions={!sidebarCollapsed}
+              hideActions
               waitingTabs={waitingTabs}
               sidebarCollapsed={sidebarCollapsed}
               onToggleSidebar={() => saveSidebar({ collapsed: !sidebarCollapsed })}
               status={sidebarCollapsed ? connLed : undefined}
               onNewTab={() => setNewTab(true)}
+              tabTerminal={tabTerminal}
             />
           )}
           {hostBanner(snap.host) && <HostBanner conn={conn} info={hostBanner(snap.host)!} />}
@@ -919,7 +962,7 @@ export function App() {
                       onHeaderDragStart={(e) => startPaneDrag(e, pane)}
                       onHeaderDragEnd={endDrag}
                       onOrganize={(x, y) => setMenu({ pane, x, y })}
-                      onAskKill={readOnly ? undefined : () => setKillTarget(pane)}
+                      onAskKill={readOnly ? undefined : () => setKillTarget({ pane, mode: "encerrar" })}
                       onDetach={readOnly || isRemote() ? undefined : () => act.detach(pane)}
                       onAskSeparate={readOnly ? undefined : () => setSeparateTarget(pane)}
                       onSpeak={readOnly ? undefined : () => setSpeakPane(pane)}
@@ -1059,9 +1102,12 @@ export function App() {
       {killTarget !== null && (
         <KillDialog
           conn={conn}
-          pane={killTarget}
-          info={paneById.get(killTarget)}
-          agent={snap.agents[killTarget]}
+          pane={killTarget.pane}
+          info={paneById.get(killTarget.pane)}
+          agent={snap.agents[killTarget.pane]}
+          mode={killTarget.mode}
+          onKilled={killTarget.mode === "matar" ? () => matarDone(killTarget.pane) : undefined}
+          onRestart={killTarget.mode === "reiniciar" ? (end) => restartTerminal(killTarget.pane, end) : undefined}
           onClose={() => setKillTarget(null)}
         />
       )}

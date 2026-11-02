@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-11-01.
+Last updated: 2026-11-02.
 
 ---
 
@@ -149,7 +149,8 @@ cannot freeze it:
 **Beth Studio**, patches 0171–0173, 0186). It talks to `bethstudio cli bridge`
 and supervises the host (starts it, restarts it after a crash, never stops
 it without a confirmed **Encerrar tudo**). Closing a Studio tab does
-not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
+not kill a terminal; **Encerrar terminal…** asks first (patch 0180) and
+ends the shell together with everything it started (patch 0203).
 
 - 🟢 **Alt does not open the window menu** (2026-10-03) — a tap on Alt (or Alt+letter) no
   longer opens the Windows system menu over the Studio and detached terminal windows, so it
@@ -196,7 +197,19 @@ not kill a terminal; **Encerrar terminal…** asks first (patch 0180).
 - 🟢 **Tool buttons in the side panel**: SSH/Serial, open/new file, speak,
   tasks, database and settings sit in a row under "Beth Studio" in the left
   panel, so the tab bar is left to the tabs. With the side panel collapsed
-  they go back to the tab bar (2026-10-02).
+  they stay on the left, as a column of icons in the narrow strip
+  (2026-11-02).
+- 🟢 **Matar terminal… / Reiniciar este terminal…** in the tab's right-click
+  menu, for the terminal in focus in that tab (2026-11-02, patch 0203). Both
+  ask first. **Matar** ends the terminal and everything it started (agents,
+  MCP servers, `wsl.exe`), takes it out of the tab and closes the tab if it was
+  the only one. **Reiniciar** opens a new shell of the same type (PowerShell,
+  pwsh, cmd, the same WSL distro, Git Bash, MobaXterm) in the same folder and
+  the same place in the tab, keeps the tab name, and only then ends the old
+  one; if the new shell does not open, the old one is left as it was. SSH,
+  serial and tool terminals cannot be restarted this way (the item is
+  greyed out). The Studio, the host and the bridge are never ended, even
+  when started from inside a terminal.
 - 🟢 **Destacar em janela**: a terminal or SSH session can leave the tabs
   and become its own window (button in the terminal header, or
   **Destacar em janela** in the terminal menu). The window can go to another
