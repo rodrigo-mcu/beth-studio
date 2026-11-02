@@ -432,6 +432,14 @@ ends the shell together with everything it started (patch 0203).
 - 🟢 Voice: record, transcribe, and optionally correct with an LLM before
   paste (no Enter). Per-call cost in `ai-usage.jsonl`; audio and text are
   not stored. API keys stay in DPAPI `secrets.dat`.
+- 🟢 **MiniMax** provider (2026-11-02): transcription with `asr-1.0`
+  (language detected by the model; the vocabulary list is not sent;
+  MiniMax does not take webm, so the recording's Opus audio is moved into an
+  Ogg file, without re-encoding) and
+  correction / database assistant with `MiniMax-M3.1-Flash` or `MiniMax-M3`.
+  The key is added in **Provedores de IA** like the others (or
+  `MINIMAX_API_KEY`); **Testar** and **Buscar modelos** use `GET /v1/models`.
+  The URL is editable for China accounts (`api.minimaxi.com`).
 - 🟢 Task manager: CPU, RAM, GPU, disk, Beth Studio processes, each terminal,
   and WSL distros that are already running. The system section shows one
   card per metric (large percentage, absolute value beside it, bar that

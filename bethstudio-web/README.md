@@ -118,7 +118,7 @@ navegador (WebView2)  <-- WebSocket -->  bethstudio-web.exe (Go)  <-- stdin/stdo
   de colar no terminal (sem Enter — o usuário revisa e confirma), com
   prefixo avisando o agente que o texto veio de voz. Provedores prontos
   para transcrição e correção (DeepInfra — rota nativa de transcrição —
-  OpenAI, Groq, Anthropic, Gemini, Azure, locais etc.),
+  OpenAI, Groq, Anthropic, Gemini, Azure, MiniMax, locais etc.),
   cartões de modelo com preço, "Testar tudo" (pipeline completo sem
   enviar ao terminal) e registro de custo por chamada
   (`%APPDATA%\bethstudio\ai-usage.jsonl`, nunca grava áudio/texto).

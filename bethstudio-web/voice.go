@@ -106,6 +106,11 @@ var providerCatalog = []ProviderDef{
 	{ID: "xai", Name: "xAI (Grok)", Kind: "openai", BaseURL: "https://api.x.ai/v1",
 		KeysURL: "https://console.x.ai/", LLM: true, NeedsKey: true, Models: true,
 		LLMModels: []string{"grok-3-mini"}, Env: []string{"XAI_API_KEY"}},
+	{ID: "minimax", Name: "MiniMax", Kind: "openai", BaseURL: "https://api.minimax.io/v1",
+		KeysURL: "https://platform.minimax.io/user-center/basic-information/interface-key", STT: true, LLM: true, NeedsKey: true, Models: true, EditURL: true,
+		STTModels: []string{"asr-1.0"},
+		LLMModels: []string{"MiniMax-M3.1-Flash", "MiniMax-M3"}, Env: []string{"MINIMAX_API_KEY"},
+		Notes: "A transcrição (asr-1.0) detecta o idioma sozinha e não usa o vocabulário. Conta da China: troque a URL para https://api.minimaxi.com/v1."},
 	{ID: "grok-build", Name: "Grok Build", Kind: "openai", BaseURL: "https://api.x.ai/v1",
 		LLM: true, NeedsKey: true, Login: "device", Models: true,
 		LLMModels: []string{"grok-build-0.1", "grok-4.7"},
@@ -555,6 +560,11 @@ func (pc providerCall) transcribe(ctx context.Context, model, lang, vocab string
 		return strings.TrimSpace(r.Results.Channels[0].Alternatives[0].Transcript), nil
 	}
 
+	if pc.def.ID == "minimax" && strings.Contains(mimeType, "webm") {
+		if ogg, ok := webmToOgg(audio); ok { // a MiniMax nao aceita webm; o Opus vai em Ogg
+			audio, mimeType = ogg, "audio/ogg"
+		}
+	}
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
 	h := make(textproto.MIMEHeader)
@@ -601,14 +611,19 @@ func (pc providerCall) transcribe(ctx context.Context, model, lang, vocab string
 	fw, _ := mw.CreatePart(h)
 	_, _ = fw.Write(audio)
 	var target string
-	switch pc.def.Kind {
-	case "elevenlabs":
+	switch {
+	case pc.def.ID == "minimax":
+		// /v1/speech_to_text: idioma detectado pelo modelo; sem campo de vocabulario.
+		_ = mw.WriteField("model", model)
+		_ = mw.WriteField("response_format", "json")
+		target = pc.base() + "/speech_to_text"
+	case pc.def.Kind == "elevenlabs":
 		_ = mw.WriteField("model_id", model)
 		if lang != "" && lang != "auto" {
 			_ = mw.WriteField("language_code", lang)
 		}
 		target = pc.base() + "/speech-to-text"
-	case "azure":
+	case pc.def.Kind == "azure":
 		u, err := pc.azureURL(model, "audio/transcriptions")
 		if err != nil {
 			return "", err
@@ -618,7 +633,7 @@ func (pc providerCall) transcribe(ctx context.Context, model, lang, vocab string
 		_ = mw.WriteField("model", model)
 		target = pc.audioBase() + "/audio/transcriptions"
 	}
-	if pc.def.Kind == "openai" || pc.def.Kind == "azure" {
+	if (pc.def.Kind == "openai" && pc.def.ID != "minimax") || pc.def.Kind == "azure" {
 		if lang != "" && lang != "auto" {
 			_ = mw.WriteField("language", lang)
 		}

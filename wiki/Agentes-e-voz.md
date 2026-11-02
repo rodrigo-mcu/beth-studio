@@ -100,6 +100,7 @@ Provedores implementados no código:
 | OpenRouter | não | sim |
 | Mistral | não | sim |
 | xAI (Grok) | não | sim |
+| MiniMax | sim | sim |
 | Grok Build | não | sim |
 | Codex | não | sim |
 | Ollama (local) | não | sim |

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - Indicator for the whole-screen zoom: a "Zoom N%" pill when it is not 100% (click to reset) and a "Redefinir para 100%" button in Configurações > Aparência.
 - Tab right-click menu: **Reiniciar este terminal…** and **Matar terminal…** for the terminal in focus in that tab, both with confirmation. Reiniciar opens a new shell of the same type in the same folder and place (tab name kept) before ending the old one, and leaves the old one alone if the new shell does not open. Matar ends the terminal, takes it out of the tab and closes the tab if it was the only one.
+- **MiniMax** in Provedores de IA: transcription (`asr-1.0`, $0.38/hour) and correction or database assistant (`MiniMax-M3.1-Flash`, `MiniMax-M3`). (Studio update needed.)
 
 ### Changed
 - Patch 0203: ending a terminal (**Encerrar terminal…**, **Matar**, **Reiniciar**) ends everything it started (agents, MCP servers, `wsl.exe`), not only the shell. The Studio, the host and the bridge are never ended. (Host update needed.)

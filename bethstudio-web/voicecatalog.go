@@ -61,6 +61,7 @@ var pricingURLs = map[string]string{
 	"openrouter": "https://openrouter.ai/models",
 	"mistral":    "https://mistral.ai/pricing",
 	"xai":        "https://docs.x.ai/docs/models",
+	"minimax":    "https://platform.minimax.io/docs/pricing/overview",
 	"azure":      "https://azure.microsoft.com/pricing/details/cognitive-services/openai-service/",
 }
 
@@ -107,6 +108,12 @@ var referencePrices = map[string][]ModelCard{
 	},
 	"mistral": {{ID: "mistral-small-latest", Func: "llm", InPerM: 0.10, OutPerM: 0.30, Context: 131072}},
 	"xai":     {{ID: "grok-3-mini", Func: "llm", InPerM: 0.30, OutPerM: 0.50, Context: 131072}},
+	// precos de 2026-11 (M3 com o desconto permanente de 50%, ate' 512k tokens de entrada)
+	"minimax": {
+		{ID: "asr-1.0", Func: "stt", PerMin: 0.38 / 60},
+		{ID: "MiniMax-M3.1-Flash", Func: "llm", InPerM: 0.15, OutPerM: 0.60, Context: 1000000},
+		{ID: "MiniMax-M3", Func: "llm", InPerM: 0.30, OutPerM: 1.20, Context: 1000000},
+	},
 }
 
 var catalogCache = struct {

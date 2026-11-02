@@ -263,6 +263,44 @@ func TestAdaptersAgainstFakeServers(t *testing.T) {
 		t.Fatalf("azure: %q %v", txt, err)
 	}
 
+	// MiniMax: transcricao na rota propria /speech_to_text (asr-1.0, sem language/prompt)
+	mm := fakeProv{t: t, answer: `{"text":"minimax ok","duration":1.2,"trace_id":"x"}`, check: func(r *http.Request, _ []byte) {
+		_ = r.ParseMultipartForm(1 << 20)
+		fh := r.MultipartForm.File["file"]
+		if r.URL.Path != "/speech_to_text" || r.Header.Get("Authorization") != "Bearer chave-falsa-minimax" ||
+			r.FormValue("model") != "asr-1.0" || r.FormValue("response_format") != "json" ||
+			r.FormValue("language") != "" || r.FormValue("prompt") != "" || len(fh) != 1 {
+			t.Errorf("minimax stt: %s %v %v", r.URL.Path, r.Header, r.MultipartForm)
+			return
+		}
+		// o webm do MediaRecorder chega como Ogg Opus
+		f, _ := fh[0].Open()
+		got, _ := io.ReadAll(f)
+		if fh[0].Filename != "audio.ogg" || fh[0].Header.Get("Content-Type") != "audio/ogg" || !bytes.HasPrefix(got, []byte("OggS")) {
+			t.Errorf("minimax stt: arquivo %q %q %q", fh[0].Filename, fh[0].Header.Get("Content-Type"), got[:min(4, len(got))])
+		}
+	}}.server()
+	defer mm.Close()
+	pc = setProvider(t, "minimax", mm.URL, VoiceSettings{})
+	if txt, err := pc.transcribe(ctx, "", "pt", "WezTerm", fakeWebm(10), "audio/webm;codecs=opus"); err != nil || txt != "minimax ok" {
+		t.Fatalf("minimax stt: %q %v", txt, err)
+	}
+	// ...e a correcao pela rota compativel com OpenAI, M3.1-Flash por padrao
+	mc := fakeProv{t: t, answer: `{"choices":[{"message":{"content":"<think>pensando</think>corrigido minimax"}}]}`, check: func(r *http.Request, b []byte) {
+		var p struct {
+			Model string `json:"model"`
+		}
+		_ = json.Unmarshal(b, &p)
+		if r.URL.Path != "/chat/completions" || p.Model != "MiniMax-M3.1-Flash" || r.Header.Get("Authorization") != "Bearer chave-falsa-minimax" {
+			t.Errorf("minimax chat: %s %s", r.URL.Path, b)
+		}
+	}}.server()
+	defer mc.Close()
+	pc = setProvider(t, "minimax", mc.URL, VoiceSettings{})
+	if out, err := pc.correct(ctx, "", "sys", "x"); err != nil || !strings.Contains(out, "corrigido minimax") {
+		t.Fatalf("minimax chat: %q %v", out, err)
+	}
+
 	// /models
 	m := fakeProv{t: t, answer: `{"data":[{"id":"b"},{"id":"a"}]}`}.server()
 	defer m.Close()
