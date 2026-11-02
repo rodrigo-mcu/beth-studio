@@ -177,3 +177,28 @@ separate UI for the same terminals.
   running host.
 - Close views and windows never kill a terminal. Only an explicit, confirmed
   action does.
+
+## 2026-11-01 — Falar, menu de links e limpeza de temporários
+
+Resumo das mudanças desta rodada (todas no `main`; detalhes por commit em `git log`):
+
+- **Falar (voz):** o prompt de correção corta o ruído inventado no fim do áudio
+  (`270f1e9`); captação que se recupera sozinha quando o microfone não capta, com
+  botão **Reiniciar**; texto longo (mais de 100 palavras ou 1000 caracteres) vai
+  por arquivo temporário com instruções de "áudio transcrito"; card de gravação
+  compacto e de tamanho fixo, com **Cancelar** no meio embaixo e **Transcrever** à
+  direita; texto do nível curto (Sem sinal, Fraco, Bom nível, Quase estourando,
+  Estourando) para a janela não mudar de altura.
+- **Terminal:** o menu do botão direito sobre uma seleção oferece abrir link,
+  abrir no Explorer (pasta), abrir arquivo e mostrar na pasta. Cada clique grava
+  uma linha `menu:` em `host-life.log`. `b352533`: o `explorer.exe` deixou de ser
+  iniciado com a janela escondida, o que deixava um processo extra vivo a cada
+  "Mostrar na pasta" e fazia a pasta não aparecer.
+- **Limpeza de temporários:** apaga, por padrão, arquivos `clipboard-`, `file-` e
+  `fala-` com mais de 10 dias (configurável em **Configurações > Arquivos
+  temporários**).
+- **Repositório:** o `main` local e o branch `perf/terminal-render-dell` foram
+  unificados no commit `b352533` (tag de backup `backup-branches-20261101-234457`)
+  e o `origin/main` foi atualizado. O trabalho passa a ficar no `main`.
+- **Regra de trabalho:** commit e push a cada alteração, com mensagem descrevendo
+  a correção.
