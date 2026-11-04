@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Activity, Loader2, Mic } from "lucide-react";
+import { Activity, ChevronDown, Loader2, Mic } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import { audioConstraints, audioInputs, micLabel, micLog, resolveMic, rmsLevel, testVerdict, type MicChoice, type MicDevice } from "@/lib/mic";
 import { micErrorMessage } from "@/lib/voice";
@@ -85,6 +85,42 @@ export function MicPicker({ conn, value, onChange, withTest, disabled }: Props) 
       )}
       {withTest && <MicTest conn={conn} deviceId={value.id ? resolved.deviceId : ""} onDone={refresh} />}
     </div>
+  );
+}
+
+/**
+ * O nome do microfone como lista, sem moldura (cabecalho da gravacao do
+ * Falar): clicar abre a escolha na hora. `currentName` e' o nome do
+ * dispositivo em uso, mostrado no "Padrao do Windows".
+ */
+export function MicInlineSelect({ value, onChange, currentName, className }: { value: MicChoice; onChange: (c: MicChoice) => void; currentName: string; className?: string }) {
+  const { devices } = useMicDevices();
+  const ins = audioInputs(devices);
+  const resolved = resolveMic(devices, value);
+  const selected = value.id ? (resolved.found ? resolved.deviceId : value.id) : "";
+  return (
+    <span className={cn("relative inline-flex min-w-0 items-center", className)}>
+      <select
+        className="min-w-0 flex-1 cursor-pointer appearance-none truncate rounded bg-transparent py-0.5 pl-1 pr-5 text-inherit hover:bg-bg-hover [&>option]:bg-bg-card [&>option]:font-normal [&>option]:text-text-1"
+        value={selected}
+        title="Trocar o microfone (recomeça a gravação)"
+        aria-label="Microfone"
+        onChange={(e) => {
+          const id = e.target.value;
+          const d = ins.find((x) => x.deviceId === id);
+          onChange({ id, label: d?.label ?? "" });
+        }}
+      >
+        <option value="">{currentName && !value.id ? currentName : "Padrão do Windows"}</option>
+        {ins.map((d, i) => (
+          <option key={d.deviceId} value={d.deviceId}>
+            {micLabel(d, i)}
+          </option>
+        ))}
+        {value.id && !resolved.found && <option value={value.id}>{value.label || "Microfone salvo"} (não encontrado)</option>}
+      </select>
+      <ChevronDown size={13} className="pointer-events-none absolute right-1 text-text-2" />
+    </span>
   );
 }
 

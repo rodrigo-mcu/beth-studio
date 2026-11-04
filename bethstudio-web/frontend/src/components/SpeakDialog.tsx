@@ -37,7 +37,7 @@ import {
   type MicTuning,
 } from "@/lib/micTuning";
 import { RecClock } from "@/lib/recClock";
-import { MicPicker } from "./MicPicker";
+import { MicInlineSelect, MicPicker } from "./MicPicker";
 import { LevelScope, type ScopeHandle } from "./LevelScope";
 import { VoiceError, correctStreaming, correctTimeoutMs, errorRecovery, formatSeconds, formatUSD, transcribe, type VoiceErrorKind } from "@/lib/voicePipeline";
 import type { SettingsSection } from "./SettingsDialog";
@@ -779,8 +779,15 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   {!paused && <span className="absolute inset-0 animate-ping rounded-full bg-[#DC2626] opacity-75" />}
                   <span className={cn("relative inline-flex h-3 w-3 rounded-full", paused ? "bg-status-warn" : "bg-[#DC2626]")} />
                 </span>
-                <span className="min-w-0 flex-1 truncate" title={micName}>
-                  {paused ? "Pausado" : "Gravando"} · {micName}
+                <span className="flex min-w-0 flex-1 items-center gap-1">
+                  <span className="shrink-0">{paused ? "Pausado" : "Gravando"} ·</span>
+                  {snap ? (
+                    <MicInlineSelect className="flex-1" value={mic} onChange={changeMic} currentName={micName} />
+                  ) : (
+                    <span className="min-w-0 truncate" title={micName}>
+                      {micName}
+                    </span>
+                  )}
                 </span>
                 <span className={cn("shrink-0 font-mono text-[18px]", paused ? "text-status-warn" : "text-text-1")}>{formatDuration(elapsed)}</span>
               </div>
