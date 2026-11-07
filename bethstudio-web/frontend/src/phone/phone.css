@@ -766,12 +766,23 @@ button:disabled {
   color: #fff;
 }
 
-/* Uma linha, como em app de mensagem: [imagem] [campo] [microfone/enviar]. */
+/* Campo em largura total (a fonte do terminal é grande); embaixo a barra:
+   [imagem] [colar] ........ [microfone] [enviar]. */
 .p-compose {
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   padding: 8px 8px 0;
+}
+
+.p-compose .p-field {
+  order: -1;
+  flex: 1 1 100%;
+}
+
+.p-push {
+  margin-left: auto;
 }
 
 .p-field {

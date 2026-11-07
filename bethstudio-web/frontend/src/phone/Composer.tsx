@@ -547,17 +547,15 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
           >
             <ImagePlus size={22} />
           </button>
-          {draft.text === "" && (
-            <button
-              type="button"
-              className="p-round p-round--ghost"
-              aria-label="Colar"
-              disabled={readOnly || busy || phase === "privacy"}
-              onClick={() => void pasteFromClipboard()}
-            >
-              <ClipboardPaste size={22} />
-            </button>
-          )}
+          <button
+            type="button"
+            className="p-round p-round--ghost"
+            aria-label="Colar"
+            disabled={readOnly || busy || phase === "privacy"}
+            onClick={() => void pasteFromClipboard()}
+          >
+            <ClipboardPaste size={22} />
+          </button>
           <textarea
             ref={fieldRef}
             className={busy ? "p-field p-field--busy" : "p-field"}
@@ -586,7 +584,7 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
             <>
               <button
                 type="button"
-                className="p-round p-round--ghost"
+                className="p-round p-round--ghost p-push"
                 aria-label="Ditar mais"
                 disabled={readOnly || busy || phase === "privacy"}
                 onClick={onTalk}
@@ -606,7 +604,7 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
           ) : (
             <button
               type="button"
-              className="p-round p-round--brand"
+              className="p-round p-round--brand p-push"
               aria-label="Falar"
               disabled={readOnly || busy || phase === "privacy"}
               onClick={onTalk}

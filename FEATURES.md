@@ -268,8 +268,7 @@ ends the shell together with everything it started (patch 0203).
   or 1000 characters, typed or dictated) is not pasted: **Enviar** saves it
   in a `.txt` file on this computer (same folder as the Falar window) and
   pastes only a short instruction telling the agent to read that file
-  (2026-11-07). A **Colar** button next to the image button (shown while the
-  field is empty) pastes the phone's clipboard: text goes into the field, an
+  (2026-11-07). A **Colar** button next to the image button, in a row below the message field (full width), pastes the phone's clipboard: text goes into the field, an
   image becomes an attachment (2026-11-07). Tapping the terminal text opens the
   keyboard in the message field, and the app follows the visible area
   when the keyboard opens.
