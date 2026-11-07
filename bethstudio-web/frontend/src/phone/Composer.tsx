@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from "react";
-import { Check, ImagePlus, Loader2, Mic, Send, X } from "lucide-react";
+import { Check, ClipboardPaste, ImagePlus, Loader2, Mic, Send, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import { composeMessage, isLongPaste } from "@/lib/voice";
 import { phonePaste } from "@/lib/phoneScreen";
@@ -111,6 +111,36 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
           setAttachments((prev) => prev.map((a) => (a.id === id ? { ...a, error: (e as Error).message } : a)));
         }
       })();
+    }
+  };
+
+  /** Botão Colar: o toque longo do celular nem sempre aparece no campo. Texto entra onde está o cursor; imagem vira anexo. */
+  const pasteFromClipboard = async () => {
+    if (readOnly || busy) return;
+    setNote(null);
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        const el = fieldRef.current;
+        const cur = draftRef.current;
+        const a = el?.selectionStart ?? cur.text.length;
+        const b = el?.selectionEnd ?? a;
+        const next = cur.text.slice(0, a) + text + cur.text.slice(b);
+        setDraft({ text: next, voice: cur.voice, raw: cur.raw });
+        const pos = a + text.length;
+        window.setTimeout(() => el?.setSelectionRange(pos, pos), 0);
+        return;
+      }
+      const items = await navigator.clipboard.read();
+      const imgs: File[] = [];
+      for (const it of items) {
+        const type = it.types.find((t) => t.startsWith("image/"));
+        if (type) imgs.push(new File([await it.getType(type)], "colado", { type }));
+      }
+      if (imgs.length) addImages(imgs);
+      else setNote({ text: "A área de transferência está vazia." });
+    } catch {
+      setNote({ text: "Não consegui ler a área de transferência. Permita o acesso ou toque e segure no campo para colar.", err: true });
     }
   };
 
@@ -517,6 +547,17 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
           >
             <ImagePlus size={22} />
           </button>
+          {draft.text === "" && (
+            <button
+              type="button"
+              className="p-round p-round--ghost"
+              aria-label="Colar"
+              disabled={readOnly || busy || phase === "privacy"}
+              onClick={() => void pasteFromClipboard()}
+            >
+              <ClipboardPaste size={22} />
+            </button>
+          )}
           <textarea
             ref={fieldRef}
             className={busy ? "p-field p-field--busy" : "p-field"}
