@@ -44,6 +44,7 @@ import { createScreenWriter } from "@/lib/screen";
 import { attachRenderer, preloadRenderer, type RendererHandle } from "@/lib/termWebgl";
 import { readIncrementalWrite } from "@/lib/termRenderer";
 import { openExternal } from "@/lib/links";
+import { MOUSE_OFF, MOUSE_ON, parseSgrMouse, wantMouse } from "@/lib/termMouse";
 import { resolveLinkPath, type PaneLinkCtx } from "@/lib/localFile";
 import { markScreen } from "@/lib/startup";
 import { fallbackLinksTouching, linkHoverHint, routeActions, routeSelection, routeTermLink, shouldActivateLink, suppressAppMouseDown, type CellLike, type LinkRoute, type LinkRow } from "@/lib/termLinks";
@@ -505,6 +506,8 @@ export function TerminalView({
       hostFitRef.current("font");
     });
     const screenWriter = createScreenWriter(readIncrementalWrite());
+    // Patch 0204: o xterm local esta' gerando relatos de mouse para o programa?
+    let appliedMouse = false;
     let linkTip: HTMLDivElement | null = null;
     const hideLinkTip = () => {
       linkTip?.remove();
@@ -737,6 +740,13 @@ export function TerminalView({
     const dataSub = term.onData((d) => {
       if (readOnlyRef.current) return;
       if (Date.now() - lastUserInput.current > USER_INPUT_WINDOW_MS) return;
+      // Relato de mouse gerado pelo xterm (patch 0204): vai como evento, e o
+      // host codifica no formato que o programa pediu.
+      const reports = appliedMouse ? parseSgrMouse(d) : null;
+      if (reports) {
+        for (const r of reports) conn.mouse(paneId, r);
+        return;
+      }
       // Digitar volta ao fim (a ponte faz isso sozinha no send).
       desired = null;
       lastSent = 0;
@@ -876,13 +886,17 @@ export function TerminalView({
         term.reset();
         screenWriter.reset();
         repairPending = false;
+        appliedMouse = false; // o reset desliga o modo de mouse do xterm
       }
       const next = latestScreen;
       if (!next) return;
       latestScreen = null;
       writing = true;
+      const want = wantMouse(next);
+      const mode = want === appliedMouse ? "" : want ? MOUSE_ON : MOUSE_OFF;
+      appliedMouse = want;
       // So' as linhas que mudaram (o xterm refaz menos; ver lib/screen.ts)
-      term.write(screenWriter.write(next), () => {
+      term.write(mode + screenWriter.write(next), () => {
         writing = false;
         pumpScreen();
       });
@@ -895,6 +909,9 @@ export function TerminalView({
       conn.refreshScreen(paneId);
     };
 
+    const unsubClip = conn.onClipboard(paneId, (text) => {
+      void copyText(text).then((ok) => flash(ok ? "Copiado pelo programa" : "O programa pediu para copiar, mas a cópia falhou"));
+    });
     const unsub = conn.onScreen(paneId, (ev) => {
       if (term.cols !== ev.cols || term.rows !== ev.rows) {
         term.resize(ev.cols, ev.rows);
@@ -939,6 +956,7 @@ export function TerminalView({
       disposed = true;
       repairViewRef.current = () => {};
       unsub();
+      unsubClip();
       window.clearTimeout(timer);
       window.clearTimeout(hostTimer);
       area.removeEventListener("wheel", onWheel, true);

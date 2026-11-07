@@ -57,6 +57,8 @@ export interface ScreenEvent {
   offset?: number;
   /** Quantas linhas de historico existem acima da tela viva. */
   scrollback?: number;
+  /** Patch 0204: o programa pegou o mouse (DECSET 1000/1002/1003). */
+  mouse?: boolean;
 }
 
 export interface ErrorEvent {
@@ -183,6 +185,7 @@ export type ServerEvent =
   | ShellsEvent
   | SpawnedEvent
   | { ev: "pane_gone"; pane_id: number }
+  | { ev: "clipboard"; pane_id: number; text: string }
   | { ev: "separated"; pane_id: number; tab_id: number; window_id: number }
   | { ev: "term_windows"; panes: number[] }
   | import("./hostBanner").HostEvent

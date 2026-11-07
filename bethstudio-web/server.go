@@ -281,6 +281,13 @@ type clientRequest struct {
 	Kind    string  `json:"kind"`   // spawn_tool: ssh | serial
 	ID      string  `json:"id"`     // spawn_tool: id do host/perfil salvo
 	Distro  string  `json:"distro"` // spawn: distro WSL (so' para shells wsl.*)
+	// mouse (patch 0204): kind = press|release|move
+	Button string `json:"button"`
+	X      *int   `json:"x"`
+	Y      *int   `json:"y"`
+	Shift  bool   `json:"shift"`
+	Ctrl   bool   `json:"ctrl"`
+	Alt    bool   `json:"alt"`
 }
 
 var (
@@ -606,6 +613,18 @@ func (s *server) handle(c *client, req clientRequest, sendErr func(string)) {
 		if err := b.write(map[string]any{"op": req.Op, "pane_id": *req.PaneID, "data": *req.Data}); err != nil {
 			userErr(err)
 		}
+	case "mouse":
+		// Clique/roda para um programa em tela cheia que ligou o mouse
+		// (patch 0204). O host codifica do jeito que o programa pediu.
+		if s.hub.readOnly {
+			return
+		}
+		msg, err := mouseMessage(req)
+		if err != nil {
+			sendErr(err.Error())
+			return
+		}
+		quiet(b.write(msg))
 	default:
 		sendErr("operação desconhecida: " + req.Op)
 	}

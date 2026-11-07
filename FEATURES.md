@@ -350,6 +350,12 @@ ends the shell together with everything it started (patch 0203).
   (patch 0182). Scrollback stays put while a program redraws (patch 0187).
 - 🟢 Shared themes and fonts. The Studio theme is pushed to the pane so
   Codex and Cursor see light backgrounds (OSC 10/11, patch 0189).
+- 🟢 Mouse in fullscreen programs. When a program turns the mouse on
+  (Grok login, `mc`, `htop`, TUIs over SSH or WSL), clicks, drags and the
+  wheel reach it; the host encodes them the way the program asked. When
+  such a program copies text (OSC 52, for example "click here to copy"),
+  it lands in the Windows clipboard and the Studio says **Copiado pelo
+  programa** (patch 0204, 2026-11-07).
   Text whose color nearly matches the background is darkened or
   lightened until it reads (minimum contrast 3:1), so Claude Code's
   bright-white bold stays visible on light themes (2026-09-27).

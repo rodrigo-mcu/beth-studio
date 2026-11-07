@@ -384,6 +384,16 @@ func (h *hub) fromBridge(line []byte) (ev bridgeEvent) {
 	case "shells":
 		h.shells = msg
 		targets = h.clientsLocked()
+	case "clipboard":
+		// Patch 0204: OSC 52 do programa. So' para quem esta' vendo o
+		// terminal, e nunca para o celular.
+		if ev.PaneID != nil {
+			for c := range h.clients {
+				if c.watch[*ev.PaneID] && !c.phone {
+					targets = append(targets, c)
+				}
+			}
+		}
 	case "pane_gone":
 		// Patch 0179: o pane fechou (a ponte ja' tirou do watch e reenvia a
 		// lista). Esquece tela, aviso de agente e cache de conteudo.

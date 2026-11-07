@@ -48,6 +48,11 @@
 //!   {"ev":"scrollback","request_id":"...","pane_id":N,"text":"..."}
 //!       plain-text dump of scrollback+viewport (patch 0188)
 //!   {"ev":"error","message":"..."}
+//!   {"op":"mouse","pane_id":N,"kind":"press|release|move","button":
+//!    "left|middle|right|wheel_up|wheel_down|none","x":X,"y":Y,
+//!    "shift":B?,"ctrl":B?,"alt":B?}   mouse for a program that grabbed it
+//!       (patch 0204); the screen event carries "mouse":B
+//!   {"ev":"clipboard","pane_id":N,"text":"..."}  OSC 52 copy (patch 0204)
 //!
 //! The bridge always connects to the host (`--prefer-mux` is implied), so
 //! a GUI restart does not affect it. If the host connection is lost it
@@ -256,6 +261,20 @@ enum Request {
     Kill {
         pane_id: PaneId,
     },
+    /// Patch 0204: a mouse event for a program that grabbed the mouse.
+    Mouse {
+        pane_id: PaneId,
+        kind: String,
+        button: String,
+        x: usize,
+        y: i64,
+        #[serde(default)]
+        shift: bool,
+        #[serde(default)]
+        ctrl: bool,
+        #[serde(default)]
+        alt: bool,
+    },
     Separate {
         pane_id: PaneId,
     },
@@ -305,6 +324,13 @@ enum Event<'a> {
         cursor_visible: bool,
         offset: usize,
         scrollback: usize,
+        /// Patch 0204: the program asked for mouse reports.
+        mouse: bool,
+        text: &'a str,
+    },
+    /// Patch 0204: OSC 52 copy from the program in the pane.
+    Clipboard {
+        pane_id: PaneId,
         text: &'a str,
     },
     Error {
@@ -355,9 +381,137 @@ fn alert_channel() -> &'static (
     CHANNEL.get_or_init(smol::channel::unbounded)
 }
 
+/// Patch 0204: panes whose program asked for mouse reports (DECSET
+/// 1000/1002/1003). The host pushes this in every render-changes PDU.
+fn mouse_grabbed() -> &'static std::sync::Mutex<HashMap<PaneId, bool>> {
+    static GRABBED: std::sync::OnceLock<std::sync::Mutex<HashMap<PaneId, bool>>> =
+        std::sync::OnceLock::new();
+    GRABBED.get_or_init(Default::default)
+}
+
+fn is_mouse_grabbed(pane_id: PaneId) -> bool {
+    mouse_grabbed()
+        .lock()
+        .map(|m| m.get(&pane_id).copied().unwrap_or(false))
+        .unwrap_or(false)
+}
+
+/// Patch 0204: OSC 52 "copy to clipboard" from a program in a pane.
+fn clipboard_channel() -> &'static (
+    smol::channel::Sender<(PaneId, String)>,
+    smol::channel::Receiver<(PaneId, String)>,
+) {
+    static CHANNEL: std::sync::OnceLock<(
+        smol::channel::Sender<(PaneId, String)>,
+        smol::channel::Receiver<(PaneId, String)>,
+    )> = std::sync::OnceLock::new();
+    CHANNEL.get_or_init(smol::channel::unbounded)
+}
+
+/// Larger OSC 52 payloads are dropped (a program dumping megabytes into the
+/// clipboard is not a copy the user asked for).
+const CLIPBOARD_MAX: usize = 1024 * 1024;
+
 fn on_unilateral(pdu: &codec::Pdu) {
-    if let codec::Pdu::NotifyAlert(codec::NotifyAlert { pane_id, alert }) = pdu {
-        let _ = alert_channel().0.try_send((*pane_id, alert.clone()));
+    match pdu {
+        codec::Pdu::NotifyAlert(codec::NotifyAlert { pane_id, alert }) => {
+            let _ = alert_channel().0.try_send((*pane_id, alert.clone()));
+        }
+        codec::Pdu::GetPaneRenderChangesResponse(r) => {
+            if let Ok(mut m) = mouse_grabbed().lock() {
+                m.insert(r.pane_id, r.mouse_grabbed);
+            }
+        }
+        codec::Pdu::SetClipboard(codec::SetClipboard {
+            pane_id,
+            clipboard: Some(text),
+            selection: wezterm_term::ClipboardSelection::Clipboard,
+        }) if !text.is_empty() && text.len() <= CLIPBOARD_MAX => {
+            let _ = clipboard_channel().0.try_send((*pane_id, text.clone()));
+        }
+        _ => {}
+    }
+}
+
+/// Patch 0204: a mouse event from the Studio, in the program's cells
+/// (0-based). The host encodes it the way the program asked (X10, SGR...).
+fn mouse_event_of(
+    kind: &str,
+    button: &str,
+    x: usize,
+    y: i64,
+    shift: bool,
+    ctrl: bool,
+    alt: bool,
+) -> anyhow::Result<wezterm_term::MouseEvent> {
+    use wezterm_term::{KeyModifiers, MouseButton, MouseEventKind};
+    let kind = match kind {
+        "press" => MouseEventKind::Press,
+        "release" => MouseEventKind::Release,
+        "move" => MouseEventKind::Move,
+        _ => anyhow::bail!("mouse: kind inválido {kind:?}"),
+    };
+    let button = match button {
+        "left" => MouseButton::Left,
+        "middle" => MouseButton::Middle,
+        "right" => MouseButton::Right,
+        "wheel_up" => MouseButton::WheelUp(1),
+        "wheel_down" => MouseButton::WheelDown(1),
+        "wheel_left" => MouseButton::WheelLeft(1),
+        "wheel_right" => MouseButton::WheelRight(1),
+        "none" => MouseButton::None,
+        _ => anyhow::bail!("mouse: button inválido {button:?}"),
+    };
+    anyhow::ensure!(x < 1000 && (0..1000).contains(&y), "mouse: fora da tela");
+    let mut modifiers = KeyModifiers::NONE;
+    if shift {
+        modifiers |= KeyModifiers::SHIFT;
+    }
+    if ctrl {
+        modifiers |= KeyModifiers::CTRL;
+    }
+    if alt {
+        modifiers |= KeyModifiers::ALT;
+    }
+    Ok(wezterm_term::MouseEvent {
+        kind,
+        x,
+        y,
+        x_pixel_offset: 0,
+        y_pixel_offset: 0,
+        button,
+        modifiers,
+    })
+}
+
+#[cfg(test)]
+mod mouse_tests {
+    use super::mouse_event_of;
+    use wezterm_term::{KeyModifiers, MouseButton, MouseEventKind};
+
+    #[test]
+    fn press_left_with_ctrl() {
+        let e = mouse_event_of("press", "left", 3, 4, false, true, false).unwrap();
+        assert_eq!(e.kind, MouseEventKind::Press);
+        assert_eq!(e.button, MouseButton::Left);
+        assert_eq!((e.x, e.y), (3, 4));
+        assert_eq!(e.modifiers, KeyModifiers::CTRL);
+    }
+
+    #[test]
+    fn wheel_and_move() {
+        let e = mouse_event_of("press", "wheel_down", 0, 0, false, false, false).unwrap();
+        assert_eq!(e.button, MouseButton::WheelDown(1));
+        let e = mouse_event_of("move", "none", 1, 1, false, false, false).unwrap();
+        assert_eq!(e.kind, MouseEventKind::Move);
+    }
+
+    #[test]
+    fn rejects_garbage() {
+        assert!(mouse_event_of("click", "left", 0, 0, false, false, false).is_err());
+        assert!(mouse_event_of("press", "x", 0, 0, false, false, false).is_err());
+        assert!(mouse_event_of("press", "left", 0, -1, false, false, false).is_err());
+        assert!(mouse_event_of("press", "left", 5000, 0, false, false, false).is_err());
     }
 }
 
@@ -479,6 +633,13 @@ impl Bridge {
                             watched = pane_ids.into_iter().chain(pane_id).collect();
                             // Force a fresh screen for every watched pane.
                             last_screen.clear();
+                            // Patch 0204: ask the host for render changes once,
+                            // so the mouse state of an idle pane arrives too.
+                            for &id in &watched {
+                                let _ = client
+                                    .get_pane_render_changes(codec::GetPaneRenderChanges { pane_id: id })
+                                    .await;
+                            }
                         }
                         Ok(Request::Shells) => {
                             let shells: Vec<ShellInfo> = wtinator::shells::default_shells()
@@ -574,6 +735,33 @@ impl Bridge {
                                     last_list = None;
                                     list_due = std::time::Instant::now();
                                 }
+                            }
+                        }
+                        Ok(Request::Mouse {
+                            pane_id,
+                            kind,
+                            button,
+                            x,
+                            y,
+                            shift,
+                            ctrl,
+                            alt,
+                        }) => {
+                            // Scrolled back, the cells shown are history, not
+                            // the program's screen: drop the event.
+                            let scrolled = anchors.contains_key(&pane_id)
+                                || pending_scroll.contains_key(&pane_id);
+                            match mouse_event_of(&kind, &button, x, y, shift, ctrl, alt) {
+                                Ok(_) if scrolled => {}
+                                Ok(event) => {
+                                    if let Err(err) = client
+                                        .mouse_event(codec::SendMouseEvent { pane_id, event })
+                                        .await
+                                    {
+                                        emit_error(&format!("mouse to pane {pane_id}: {err:#}"));
+                                    }
+                                }
+                                Err(err) => emit_error(&format!("{err:#}")),
                             }
                         }
                         Ok(Request::Kill { pane_id }) => {
@@ -701,6 +889,13 @@ impl Bridge {
                 None => {}
             }
 
+            while let Ok((pane_id, text)) = clipboard_channel().1.try_recv() {
+                emit(&Event::Clipboard {
+                    pane_id,
+                    text: &text,
+                });
+            }
+
             while let Ok((pane_id, alert)) = alerts.try_recv() {
                 let Some((is_waiting, reason, detail)) = waiting_from_alert(&alert) else {
                     continue;
@@ -807,6 +1002,7 @@ impl Bridge {
                                 cursor_visible: screen.cursor_visible,
                                 offset: screen.offset,
                                 scrollback: screen.scrollback,
+                                mouse: screen.mouse,
                                 text: &screen.text,
                             });
                         }
@@ -1129,6 +1325,8 @@ struct Screen {
     scrollback: usize,
     /// Absolute top row shown (for pinning scrollback while scrolled).
     top: StableRowIndex,
+    /// Patch 0204: the program grabbed the mouse.
+    mouse: bool,
     text: String,
 }
 
@@ -1190,6 +1388,7 @@ async fn screen_of(
         offset,
         scrollback,
         top,
+        mouse: is_mouse_grabbed(pane_id),
         text,
     })
 }

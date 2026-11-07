@@ -11,6 +11,7 @@ import type { RestoreEvent } from "./restoreBanner";
 // estado do React (chegam a cada ~30 ms).
 
 type ScreenListener = (ev: ScreenEvent) => void;
+type ClipboardListener = (text: string) => void;
 
 export interface ConnectionSnapshot {
   socket: SocketState;
@@ -61,6 +62,7 @@ export class Connection {
   /** Offset de rolagem pedido por pane (reenviado ao reconectar). */
   private offsets = new Map<number, number>();
   private screenListeners = new Map<number, Set<ScreenListener>>();
+  private clipboardListeners = new Map<number, Set<ClipboardListener>>();
   private lastScreens = new Map<number, ScreenEvent>();
   private snapshot: ConnectionSnapshot = {
     socket: "connecting",
@@ -209,6 +211,13 @@ export class Connection {
           const s = ev;
           this.lastScreens.set(s.pane_id, s);
           this.screenListeners.get(s.pane_id)?.forEach((fn) => fn(s));
+          break;
+        }
+        case "clipboard": {
+          // Patch 0204: OSC 52 do programa; quem mostra o terminal copia.
+          const fns = this.clipboardListeners.get(ev.pane_id);
+          const first = fns?.values().next().value;
+          if (first) first(ev.text);
           break;
         }
         case "list":
@@ -414,6 +423,24 @@ export class Connection {
     return () => {
       set.delete(fn);
     };
+  }
+
+  /** Patch 0204: o programa do pane pediu para copiar (OSC 52). */
+  onClipboard(paneId: number, fn: ClipboardListener) {
+    let set = this.clipboardListeners.get(paneId);
+    if (!set) {
+      set = new Set();
+      this.clipboardListeners.set(paneId, set);
+    }
+    set.add(fn);
+    return () => {
+      set.delete(fn);
+    };
+  }
+
+  /** Patch 0204: clique/arraste/roda para um programa que pegou o mouse. */
+  mouse(paneId: number, r: import("./termMouse").MouseReport) {
+    return this.raw({ op: "mouse", pane_id: paneId, ...r });
   }
 
   /** Redimensiona o pane NO HOST (so' panes sozinhos na aba do host). */
