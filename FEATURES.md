@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Last updated: 2026-11-02.
+Last updated: 2026-11-07.
 
 ---
 
@@ -264,7 +264,11 @@ ends the shell together with everything it started (patch 0203).
   imagem ou print** saves the picture on this computer (large photos are
   reduced to JPEG first) and adds its link to the message; it goes to the
   terminal only with **Enviar**. Pasting an image or print into the
-  message field does the same (2026-11-07). Tapping the terminal text opens the
+  message field does the same (2026-11-07). A long message (over 100 words
+  or 1000 characters, typed or dictated) is not pasted: **Enviar** saves it
+  in a `.txt` file on this computer (same folder as the Falar window) and
+  pastes only a short instruction telling the agent to read that file
+  (2026-11-07). Tapping the terminal text opens the
   keyboard in the message field, and the app follows the visible area
   when the keyboard opens.
   The Studio **Falar** button still pastes without Enter.

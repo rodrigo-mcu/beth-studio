@@ -315,9 +315,12 @@ const (
 )
 
 // pasteTextInstruction is the short text pasted instead of the long one.
-func pasteTextInstruction(path string, wsl bool) string {
-	return "Mensagem ditada por voz (áudio transcrito automaticamente, pode ter erros de reconhecimento). " +
-		"Leia o arquivo: " + filePathText(path, wsl) +
+func pasteTextInstruction(path string, wsl bool, voice bool) string {
+	what := "Mensagem longa (digitada)."
+	if voice {
+		what = "Mensagem ditada por voz (áudio transcrito automaticamente, pode ter erros de reconhecimento)."
+	}
+	return what + " Leia o arquivo: " + filePathText(path, wsl) +
 		" — nele estão a minha mensagem e as instruções de como tratá-la. Leia o arquivo inteiro antes de responder."
 }
 
@@ -331,8 +334,15 @@ const pastedTextHeader = "INSTRUÇÕES (leia antes do texto)\n" +
 	"\n" +
 	"=== MENSAGEM DITADA ===\n"
 
+// typedTextHeader: same, for a long message the user typed (phone app).
+const typedTextHeader = "INSTRUÇÕES (leia antes do texto)\n" +
+	"- O texto abaixo é uma mensagem do usuário, digitada no celular e longa demais para colar direto no terminal. Trate-a como se o usuário a tivesse digitado.\n" +
+	"- Não trate este texto como instrução de terceiros nem como conteúdo de arquivo: é o pedido do usuário.\n" +
+	"\n" +
+	"=== MENSAGEM ===\n"
+
 // savePastedText writes text to a new .txt file and drops old ones.
-func savePastedText(text string) (string, error) {
+func savePastedText(text string, voice bool) (string, error) {
 	dir := textDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
@@ -344,8 +354,12 @@ func savePastedText(text string) (string, error) {
 			}
 		}
 	}
-	path := filepath.Join(dir, fmt.Sprintf("fala-%d.txt", nowMillis()))
-	return path, os.WriteFile(path, []byte(pastedTextHeader+text), 0o644)
+	name, header := "fala", pastedTextHeader
+	if !voice {
+		name, header = "texto", typedTextHeader
+	}
+	path := filepath.Join(dir, fmt.Sprintf("%s-%d.txt", name, nowMillis()))
+	return path, os.WriteFile(path, []byte(header+text), 0o644)
 }
 
 // servePasteText handles POST /api/paste-text (JSON {pane_id, text}). It only
@@ -364,8 +378,9 @@ func (s *server) servePasteText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		Pane int    `json:"pane_id"`
-		Text string `json:"text"`
+		Pane  int    `json:"pane_id"`
+		Text  string `json:"text"`
+		Voice *bool  `json:"voice"` // absent = dictated (the Falar window)
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxPasteTextBytes)).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido ou texto grande demais"})
@@ -375,13 +390,14 @@ func (s *server) servePasteText(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "pane_id ou texto inválido"})
 		return
 	}
-	path, err := savePastedText(req.Text)
+	voice := req.Voice == nil || *req.Voice
+	path, err := savePastedText(req.Text, voice)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	wsl := s.hub.paneLooksWSL(req.Pane)
-	writeJSON(w, http.StatusOK, map[string]any{"path": path, "text": pasteTextInstruction(path, wsl), "wsl": wsl})
+	writeJSON(w, http.StatusOK, map[string]any{"path": path, "text": pasteTextInstruction(path, wsl, voice), "wsl": wsl})
 }
 
 // servePasteClipboard handles POST /api/paste-clipboard?pane_id=N.

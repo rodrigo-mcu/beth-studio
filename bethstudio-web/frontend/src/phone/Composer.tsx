@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from "react";
 import { Check, ImagePlus, Loader2, Mic, Send, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
-import { composeMessage } from "@/lib/voice";
+import { composeMessage, isLongPaste } from "@/lib/voice";
 import { phonePaste } from "@/lib/phoneScreen";
 import { correctStreaming, correctTimeoutMs, transcribe, VoiceError } from "@/lib/voicePipeline";
 import { appendDictation, clock } from "./audio";
@@ -77,6 +77,7 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
   const recRef = useRef<PhoneRecorder | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fieldRef = useRef<HTMLTextAreaElement>(null);
+  const savingRef = useRef(false);
   const draftRef = useRef(draft);
   draftRef.current = draft;
 
@@ -311,9 +312,24 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
   const uploading = attachments.some((a) => a.text == null && !a.error);
   const ready = attachments.filter((a) => a.text).map((a) => a.text as string);
 
-  const send = () => {
-    if (readOnly || busy || uploading) return;
-    const body = message();
+  const send = async () => {
+    if (readOnly || busy || uploading || savingRef.current) return;
+    let body = message();
+    if (body && isLongPaste(body)) {
+      savingRef.current = true;
+      // Texto enorme: alguns agentes recusam a colagem. O PC grava num arquivo e
+      // vai só uma instrução curta apontando para ele (como o Falar no desktop).
+      // Se falhar, cola o texto mesmo.
+      setNote({ text: "Texto longo: salvando em arquivo no PC…" });
+      try {
+        const r = await conn.api<{ text: string }>("/api/phone/text", { pane_id: paneId, text: body, voice: draft.voice });
+        body = r.text;
+      } catch {
+        setNote(null);
+      } finally {
+        savingRef.current = false;
+      }
+    }
     // Imagens primeiro, uma por linha; depois o texto.
     const m = [...ready, ...(body ? [body] : [])].join("\n");
     if (!m) return;
@@ -541,7 +557,7 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
                 className="p-round p-round--brand"
                 aria-label={uploading ? "Subindo imagem" : "Enviar"}
                 disabled={readOnly || busy || uploading}
-                onClick={send}
+                onClick={() => void send()}
               >
                 {uploading ? <Loader2 size={20} className="p-spin" /> : <Send size={20} />}
               </button>

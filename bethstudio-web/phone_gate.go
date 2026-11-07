@@ -205,6 +205,10 @@ func (s *server) servePhoneAuthed(w http.ResponseWriter, r *http.Request, device
 		s.serveContent(w, r)
 	case r.URL.Path == "/api/phone/image":
 		s.servePhoneImage(w, r)
+	case r.URL.Path == "/api/phone/text":
+		// Texto longo: grava num arquivo no PC e devolve a instrução curta;
+		// o celular é quem cola (como o Falar no desktop).
+		s.servePasteText(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/voice"):
 		s.servePhoneVoice(w, r)
 	default:

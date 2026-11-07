@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -136,6 +137,50 @@ func TestPhoneImageSavesWithoutPasting(t *testing.T) {
 	// sem senha: não guarda nada
 	req = httptest.NewRequest(http.MethodPost, "/api/phone/image?pane_id=3", bytes.NewReader(pn.Bytes()))
 	req.Header.Set("Content-Type", "image/png")
+	req.Header.Set("Origin", "https://"+testDomain)
+	rec = httptest.NewRecorder()
+	srv.servePhonePublic(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("sem senha: %d", rec.Code)
+	}
+}
+
+// Texto longo digitado no celular: vira arquivo no PC, com cabeçalho de texto
+// digitado (não "ditado"), e volta a instrução curta sem colar nada.
+func TestPhoneTextSavesTypedFile(t *testing.T) {
+	tok := withPhoneSession(t)
+	dir := t.TempDir()
+	oldDir := textDir
+	textDir = func() string { return dir }
+	t.Cleanup(func() { textDir = oldDir })
+
+	srv := &server{hub: newHub(false)}
+	long := strings.Repeat("palavra ", 300)
+	body, _ := json.Marshal(map[string]any{"pane_id": 3, "text": long, "voice": false})
+	req := httptest.NewRequest(http.MethodPost, "/api/phone/text", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://"+testDomain)
+	req.AddCookie(&http.Cookie{Name: phoneCookie, Value: tok})
+	rec := httptest.NewRecorder()
+	srv.servePhonePublic(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("%d %s", rec.Code, rec.Body.String())
+	}
+	var out struct{ Path, Text string }
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(out.Path)
+	if err != nil || !strings.HasSuffix(string(b), long) || strings.Contains(string(b), "ditada por voz") {
+		t.Fatalf("arquivo: %v", err)
+	}
+	if !strings.HasPrefix(out.Text, "Mensagem longa (digitada).") || !strings.Contains(out.Text, "Leia o arquivo: ") {
+		t.Fatalf("instrução: %q", out.Text)
+	}
+
+	// sem senha: não guarda nada
+	req = httptest.NewRequest(http.MethodPost, "/api/phone/text", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Origin", "https://"+testDomain)
 	rec = httptest.NewRecorder()
 	srv.servePhonePublic(rec, req)
