@@ -51,6 +51,9 @@ const attachmentsByPane = new Map<number, Attachment[]>();
 let nextAttachment = 1;
 const BARS = 36;
 
+/** Pausa entre colar e mandar o Enter (ver send). */
+export const enterDelayMs = (text: string) => Math.min(1500, 400 + Math.floor(text.length / 10));
+
 interface ComposerProps {
   conn: Connection;
   paneId: number;
@@ -367,7 +370,12 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
       setNote({ text: "Sem conexão com o PC. O texto continua aqui; envie quando voltar.", err: true });
       return;
     }
-    window.setTimeout(() => conn.send(paneId, "\r"), 40);
+    // O Enter vai depois de uma pausa. No WSL a colagem chega marcada
+    // (bracketed paste) e o agente sabe onde ela acaba. No PowerShell/cmd a
+    // ConPTY tira essas marcas: o agente (Claude Code etc.) adivinha a colagem
+    // pelo ritmo, e um Enter que chega logo atrás entra como quebra de linha
+    // dentro dela em vez de enviar. Texto maior leva mais tempo para passar.
+    window.setTimeout(() => conn.send(paneId, "\r"), enterDelayMs(m));
     navigator.vibrate?.(10);
     setDraft(EMPTY);
     attachRef.current.forEach((a) => URL.revokeObjectURL(a.preview));
