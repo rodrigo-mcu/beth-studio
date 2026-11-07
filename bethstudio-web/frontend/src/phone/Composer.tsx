@@ -7,6 +7,7 @@ import { correctStreaming, correctTimeoutMs, transcribe, VoiceError } from "@/li
 import { appendDictation, clock } from "./audio";
 import { PhoneRecorder } from "./recorder";
 import { prepareImage } from "./image";
+import { pastedImages } from "./imageFit";
 import { runWithRetry } from "./retry";
 import { clearTake, loadTake, saveTake } from "./takeStore";
 import { QUICK_KEYS } from "./text";
@@ -93,7 +94,7 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
 
   if (focusRef) focusRef.current = () => fieldRef.current?.focus();
 
-  const addImages = (files: FileList | null) => {
+  const addImages = (files: FileList | File[] | null) => {
     if (!files?.length || readOnly) return;
     setNote(null);
     for (const file of Array.from(files)) {
@@ -511,6 +512,13 @@ export function Composer({ conn, paneId, readOnly, focusRef, fontSize }: Compose
             placeholder={readOnly ? "O PC está em somente leitura" : "Escreva ou toque no microfone"}
             aria-label="Mensagem para o terminal"
             enterKeyHint="enter"
+            onPaste={(e) => {
+              // Print/imagem colada: vira anexo, como o botão de imagem.
+              const imgs = pastedImages(e.clipboardData);
+              if (!imgs.length) return;
+              e.preventDefault();
+              addImages(imgs);
+            }}
             onChange={(e) => {
               const text = e.target.value;
               setDraft({ text, voice: draft.voice && text.trim() !== "", raw: draft.raw });

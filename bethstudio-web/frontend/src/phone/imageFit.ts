@@ -23,3 +23,26 @@ export function needsReencode(type: string, bytes: number, w: number, h: number)
   if (type.toLowerCase() === "image/gif") return false;
   return bytes > MAX_KEEP_BYTES || Math.max(w, h) > MAX_SIDE;
 }
+
+/**
+ * Imagens de um colar (clipboardData). Teclados como o Gboard colam um print
+ * como arquivo; texto puro não tem arquivo e segue para o campo.
+ */
+export function pastedImages(data: {
+  items?: ArrayLike<{ kind: string; type: string; getAsFile(): File | null }> | null;
+  files?: ArrayLike<File> | null;
+}): File[] {
+  const out: File[] = [];
+  const items = data.items;
+  if (items) {
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (it.kind === "file" && it.type.toLowerCase().startsWith("image/")) {
+        const f = it.getAsFile();
+        if (f) out.push(f);
+      }
+    }
+  }
+  if (out.length) return out;
+  return data.files ? Array.from(data.files).filter((f) => f.type.toLowerCase().startsWith("image/")) : [];
+}

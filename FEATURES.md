@@ -263,7 +263,8 @@ ends the shell together with everything it started (patch 0203).
   top (agents waiting on you stay in their own section above). **Anexar
   imagem ou print** saves the picture on this computer (large photos are
   reduced to JPEG first) and adds its link to the message; it goes to the
-  terminal only with **Enviar**. Tapping the terminal text opens the
+  terminal only with **Enviar**. Pasting an image or print into the
+  message field does the same (2026-11-07). Tapping the terminal text opens the
   keyboard in the message field, and the app follows the visible area
   when the keyboard opens.
   The Studio **Falar** button still pastes without Enter.
