@@ -89,6 +89,8 @@ export function cwdPath(cwd: string): { path: string; sep: "/" | "\\" } {
   return { path, sep };
 }
 
+import { paneIdentity } from "@/lib/paneIdentity";
+
 /**
  * Titulo que e' so' o caminho do executavel do shell
  * (`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`).
@@ -99,7 +101,11 @@ export function isShellExeTitle(title: string): boolean {
   return /(?:^|[\\/])(powershell|pwsh|cmd|wsl|bash|conhost|openconsole)(\.exe)?$/i.test(t);
 }
 
+/** Nome mostrado na aba e na barra lateral. A ferramenta vence o título
+ * do shell (`brian`), para os dois lugares dizerem a mesma coisa. */
 export function paneLabel(p: PaneInfo): string {
+  const id = paneIdentity({ title: p.title, kind_label: p.kind_label, tool: p.tool }, "");
+  if (id.tool) return id.name;
   // SSH: preferir user@host:port (kind_label / ssh_host) — o titulo do
   // processo Windows às vezes vira "bethstudio-tool.exe" / ".old".
   if (p.kind === "ssh") {

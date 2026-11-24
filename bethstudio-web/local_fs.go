@@ -6,6 +6,7 @@ package main
 //	POST /api/local-fs/mkdir {path}
 //	POST /api/local-fs/remove {path, is_dir}
 //	POST /api/local-fs/reveal {path}
+//	POST /api/worktree        {path}  git da pasta (worktree.go)
 //
 // path vazio = pasta do usuario (USERPROFILE). Sem caminho relativo fora
 // de unidades/UNC; sem "..".
@@ -197,6 +198,12 @@ var openFolderLocal = func(dir string) error {
 	// CREATE_NO_WINDOW / HideWindow ele cria a janela de pasta com SW_HIDE,
 	// ou seja, um processo explorer.exe novo, invisivel e que nunca fecha.
 	// Cada "abrir pasta" deixava um host extra vivo.
+	if runtime.GOOS == "darwin" {
+		return exec.Command("open", dir).Start()
+	}
+	if runtime.GOOS != "windows" {
+		return exec.Command("xdg-open", dir).Start()
+	}
 	cmd := exec.Command("explorer.exe", dir)
 	return cmd.Start()
 }

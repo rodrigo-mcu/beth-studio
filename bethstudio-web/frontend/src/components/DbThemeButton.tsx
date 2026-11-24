@@ -156,7 +156,7 @@ export function DbThemeButton({ conn }: { conn: DbApiClient }) {
         createPortal(
           <div
             ref={panel}
-            className="fixed bottom-2 right-2 top-12 z-[80] flex w-[400px] max-w-[calc(100%-16px)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+            className="fixed bottom-2 right-2 top-12 z-[80] flex w-[400px] max-w-[calc(100%-16px)] flex-col overflow-hidden bt-dialog"
             onMouseDown={(e) => e.stopPropagation()}
             onContextMenu={(e) => e.stopPropagation()}
           >
@@ -168,7 +168,7 @@ export function DbThemeButton({ conn }: { conn: DbApiClient }) {
               </button>
             </div>
             <div className="space-y-2 border-b border-border p-2">
-              <div className="flex items-center gap-1.5 rounded border border-border bg-bg-term px-2">
+              <div className="flex items-center gap-1.5 bt-field bg-bg-term px-2">
                 <Search size={13} className="text-text-3" />
                 <input
                   value={q}

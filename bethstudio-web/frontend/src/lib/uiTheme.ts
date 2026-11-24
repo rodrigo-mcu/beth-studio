@@ -224,7 +224,9 @@ export function applyUI(c: UIColors) {
   root.classList.toggle("dark", c.dark);
   // o <style> de boot (injetado pelo Go) sai de cena: as inline valem agora
   document.getElementById("bt-boot")?.remove();
-  document.body.style.background = c["bg-body"];
+  // Com vibrancy o vão em volta do cartão é a cor da faixa de abas.
+  // Transparente aqui deixa o material nativo aparecer.
+  document.body.style.background = root.classList.contains("bt-vibrancy") ? "transparent" : c["bg-body"];
   root.style.colorScheme = c.dark ? "dark" : "light";
 }
 

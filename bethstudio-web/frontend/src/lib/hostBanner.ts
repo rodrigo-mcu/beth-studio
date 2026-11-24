@@ -15,8 +15,12 @@ export interface HostBannerInfo {
   retry: boolean;
 }
 
-/** O que mostrar para o estado do host (null = nada). */
-export function hostBanner(h: HostEvent | null): HostBannerInfo | null {
+/**
+ * O que mostrar para o estado do host (null = nada).
+ * No macOS o supervisor do host não existe: o aviso de queda é do Windows.
+ */
+export function hostBanner(h: HostEvent | null, platform: "windows" | "mac" = "windows"): HostBannerInfo | null {
+  if (platform === "mac") return null;
   if (!h) return null;
   if (h.state === "unavailable") return { text: h.message || "O host está indisponível.", retry: true };
   // falha ao iniciar: o supervisor tenta de novo sozinho, mas o motivo vale mostrar

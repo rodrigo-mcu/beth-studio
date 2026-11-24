@@ -105,7 +105,7 @@ export function DbHistoryDialog({
         role="dialog"
         aria-modal="true"
         aria-label="Histórico geral de consultas"
-        className="flex max-h-[84vh] w-[min(980px,95vw)] flex-col rounded-lg border border-border-strong bg-bg-card text-[12px] text-text-1 shadow-2xl"
+        className="bt-dialog flex max-h-[84vh] w-[min(980px,95vw)] flex-col text-[12px] text-text-1"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
       >
@@ -144,14 +144,14 @@ export function DbHistoryDialog({
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar no SQL, na conexão ou no banco (vários termos = todos)"
-              className="h-8 w-full rounded border border-border bg-bg-panel pl-7 pr-2 text-text-1 outline-none focus:border-accent"
+              className="h-8 w-full bt-field bg-bg-panel pl-7 pr-2 text-text-1 outline-none"
               style={{ userSelect: "text" }}
             />
           </div>
           <select
             value={connId}
             onChange={(e) => setConnId(e.target.value)}
-            className="h-8 max-w-[220px] rounded border border-border bg-bg-panel px-1.5 text-text-1"
+            className="h-8 max-w-[220px] bt-field bg-bg-panel px-1.5 text-text-1"
             title="Filtrar por conexão"
           >
             <option value="">Todas as conexões</option>

@@ -28,6 +28,188 @@ html,
 body {
   background: rgb(var(--bt-bg-body));
 }
+/* O vão da coluna é a mesma cor da faixa das abas (26,26,26 no tema
+   escuro). Transparente aqui deixa o material nativo aparecer. */
+html.bt-vibrancy .bt-mac-gutter,
+html.bt-vibrancy .bt-side-slot-right,
+html.bt-vibrancy .bt-tabstrip,
+html.bt-vibrancy .bt-main,
+html.bt-vibrancy .bt-main-mac {
+  background: rgb(19, 19, 19) !important;
+  background-color: rgb(19, 19, 19) !important;
+  background-image: none !important;
+}
+/* A coluna e o slot do cartão ficam transparentes para o material nativo
+   aparecer. O inline da página não pode ganhar desta regra. */
+html.bt-vibrancy .bt-side-col,
+html.bt-vibrancy .bt-side-slot-left,
+html.bt-vibrancy .bt-side-slot {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+html.bt-vibrancy .bt-sidebar,
+html.bt-vibrancy .bt-side-card {
+  /* O material nativo fica atrás desta área. Fundo opaco esconde o efeito. */
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+html.bt-vibrancy,
+html.bt-vibrancy body,
+html.bt-vibrancy #root {
+  /* Opaco aqui tampa o cartão inteiro. O vão fica na cor da janela nativa. */
+  background: transparent !important;
+  background-color: transparent !important;
+}
+html.bt-vibrancy .bt-sidebar {
+  border-right-color: transparent;
+  position: relative;
+  z-index: 1;
+}
+html.bt-vibrancy .bt-side-col {
+  position: relative;
+}
+
+/* As guias ficam só sobre a área do terminal. A faixa da sidebar, atrás
+   dos semáforos, tem a mesma altura para os botões ficarem no centro. */
+/* A topbar é mais escura que o terminal no tema escuro e mais clara no
+   claro. Com vibrancy, essa faixa também vira material. */
+html.dark {
+  /* A captura em 2x lê rgb(26,26,26) como 32. O token e a tinta usam
+     19, o valor que o mesmo print devolve em 26,26,26. */
+  --bt-topbar-rgb: 19 19 19;
+  --bt-topbar: rgb(19, 19, 19);
+}
+html:not(.dark) {
+  --bt-topbar-rgb: 236 236 236;
+  --bt-topbar: rgb(var(--bt-topbar-rgb));
+}
+.bt-tabstrip,
+.bt-tabstrip-mac {
+  background: var(--bt-topbar);
+}
+/* A caixa do terminal: o fundo do tema com canto. A margem em volta é a
+   cor da faixa de abas, inclusive com vibrancy. */
+.bt-term-frame {
+  margin: 0 8px 8px 0;
+  border-radius: 12px;
+  corner-shape: superellipse(1.6);
+  overflow: hidden;
+}
+/* Com a pasta da guia aberta o vão da direita é o slot, não a margem. */
+.bt-stage-files .bt-term-frame {
+  margin-right: 0;
+}
+
+/* O vão em volta do terminal e da pasta da guia é a mesma cor da topbar.
+   A pasta é cortada por baixo, na mesma linha em que o terminal acaba. */
+.bt-main {
+  background: var(--bt-topbar);
+}
+.bt-worktree {
+  height: 100%;
+  margin: 0;
+  border-radius: 12px;
+  corner-shape: superellipse(1.6);
+  overflow: hidden;
+  border: 1px solid rgb(var(--bt-border) / 0.9);
+  background: rgb(var(--bt-bg-panel));
+}
+/* A caixa do terminal usa a mesma borda do cartão da sidebar. Sobe 1 px
+   para encostar na aba selecionada; o meio de cima fica reto, as pontas
+   continuam curvas, no mesmo desenho da aba. */
+.bt-term-frame {
+  margin-top: -1px;
+  border: 1px solid rgb(var(--bt-border) / 0.9);
+  border-radius: 8px 8px 12px 12px;
+  corner-shape: superellipse(1.6);
+}
+.bt-tab-active {
+  border: 1px solid rgb(var(--bt-border) / 0.9);
+  border-bottom: 0;
+}
+.bt-sidebar {
+  transition: none;
+}
+/* A barra da esquerda é um cartão na mesma faixa do terminal: 8 px da
+   borda, 8 px do terminal e a base na mesma linha da caixa. */
+/* Mesma faixa da pasta da direita: começa abaixo das abas e acaba 8 px
+   antes do fundo. O vão em volta usa a cor da topbar. */
+.bt-side-slot {
+  height: calc(100% - 8px);
+  padding: 8px 8px 8px 0;
+  background: var(--bt-topbar);
+}
+/* A coluna da esquerda já reservou os 40 px das abas. O cartão ocupa o
+   resto e o padding de 8 px deixa a base na mesma linha do terminal. */
+.bt-side-slot-left {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  bottom: 8px;
+  left: 0;
+  height: auto;
+  margin: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--bt-topbar);
+}
+/* A pasta da guia está na faixa do terminal, abaixo das abas. 100% dessa
+   faixa, com 8 px embaixo, acaba na mesma linha da caixa do terminal. */
+.bt-side-slot-right {
+  height: 100%;
+  max-height: none;
+  margin-top: 0;
+  padding: 0 8px 8px 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--bt-topbar);
+}
+html.bt-vibrancy .bt-side-slot-right {
+  background: rgb(19, 19, 19) !important;
+  background-color: rgb(19, 19, 19) !important;
+}
+.bt-side-card {
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
+  border-radius: 12px;
+  corner-shape: superellipse(1.6);
+  border: 1px solid rgb(var(--bt-border) / 0.9);
+  overflow: hidden;
+}
+html.bt-vibrancy .bt-side-card {
+  border-color: rgb(var(--bt-border) / 0.9);
+}
+
+
+html.bt-vibrancy .bt-tabstrip,
+html.bt-vibrancy .bt-main-mac > .bt-tabstrip {
+  background: rgb(19, 19, 19) !important;
+  background-color: rgb(19, 19, 19) !important;
+  background-image: none !important;
+}
+html.bt-vibrancy .bt-sidebar::before {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+html.bt-vibrancy .bt-mac-gutter,
+html.bt-vibrancy .bt-side-slot-right {
+  background: rgb(19, 19, 19) !important;
+  background-color: rgb(19, 19, 19) !important;
+  background-image: none !important;
+}
+html.bt-vibrancy .bt-main {
+  background: rgb(19, 19, 19) !important;
+  background-color: rgb(19, 19, 19) !important;
+}
+/* A faixa dos semáforos é a cor da topbar. O vidro fica só no cartão,
+   abaixo dessa faixa, então a página pode pintar aqui sem cobrir o material. */
+.bt-mac-gutter {
+  background: var(--bt-topbar);
+}
 
 html,
 body,
@@ -58,6 +240,350 @@ body {
   opacity: 1 !important;
 }
 
+/* Caixas, menus e campos no mesmo raio das abas: 14 px na caixa, 8 px no
+   campo. O WebKit desenha o canto contínuo; o WebView2 fica no arco. */
+.bt-dialog {
+  border-radius: 14px;
+  corner-shape: superellipse(1.6);
+  border: 1px solid rgb(var(--bt-border-strong));
+  background: rgb(var(--bt-bg-card));
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.35);
+}
+.bt-menu {
+  border-radius: 10px;
+  corner-shape: superellipse(1.6);
+  border: 1px solid rgb(var(--bt-border-strong));
+  background: rgb(var(--bt-bg-card));
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.3);
+}
+.bt-field {
+  border-radius: 8px;
+  corner-shape: superellipse(1.6);
+  border: 1px solid rgb(var(--bt-border));
+  background: rgb(var(--bt-bg-term));
+}
+.bt-field:focus,
+.bt-field:focus-within {
+  border-color: rgb(var(--bt-accent));
+  outline: none;
+}
+/* Barra do terminal: um grupo só, botões do mesmo tamanho, o ativo em
+   destaque. O raio é o da caixa. */
+.bt-termbar {
+  display: flex;
+  height: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.06);
+}
+.bt-termbar > span {
+  padding: 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+.bt-termbar > button {
+  display: flex;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  padding: 0 6px;
+  color: rgb(var(--bt-text-2));
+}
+.bt-termbar > button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.12);
+  color: rgb(var(--bt-text-1));
+}
+.bt-termbar > button:disabled {
+  opacity: 0.35;
+}
+.bt-termbar > button.bt-on {
+  background: rgb(255 255 255 / 0.18);
+  color: white;
+}
+
+/* Abas no formato de navegador, com o raio da Apple: 8 pt no controle
+   grande (a aba) e círculo de 22 pt no botão de ícone (o + do Safari).
+   A curva invertida usa o mesmo 8 pt, para as duas curvas ficarem paralelas.
+   corner-shape é o canto contínuo do AppKit; o WebView2 ignora e fica no arco. */
+.bt-tabstrip-mac,
+.bt-tabstrip {
+  --bt-tab-on: var(--bt-bg-term);
+  background: var(--bt-topbar);
+  /* a curva invertida da aba ativa sai 8 px para cada lado; sem isso a
+     lista corta a da esquerda */
+  overflow: visible;
+}
+.bt-tab {
+  position: relative;
+  z-index: 1;
+  height: 26px;
+  align-self: flex-end;
+  min-width: 112px;
+  max-width: 240px;
+  margin: 0 2px 2px;
+  padding: 0 12px;
+  border-radius: 10px;
+  corner-shape: superellipse(1.6);
+  color: rgb(var(--bt-text-2));
+  background: rgb(var(--bt-bg-card));
+}
+/* O texto desses controles é o do vidro nativo. O da página some, senão
+   fica duplicado e por baixo do efeito. Ícones continuam. */
+/* O vidro nativo fica atrás do texto. A cor não segue o tema do app:
+   no vidro escuro o texto claro continua legível. */
+html.bt-vibrancy .bt-sidebar,
+html.bt-vibrancy .bt-tabstrip {
+  color-scheme: dark;
+}
+html.bt-vibrancy .bt-sidebar,
+html.bt-vibrancy .bt-sidebar .text-text-1,
+html.bt-vibrancy .bt-sidebar .text-text-2,
+html.bt-vibrancy .bt-sidebar .text-text-3 {
+  color: rgb(var(--bt-text-1));
+}
+/* A página desenha a lista. O cartão pode ser o material nativo; o vão
+   em volta continua a cor da topbar. */
+html.bt-vibrancy .bt-sidebar,
+html.bt-vibrancy .bt-sidebar > div,
+html.bt-vibrancy .bt-sidebar nav,
+html.bt-vibrancy .bt-sidebar ul,
+html.bt-vibrancy .bt-sidebar li,
+html.bt-vibrancy .bt-sidebar .border-b,
+html.bt-vibrancy .bt-sidebar .overflow-y-auto {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar button.h-7,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-mode {
+  color: rgb(var(--bt-text-1));
+}
+/* Só a busca e os botões de modo escondem o fundo: o texto deles é o
+   da placa nativa. Lista, cabeçalho e chip continuam opacos na página. */
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-search,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-search input,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-mode,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar button.h-7 {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-search svg {
+  color: rgb(var(--bt-text-2));
+}
+/* Cabeçalho de pasta: sem fundo. O chevron, o ícone e o nome ficam na página. */
+html.bt-vibrancy .bt-sidebar .bt-folder,
+html.bt-vibrancy .bt-sidebar .bt-folder:hover,
+html.bt-vibrancy .bt-sidebar .bt-folder.bt-glass-on {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: rgb(var(--bt-text-1));
+}
+/* O chat não esconde o nome e não pinta fundo. O vidro nativo é só o
+   material, atrás; o rótulo continua na página, selecionado ou não. */
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-chat,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-chat:hover,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-chat.bt-glass-on,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-chat.bt-glass-on:hover,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-chat * {
+  background: transparent !important;
+  background-color: transparent !important;
+  opacity: 0;
+}
+/* Chip sem placa: o vidro nativo cortava "Todos". O fundo é o mesmo
+   material, pintado na página, e o nome fica inteiro. */
+html.bt-vibrancy .bt-sidebar .bt-chip {
+  background: rgb(255 255 255 / 0.1);
+  color: rgb(var(--bt-text-1));
+  opacity: 1;
+}
+html.bt-vibrancy .bt-sidebar .bt-chip.bt-glass-on {
+  background: rgb(var(--bt-accent));
+  color: white;
+}
+.bt-tip,
+.bt-tip * {
+  color: transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none;
+}
+html.bt-vibrancy.bt-native-menu .bt-menu {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent;
+  color: white;
+}
+html.bt-vibrancy.bt-native-menu .bt-menu,
+html.bt-vibrancy.bt-native-menu .bt-menu .text-text-1,
+html.bt-vibrancy.bt-native-menu .bt-menu .text-text-2,
+html.bt-vibrancy.bt-native-menu .bt-menu .text-text-3,
+html.bt-vibrancy.bt-native-menu .bt-menu button {
+  color: white !important;
+}
+html.bt-vibrancy.bt-native-menu .bt-menu svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+html.bt-vibrancy.bt-native-menu .bt-menu .text-status-err,
+html.bt-vibrancy.bt-native-menu .bt-menu button.text-status-err {
+  color: #ff8a80 !important;
+}
+.bt-tip {
+  z-index: 10000;
+}
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-tab:not(.bt-tab-active) *,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-tab-tool *,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-mode,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-mode *,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar button.h-7,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar button.h-7 *,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-search,
+html.bt-vibrancy:not(:has(.bt-preview)) .bt-sidebar .bt-search * {
+  opacity: 0;
+}
+/* Sem vibrancy a lista é conteúdo, não vidro: cada chat tem fundo e o
+   selecionado se destaca. Com vibrancy a página continua desenhando a
+   lista; só busca, modo e ícone viram placa nativa. */
+html:not(.bt-vibrancy) .bt-sidebar .bt-chat {
+  background: rgb(var(--bt-bg-hover));
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-chat:hover {
+  background: rgb(var(--bt-bg-card));
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-chat.bt-glass-on,
+html:not(.bt-vibrancy) .bt-sidebar .bt-chat.bt-glass-on:hover {
+  background: rgb(var(--bt-accent));
+  color: white;
+  overflow: hidden;
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-chat.bt-glass-on .text-text-1,
+html:not(.bt-vibrancy) .bt-sidebar .bt-chat.bt-glass-on .text-text-3 {
+  color: white;
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-glass.bt-glass-on,
+html:not(.bt-vibrancy) .bt-sidebar .bt-chip.bt-glass-on,
+html:not(.bt-vibrancy) .bt-sidebar .bt-folder.bt-glass-on {
+  background: rgb(var(--bt-accent));
+  color: white;
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-folder,
+html:not(.bt-vibrancy) .bt-sidebar .bt-chip {
+  background: rgb(var(--bt-bg-hover));
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-folder:hover,
+html:not(.bt-vibrancy) .bt-sidebar .bt-chip:hover {
+  background: rgb(var(--bt-bg-card));
+}
+html:not(.bt-vibrancy) .bt-sidebar button.h-7 {
+  background: rgb(var(--bt-bg-hover));
+}
+html:not(.bt-vibrancy) .bt-sidebar button.h-7:hover {
+  background: rgb(var(--bt-bg-card));
+  color: rgb(var(--bt-text-1));
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-search,
+html:not(.bt-vibrancy) .bt-sidebar .bt-search input {
+  background: rgb(var(--bt-bg-card));
+  color: rgb(var(--bt-text-1));
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-search input::placeholder {
+  color: rgb(var(--bt-text-3));
+}
+html:not(.bt-vibrancy) .bt-sidebar .bt-search svg {
+  color: rgb(var(--bt-text-2));
+}
+.bt-tab:hover:not(.bt-tab-active) {
+  background: rgb(var(--bt-bg-hover));
+  color: rgb(var(--bt-text-1));
+}
+.bt-tab-active {
+  z-index: 2;
+  align-self: flex-end;
+  margin-bottom: -1px;
+  height: 32px;
+  border-radius: 8px 8px 0 0;
+  background: rgb(var(--bt-tab-on));
+  color: rgb(var(--bt-text-1));
+}
+.bt-tab-active::before,
+.bt-tab-active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+
+}
+.bt-tab-active::before {
+  left: -8px;
+  background: radial-gradient(circle at 0 0, transparent 7.5px, rgb(var(--bt-tab-on)) 8px);
+}
+.bt-tab-active::after {
+  right: -8px;
+  background: radial-gradient(circle at 100% 0, transparent 7.5px, rgb(var(--bt-tab-on)) 8px);
+}
+
+.bt-tab-over {
+  background: rgb(var(--bt-accent-soft));
+  color: rgb(var(--bt-text-1));
+  box-shadow: inset 0 0 0 1px rgb(var(--bt-accent));
+}
+.bt-tab-close {
+  display: flex;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  corner-shape: superellipse(1.6);
+  color: rgb(var(--bt-text-3));
+}
+.bt-tab-active .bt-tab-close {
+  color: rgb(var(--bt-text-2));
+}
+.bt-tab:hover .bt-tab-close {
+  color: rgb(var(--bt-text-2));
+}
+.bt-tab-close:hover {
+  background: rgb(var(--bt-text-1) / 0.16);
+  color: rgb(var(--bt-text-1));
+}
+/* Nova aba e ver tudo: quadrado de 28 px com o raio de 8 pt da Apple,
+   na linha das abas. O mais acende no acento; a grade abre a visão de todos. */
+.bt-tab-tool {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  margin: 0 1px 2px;
+  border-radius: 8px;
+  corner-shape: superellipse(1.6);
+  color: rgb(var(--bt-text-2));
+  background: rgb(var(--bt-bg-hover) / 0.45);
+}
+.bt-tab-tool:hover {
+  background: rgb(var(--bt-bg-hover));
+  color: rgb(var(--bt-text-1));
+}
+.bt-tab-tool-plus:hover,
+.bt-tab-tool-over {
+  background: rgb(var(--bt-accent));
+  color: white;
+}
+
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -71,6 +597,54 @@ body {
   background: transparent;
 }
 
+/* Uma superfície para o painel inteiro. Só ela amostra o fundo. */
+.bt-preview {
+  contain: layout;
+  isolation: isolate;
+}
+.bt-preview-code {
+  contain: paint;
+}
+.bt-preview-title,
+.bt-preview-tools {
+  border-color: rgb(var(--bt-border-strong) / 0.58);
+}
+html.bt-vibrancy .bt-preview {
+  --preview-glass-fill: var(--bt-preview-vibrancy-opacity, 0.56);
+  border-color: rgb(var(--bt-text-1) / 0.22);
+  background: rgb(var(--bt-bg-card) / var(--preview-glass-fill));
+  box-shadow: inset 0 1px rgb(255 255 255 / 0.12), 0 14px 36px rgb(0 0 0 / 0.32);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  backdrop-filter: blur(20px) saturate(130%);
+}
+html.bt-vibrancy .bt-preview-title,
+html.bt-vibrancy .bt-preview-tools,
+html.bt-vibrancy .bt-preview-notes {
+  background: rgb(var(--bt-bg-panel) / 0.12);
+}
+html.bt-vibrancy .bt-preview-code {
+  background: rgb(20 21 25 / 0.18);
+}
+html.bt-vibrancy:not(.dark) .bt-preview-code {
+  background: rgb(20 21 25 / 0.65);
+}
+html.bt-vibrancy .bt-preview-interacting {
+  --preview-glass-fill: 0.92;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  html.bt-vibrancy .bt-preview {
+    --preview-glass-fill: 1;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.bt-preview-interacting {
+  transform: translateZ(0);
+  will-change: transform;
+}
 /* Preview de Markdown (FilePreviewPanel): estilo proprio, no tema do app
    (sem plugin de tipografia). Tamanhos em em: seguem a fonte do painel. */
 .md-view {

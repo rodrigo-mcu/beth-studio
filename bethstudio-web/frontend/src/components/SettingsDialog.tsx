@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, Cable, CircleDollarSign, Eraser, Database, FolderOpen, History, Info, KeyRound, LayoutGrid, Mic, Monitor, PanelLeft, Settings, Smartphone, TerminalSquare, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Cable, CircleDollarSign, Eraser, Database, FolderOpen, History, Info, Keyboard, KeyRound, LayoutGrid, Mic, Monitor, PanelLeft, Settings, Smartphone, TerminalSquare, X } from "lucide-react";
 import type { Connection } from "@/lib/connection";
 import type { PaneInfo, SettingsEvent } from "@/lib/types";
 import { setDefault, type Catalog } from "@/lib/appearance";
@@ -8,6 +8,7 @@ import type { NotifyPrefs } from "@/lib/notify";
 import { cn } from "@/lib/utils";
 import { KIND_LABEL, kindOrder, moveItem } from "@/lib/kinds";
 import { GeneralAppearance } from "./GeneralAppearance";
+import { ShortcutsSection } from "./ShortcutsSection";
 import { WslInitSettings } from "./WslInitSettings";
 import { VoiceSettingsDialog } from "./VoiceSettingsDialog";
 import { AIUsageSection } from "./AIUsage";
@@ -24,7 +25,7 @@ import { LaunchersSection } from "./LaunchersSection";
 import { AgentResumeSection } from "./AgentResumeSection";
 import { isRemote } from "@/lib/remote";
 
-export type SettingsSection = "aparencia" | "terminais" | "celular" | "voz" | "provedores" | "ponte" | "retomar" | "temp" | "banco" | "uso" | "barra" | "sobre";
+export type SettingsSection = "aparencia" | "atalhos" | "terminais" | "celular" | "voz" | "provedores" | "ponte" | "retomar" | "temp" | "banco" | "uso" | "barra" | "sobre";
 
 interface SidebarPrefs {
   collapsed: boolean;
@@ -53,6 +54,7 @@ interface Props {
 
 const NAV: { id: SettingsSection; label: string; icon: ReactNode }[] = [
   { id: "aparencia", label: "Aparência", icon: <Monitor size={15} /> },
+  { id: "atalhos", label: "Atalhos", icon: <Keyboard size={15} /> },
   { id: "terminais", label: "Terminais", icon: <TerminalSquare size={15} /> },
   { id: "celular", label: "Celular", icon: <Smartphone size={15} /> },
   { id: "voz", label: "Voz e IA", icon: <Mic size={15} /> },
@@ -83,16 +85,16 @@ export function SettingsDialog(p: Props) {
     embedded: true,
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-[4vh]" onMouseDown={p.onClose}>
+    <div className="bt-modal fixed inset-0 z-[80] flex items-start justify-center bg-black/50 pt-[6vh] backdrop-blur-xl" onMouseDown={p.onClose}>
       <div
-        className="flex h-[88vh] w-[min(1040px,96vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex h-[88vh] w-[min(1040px,96vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && p.onClose()}
       >
         <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
           <Settings size={16} className="text-accent-text" />
           <div className="flex-1 text-[15px] font-semibold text-text-1">Configurações</div>
-          <button className="rounded p-1 text-text-2 hover:bg-bg-hover hover:text-text-1" title="Fechar" onClick={p.onClose}>
+          <button className="rounded-lg p-1 text-text-2 hover:bg-bg-hover hover:text-text-1" title="Fechar" onClick={p.onClose}>
             <X size={16} />
           </button>
         </div>
@@ -102,7 +104,7 @@ export function SettingsDialog(p: Props) {
               <button
                 key={n.id}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-[13px]",
+                  "flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px]",
                   sec === n.id ? "bg-accent-soft font-semibold text-text-1" : "text-text-2 hover:bg-bg-hover hover:text-text-1",
                 )}
                 onClick={() => setSec(n.id)}
@@ -114,6 +116,7 @@ export function SettingsDialog(p: Props) {
           </nav>
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {sec === "aparencia" && <GeneralAppearance {...common} sections={["ui", "terminals"]} />}
+            {sec === "atalhos" && <ShortcutsSection conn={p.conn} saved={p.settings?.shortcuts} onMessage={p.onMessage} />}
             {sec === "terminais" && (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <TerminalsSection conn={p.conn} settings={p.settings} onMessage={p.onMessage} />

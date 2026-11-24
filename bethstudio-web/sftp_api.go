@@ -24,7 +24,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
@@ -35,7 +34,6 @@ import (
 
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/sys/windows"
 )
 
 const (
@@ -344,13 +342,7 @@ func sftpUpload(sc *sftp.Client, dest string, body io.Reader) (int64, error) {
 	return n, nil
 }
 
-// sftpDownloadsDir: pasta Downloads do usuario (BETHSTUDIO_DOWNLOADS nos testes).
-func sftpDownloadsDir() (string, error) {
-	if v := strings.TrimSpace(os.Getenv("BETHSTUDIO_DOWNLOADS")); v != "" {
-		return v, nil
-	}
-	return windows.KnownFolderPath(windows.FOLDERID_Downloads, 0)
-}
+
 
 func sftpDownload(sc *sftp.Client, remote string) (string, error) {
 	st, err := sc.Stat(remote)
@@ -441,7 +433,7 @@ func (s *server) serveSFTPReveal(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "arquivo não encontrado"})
 		return
 	}
-	cmd := exec.Command("explorer.exe", "/select,"+p)
+	cmd := revealDownloaded(p)
 	if err := cmd.Start(); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return

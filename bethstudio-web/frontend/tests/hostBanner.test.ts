@@ -20,6 +20,11 @@ test("host indisponível mostra o motivo e o botão Tentar de novo", () => {
   assert.deepEqual(hostBanner(ev("unavailable")), { text: "O host está indisponível.", retry: true });
 });
 
+test("no macOS o aviso de host não aparece: o supervisor é do Windows", () => {
+  assert.equal(hostBanner(ev("unavailable", "O host caiu 3 vezes em 10 minutos."), "mac"), null);
+  assert.equal(hostBanner(ev("starting", "Não foi possível iniciar o host"), "mac"), null);
+});
+
 test("iniciando normalmente não mostra faixa, falha ao iniciar mostra o motivo", () => {
   assert.equal(hostBanner(ev("starting", "Iniciando o host…")), null);
   assert.deepEqual(hostBanner(ev("starting", "Não foi possível iniciar o host: bethstudio-host.exe não encontrado")), {

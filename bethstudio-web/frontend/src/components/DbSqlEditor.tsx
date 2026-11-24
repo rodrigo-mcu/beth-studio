@@ -237,7 +237,7 @@ export const DbSqlEditor = forwardRef<
   const shared = "m-0 whitespace-pre p-2 font-mono text-[13px] leading-[20px] [tab-size:2]";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded border border-border bg-bg-term">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bt-field bg-bg-term">
       {findOpen && (
         <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-bg-panel px-2 py-1 text-[11px]">
           <input
@@ -252,13 +252,13 @@ export const DbSqlEditor = forwardRef<
               if (e.key === "Escape") setFindOpen(false);
             }}
             placeholder="Localizar"
-            className="h-6 w-36 rounded border border-border bg-bg-term px-1.5 text-text-1 outline-none focus:border-accent"
+            className="h-6 w-36 bt-field bg-bg-term px-1.5 text-text-1 outline-none"
           />
           <input
             value={repl}
             onChange={(e) => setRepl(e.target.value)}
             placeholder="Substituir"
-            className="h-6 w-36 rounded border border-border bg-bg-term px-1.5 text-text-1 outline-none focus:border-accent"
+            className="h-6 w-36 bt-field bg-bg-term px-1.5 text-text-1 outline-none"
           />
           <button className="rounded px-1.5 py-0.5 text-text-2 hover:bg-bg-hover hover:text-text-1" onClick={() => goFind(1)} title="Próxima">
             Próxima
@@ -385,7 +385,7 @@ export const DbSqlEditor = forwardRef<
         />
         {comp && comp.length > 0 && focused && (
           <ul
-            className="absolute z-30 max-h-52 w-72 overflow-auto rounded border border-border-strong bg-bg-card py-1 text-[12px] shadow-lg"
+            className="absolute z-30 max-h-52 w-72 overflow-auto bt-field-strong bg-bg-card py-1 text-[12px] shadow-lg"
             style={compStyle(value, compStart, taRef.current)}
             onMouseDown={(e) => e.preventDefault()}
           >

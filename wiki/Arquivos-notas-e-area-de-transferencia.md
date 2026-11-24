@@ -6,6 +6,10 @@ O Studio tem um painel para ler e editar arquivos de texto e Markdown, um bloco 
 
 ## Como usar
 
+### Pasta da guia
+
+O botão de painel à direita, na barra de abas, abre uma coluna só da guia ativa. Ela mostra a pasta do terminal em foco nessa guia: a árvore de arquivos e, em **Mudanças**, o git dessa pasta (ramo e arquivos alterados, novos e apagados). Abrir numa guia não abre nas outras; voltar para a guia encontra a coluna como você deixou. Um clique num arquivo de texto ou imagem abre o painel de arquivo. A lista se atualiza sozinha a cada poucos segundos, então um arquivo que o agente grava nessa pasta aparece ali.
+
 ### Abrir arquivo
 
 1. Clique em **Abrir arquivo** (na barra lateral ou, com ela recolhida, na barra de abas).

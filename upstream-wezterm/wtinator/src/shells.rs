@@ -22,6 +22,19 @@ pub struct ShellEntry {
 ///   - `wsl.exe -d <DistroName>` (named WSL distros)
 ///   - Git Bash (if installed)
 pub fn default_shells() -> Vec<ShellEntry> {
+    #[cfg(windows)]
+    let mut shells = windows_shells();
+    #[cfg(not(windows))]
+    let mut shells = unix_shells();
+
+    // Patch 0183: user-defined entries from the data dir's shells.json.
+    shells.extend(custom_shells());
+
+    shells
+}
+
+#[cfg(windows)]
+fn windows_shells() -> Vec<ShellEntry> {
     let mut shells = vec![
         ShellEntry {
             id: "cmd",
@@ -69,13 +82,59 @@ pub fn default_shells() -> Vec<ShellEntry> {
             args: vec![path, "--login".to_string()],
         });
     }
-
-    // Patch 0183: user-defined entries from %APPDATA%\bethstudio\shells.json.
-    shells.extend(custom_shells());
-
     shells
 }
 
+/// Shells offered on macOS and Linux: the login shell, then zsh and bash
+/// when they exist and are not already the login shell.
+#[cfg(not(windows))]
+fn unix_shells() -> Vec<ShellEntry> {
+    let mut shells = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let login = std::env::var("SHELL").ok().filter(|p| {
+        !p.is_empty() && std::path::Path::new(p).is_file()
+    });
+    if let Some(path) = login {
+        let label = std::path::Path::new(&path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("shell")
+            .to_string();
+        seen.insert(path.clone());
+        shells.push(ShellEntry {
+            id: "login",
+            label: Box::leak(label.into_boxed_str()),
+            // Interactive, not a login shell. On macOS `zsh -l` sources
+            // /etc/zprofile, which runs path_helper and holds the prompt
+            // for more than a second. ~/.zshrc still runs.
+            args: vec![path],
+        });
+    }
+    for (id, label, path) in [
+        ("zsh", "zsh", "/bin/zsh"),
+        ("bash", "bash", "/bin/bash"),
+    ] {
+        if seen.contains(path) || !std::path::Path::new(path).is_file() {
+            continue;
+        }
+        seen.insert(path.to_string());
+        shells.push(ShellEntry {
+            id,
+            label,
+            args: vec![path.to_string()],
+        });
+    }
+    if shells.is_empty() {
+        shells.push(ShellEntry {
+            id: "sh",
+            label: "sh",
+            args: vec!["/bin/sh".to_string()],
+        });
+    }
+    shells
+}
+
+#[cfg(windows)]
 fn moba_local_bash_path() -> Option<String> {
     let mut candidates = Vec::new();
     if let Ok(user_profile) = std::env::var("USERPROFILE") {

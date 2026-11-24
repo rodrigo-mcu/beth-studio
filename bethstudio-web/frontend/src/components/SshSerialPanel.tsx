@@ -93,7 +93,7 @@ export function SshSerialPanel({
     <div className="flex h-full min-h-0 gap-3">
       {/* lista */}
       <div className="flex w-72 shrink-0 flex-col">
-        <div className="mb-2 flex items-center gap-1 rounded border border-border-strong bg-bg-panel px-2">
+        <div className="mb-2 flex items-center gap-1 bt-field-strong bg-bg-panel px-2">
           <Search size={13} className="text-text-3" />
           <input className="w-full bg-transparent py-1 text-[13px] text-text-1 outline-none" placeholder="Buscar perfil…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
@@ -145,7 +145,7 @@ export function SshSerialPanel({
       </div>
 
       {/* detalhe / editor */}
-      <div className="min-w-0 flex-1 rounded border border-border bg-bg-panel/40 p-3">
+      <div className="min-w-0 flex-1 bt-field bg-bg-panel/40 p-3">
         {edit ? (
           <div className="flex h-full flex-col">
             <div className="mb-3 flex items-center">

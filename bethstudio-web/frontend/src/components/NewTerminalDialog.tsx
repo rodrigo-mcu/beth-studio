@@ -19,7 +19,7 @@ export const SHELL_ICON: Record<ShellKind, typeof Terminal> = {
   other: Terminal,
 };
 
-const KIND_LABEL: Record<ShellKind, string> = {
+export const KIND_LABEL: Record<ShellKind, string> = {
   powershell: "PowerShell",
   cmd: "Prompt de comando",
   wsl: "WSL / Linux",
@@ -109,7 +109,7 @@ export function NewTerminalDialog({ conn, shells, focused, readOnly, onEmptyTab,
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-[8vh]" onMouseDown={onClose}>
       <div
-        className="flex max-h-[84vh] w-[min(560px,94vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex max-h-[84vh] w-[min(560px,94vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
@@ -199,11 +199,11 @@ export function NewTerminalDialog({ conn, shells, focused, readOnly, onEmptyTab,
                           setCwdTouched(true);
                         }}
                         placeholder={shellKind(shell.id) === "wsl" ? "/home/… ou /mnt/c/…" : "C:\\…"}
-                        className="h-8 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 font-mono text-[12px] text-text-1 outline-none focus:border-accent"
+                        className="h-8 min-w-0 flex-1 bt-field bg-bg-term px-2 font-mono text-[12px] text-text-1 outline-none"
                       />
                       <button
                         type="button"
-                        className="flex h-8 shrink-0 items-center gap-1 rounded border border-border bg-bg-panel px-2.5 text-[12px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
+                        className="flex h-8 shrink-0 items-center gap-1 bt-field bg-bg-panel px-2.5 text-[12px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
                         title="Escolher a pasta"
                         disabled={picking}
                         onClick={browse}
@@ -237,7 +237,7 @@ export function NewTerminalDialog({ conn, shells, focused, readOnly, onEmptyTab,
                         setName(e.target.value);
                         setNameTouched(true);
                       }}
-                      className="h-8 w-full rounded border border-border bg-bg-term px-2 text-text-1 outline-none focus:border-accent"
+                      className="h-8 w-full bt-field bg-bg-term px-2 text-text-1 outline-none"
                     />
                   </label>
                 </>

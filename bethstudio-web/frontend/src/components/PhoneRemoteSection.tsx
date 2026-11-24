@@ -97,7 +97,7 @@ export function PhoneRemoteSection({ conn, onMessage }: { conn: Connection; onMe
         rows={3}
         spellCheck={false}
         placeholder="bethstudio://link?domain=..."
-        className="mt-1 w-full max-w-xl resize-none rounded border border-border bg-bg-term px-2.5 py-2 font-mono text-[13px] text-text-1 outline-none focus:border-accent"
+        className="mt-1 w-full max-w-xl resize-none bt-field bg-bg-term px-2.5 py-2 font-mono text-[13px] text-text-1 outline-none"
         onChange={(e) => setCode(e.target.value)}
       />
       <label className="mt-3 block text-[12px] text-text-3" htmlFor="phone-password">
@@ -108,7 +108,7 @@ export function PhoneRemoteSection({ conn, onMessage }: { conn: Connection; onMe
         type="password"
         value={password}
         autoComplete="new-password"
-        className="mt-1 w-full max-w-xl rounded border border-border bg-bg-term px-2.5 py-2 text-[14px] text-text-1 outline-none focus:border-accent"
+        className="mt-1 w-full max-w-xl bt-field bg-bg-term px-2.5 py-2 text-[14px] text-text-1 outline-none"
         onChange={(e) => setPassword(e.target.value)}
       />
       <button

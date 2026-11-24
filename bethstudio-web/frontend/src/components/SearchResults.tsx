@@ -12,38 +12,44 @@ export interface ResultActions {
 }
 
 /** Campo de busca + opcao de procurar no conteudo das telas. */
-export function SearchInput({ s, autoFocus, compact }: { s: SearchState; autoFocus?: boolean; compact?: boolean }) {
+export function SearchInput({ s, autoFocus, compact, inputId }: { s: SearchState; autoFocus?: boolean; compact?: boolean; inputId?: string }) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (autoFocus) ref.current?.focus();
   }, [autoFocus]);
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 rounded border border-border bg-bg-term px-2 focus-within:border-accent">
-        <Search size={14} className="shrink-0 text-text-3" />
+      <div className="bt-search flex items-center gap-1.5 rounded-2xl bg-bg-hover/70 px-3 focus-within:ring-1 focus-within:ring-white/30">
+        <Search size={14} className="shrink-0 text-white/80" />
         <input
+          id={inputId}
           ref={ref}
           value={s.query}
           onChange={(e) => s.setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Escape" && s.setQuery("")}
-          placeholder="Buscar terminal…"
-          className={cn("min-w-0 flex-1 bg-transparent text-text-1 outline-none placeholder:text-text-3", compact ? "h-7" : "h-9 text-[14px]")}
+          placeholder="Buscar terminal ou pasta"
+          className={cn("min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-white/55", compact ? "h-8" : "h-9 text-[14px]")}
         />
         {s.loadingContent && <Loader2 size={13} className="shrink-0 animate-spin text-text-3" />}
         {s.query && (
-          <button className="shrink-0 text-text-3 hover:text-text-1" title="Limpar busca" onClick={() => s.setQuery("")}>
-            <X size={14} />
+          <button className="shrink-0 rounded-full p-0.5 text-text-3 hover:bg-bg-hover hover:text-text-1" title="Limpar busca" onClick={() => s.setQuery("")}>
+            <X size={13} />
           </button>
         )}
       </div>
-      <label
-        className="flex cursor-pointer select-none items-center gap-1.5 px-0.5 text-[11px] text-text-2 hover:text-text-1"
-        title="Lê o texto visível da tela de cada terminal (sob demanda, a cada 3 s enquanto a busca está aberta)"
-      >
-        <input type="checkbox" className="accent-[#2B6CB0]" checked={s.withContent} onChange={(e) => s.setWithContent(e.target.checked)} />
-        Procurar também no conteúdo da tela
-        {s.contentInfo && <span className="ml-auto truncate text-text-3">{s.contentInfo}</span>}
-      </label>
+      {s.query.trim() && (
+        <button
+          className={cn(
+            "rounded-lg px-2 py-1 text-left text-[11px]",
+            s.withContent ? "bg-accent-soft text-text-1" : "text-text-2 hover:bg-bg-hover hover:text-text-1",
+          )}
+          title="Lê o texto visível da tela de cada terminal (sob demanda, a cada 3 s enquanto a busca está aberta)"
+          onClick={() => s.setWithContent(!s.withContent)}
+        >
+          {s.withContent ? "Buscando também no texto da tela" : "Buscar também no texto da tela"}
+          {s.contentInfo && <span className="ml-1 text-text-3">{s.contentInfo}</span>}
+        </button>
+      )}
     </div>
   );
 }

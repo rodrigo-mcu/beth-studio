@@ -58,6 +58,13 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "origem inválida", http.StatusForbidden)
 		return
 	}
+	// A página e os arquivos dela (JS, CSS, ícone) não levam o token. O
+	// WebKit do macOS não manda o cookie de volta nesses pedidos, e a tela
+	// ficava vazia. O token continua obrigatório na API e no WebSocket.
+	if isPageAsset(r.URL.Path) {
+		s.serveAsset(w, r)
+		return
+	}
 	fromQuery, ok := s.tokenOK(r)
 	if !ok {
 		http.Error(w, "token ausente ou inválido", http.StatusUnauthorized)
@@ -183,6 +190,8 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		servePickFolder(w, r)
 	case "/api/local-fs/list", "/api/local-fs/mkdir", "/api/local-fs/remove", "/api/local-fs/reveal":
 		s.serveLocalFS(w, r)
+	case "/api/worktree":
+		serveWorktree(w, r)
 	case "/api/pane/scrollback", "/api/pane/scrollback/save":
 		s.servePaneScrollback(w, r)
 	case "/api/pane/screenshot/save":
@@ -233,7 +242,7 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 	case "/api/content":
 		s.serveContent(w, r)
 	case "/api/themes", "/api/fonts", "/api/settings", "/api/settings/default", "/api/settings/pane",
-		"/api/favorites/theme", "/api/favorites/font", "/api/layout", "/api/settings/ui", "/api/settings/clear-panes", "/api/settings/sidebar", "/api/settings/pane-names":
+		"/api/favorites/theme", "/api/favorites/font", "/api/layout", "/api/settings/ui", "/api/settings/clear-panes", "/api/settings/sidebar", "/api/settings/pane-names", "/api/settings/search-shortcut":
 		s.serveAPI(w, r)
 	default:
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -246,6 +255,34 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		}
 		s.static.ServeHTTP(w, r)
 	}
+}
+
+// isPageAsset: o HTML, o JS, o CSS e o ícone. Nada disso fala com o host.
+func isPageAsset(path string) bool {
+	switch path {
+	case "/", "/index.html", "/favicon.ico":
+		return true
+	}
+	if strings.HasPrefix(path, "/assets/") {
+		return true
+	}
+	// As logos da página. O WebKit não manda o cookie nesses pedidos.
+	return strings.HasPrefix(path, "/bethstudio-") && strings.HasSuffix(path, ".png")
+}
+
+func (s *server) serveAsset(w http.ResponseWriter, r *http.Request) {
+	h := w.Header()
+	h.Set("Cache-Control", "no-store")
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("Content-Security-Policy", fmt.Sprintf(
+		"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "+
+			"font-src 'self' data:; connect-src 'self' ws://127.0.0.1:%d ws://localhost:%d; frame-ancestors 'none'",
+		s.port, s.port))
+	if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+		s.serveIndex(w)
+		return
+	}
+	s.static.ServeHTTP(w, r)
 }
 
 func (s *server) originOK(o string) bool {

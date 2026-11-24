@@ -334,7 +334,7 @@ export function DbTableView({
             <div className="ml-auto flex items-center gap-2 text-[12px] text-text-2">
               <DbExportButtons base={title} table={target.table} driver={driver} columns={data?.columns ?? null} rows={rows} onNotice={onNotice} />
               <select
-                className="rounded border border-border bg-bg-panel px-1 py-0.5 text-[12px] text-text-1"
+                className="bt-field bg-bg-panel px-1 py-0.5 text-[12px] text-text-1"
                 value={pageSize}
                 title="Linhas por página"
                 onChange={(e) => {
@@ -376,14 +376,14 @@ export function DbTableView({
             const upd = (p: Partial<DbFilter>) => setDraft((d) => d.map((x, k) => (k === i ? { ...x, ...p } : x)));
             return (
               <div key={i} className="flex items-center gap-1.5">
-                <select className="rounded border border-border bg-bg-card px-1 py-1 text-text-1" value={f.column} onChange={(e) => upd({ column: e.target.value })}>
+                <select className="bt-field bg-bg-card px-1 py-1 text-text-1" value={f.column} onChange={(e) => upd({ column: e.target.value })}>
                   {cols.map((c) => (
                     <option key={c.name} value={c.name}>
                       {c.name}
                     </option>
                   ))}
                 </select>
-                <select className="rounded border border-border bg-bg-card px-1 py-1 text-text-1" value={f.op} onChange={(e) => upd({ op: e.target.value as DbFilter["op"] })}>
+                <select className="bt-field bg-bg-card px-1 py-1 text-text-1" value={f.op} onChange={(e) => upd({ op: e.target.value as DbFilter["op"] })}>
                   {FILTER_OPS.map((o) => (
                     <option key={o.op} value={o.op}>
                       {o.label}
@@ -392,7 +392,7 @@ export function DbTableView({
                 </select>
                 {op?.needsValue && (
                   <input
-                    className="w-64 rounded border border-border bg-bg-card px-2 py-1 font-mono text-text-1 outline-none focus:border-accent"
+                    className="w-64 bt-field bg-bg-card px-2 py-1 font-mono text-text-1 outline-none"
                     value={f.value}
                     style={{ userSelect: "text" }}
                     onChange={(e) => upd({ value: e.target.value })}

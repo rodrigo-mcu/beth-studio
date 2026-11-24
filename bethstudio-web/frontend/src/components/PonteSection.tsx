@@ -293,7 +293,7 @@ export function PonteSection({ conn, onMessage }: { conn: Connection; onMessage:
                 onMessage={onMessage}
               >
                 {view.distros.length > 1 && (
-                  <select className="h-7 rounded border border-border bg-bg-term px-2 text-[12px] text-text-1" value={distro} onChange={(e) => setDistro(e.target.value)}>
+                  <select className="h-7 bt-field bg-bg-term px-2 text-[12px] text-text-1" value={distro} onChange={(e) => setDistro(e.target.value)}>
                     {view.distros.map((d) => (
                       <option key={d} value={d}>
                         {d}
@@ -325,7 +325,7 @@ export function PonteSection({ conn, onMessage }: { conn: Connection; onMessage:
             {view.distros.length > 0 && (
               <ListenCard title="Claude no WSL" state={st["hook:wsl"] ?? null} busy={busyHook === "wsl"} result={resHook.wsl} onRun={(a) => runHook("wsl", a)}>
                 {view.distros.length > 1 && (
-                  <select className="h-7 rounded border border-border bg-bg-term px-2 text-[12px] text-text-1" value={distro} onChange={(e) => setDistro(e.target.value)}>
+                  <select className="h-7 bt-field bg-bg-term px-2 text-[12px] text-text-1" value={distro} onChange={(e) => setDistro(e.target.value)}>
                     {view.distros.map((d) => (
                       <option key={d} value={d}>
                         {d}
@@ -361,7 +361,7 @@ export function PonteSection({ conn, onMessage }: { conn: Connection; onMessage:
             ) : (
               <ul className="space-y-1">
                 {view.agents.map((a) => (
-                  <li key={a.id} className="flex items-center gap-2 rounded border border-border bg-bg-panel px-2.5 py-1 text-[12px]">
+                  <li key={a.id} className="flex items-center gap-2 bt-field bg-bg-panel px-2.5 py-1 text-[12px]">
                     <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase", a.side === "wsl" ? "bg-status-ok/15 text-status-ok" : "bg-accent-soft text-accent-text")}>
                       {a.side}
                     </span>

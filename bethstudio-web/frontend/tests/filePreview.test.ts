@@ -112,3 +112,8 @@ test("editor: painel tem modo editar, salvar no próprio arquivo e conflito", ()
   const app = fs.readFileSync("src/App.tsx", "utf8");
   assert.match(app, /\/api\/local-file\/open-dialog/);
 });
+
+test("editor automático normaliza o rascunho e preserva CRLF ao salvar", () => {
+  const src = fs.readFileSync("src/components/FilePreviewPanel.tsx", "utf8");
+  assert.match(src, /if \(!markdown && !truncated\) \{\s*setEol\(detectEol\(raw\)\);\s*setDraft\(editableText\(raw\)\);/);
+});

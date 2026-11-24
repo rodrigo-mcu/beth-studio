@@ -464,7 +464,7 @@ export function DbResultGrid({
 
       {menu && (
         <div
-          className="fixed z-[90] min-w-[220px] rounded-md border border-border-strong bg-bg-card py-1 text-[12px] text-text-1 shadow-2xl"
+          className="fixed z-[90] min-w-[220px] bt-menu py-1 text-[12px] text-text-1"
           style={{ left: Math.min(menu.x, window.innerWidth - 240), top: Math.min(menu.y, window.innerHeight - 230) }}
           onMouseDown={(e) => e.stopPropagation()}
         >
@@ -537,7 +537,7 @@ export function DbResultGrid({
       {viewer && (
         <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/50" onMouseDown={() => setViewer(null)}>
           <div
-            className="flex max-h-[80vh] w-[min(760px,92vw)] flex-col rounded-lg border border-border bg-bg-card shadow-2xl"
+            className="flex max-h-[80vh] w-[min(760px,92vw)] flex-col bt-dialog"
             onMouseDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.key === "Escape" && setViewer(null)}
           >

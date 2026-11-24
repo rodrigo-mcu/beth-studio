@@ -66,6 +66,19 @@ export function startupStage(i: StageInput): Stage {
   return { key: "done", done: true, text: "", slow: false, action: null };
 }
 
+/** A lista e a organização não seguram a abertura para sempre. Sem isto a
+ *  tela cobre a janela inteira e o arraste não chega na faixa de abas. */
+export const LIST_MAX_MS = 12_000;
+
+export function startupBlocked(i: StageInput): boolean {
+  const stage = startupStage(i);
+  if (stage.done) return false;
+  if (stage.key === "list" || stage.key === "layout" || stage.key === "connect") {
+    return i.stageMs < LIST_MAX_MS;
+  }
+  return true;
+}
+
 export interface StartupItem {
   id: number;
   label: string;

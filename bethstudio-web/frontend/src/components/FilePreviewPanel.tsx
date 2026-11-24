@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as RKeyboardEvent, type MouseEvent as RMouseEvent, type PointerEvent as RPointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as RKeyboardEvent, type MouseEvent as RMouseEvent, type PointerEvent as RPointerEvent } from "react";
 import {
   AArrowDown,
   AArrowUp,
@@ -38,6 +38,10 @@ import { localFileKind, localFileURL } from "@/lib/localFile";
 import { download, isRemote, sinceLabel } from "@/lib/remote";
 import { loadScratch, saveScratch, UNTITLED_PATH } from "@/lib/folderBrowser";
 import { notesApi, noteWhen, type NoteInfo } from "@/lib/notes";
+import { FileKindIcon } from "./FileKindIcon";
+import { GlassMenu, MenuItem } from "./GlassMenu";
+import { CodeEditor, CodeView } from "./CodeEditor";
+import { langOf } from "@/lib/codeHighlight";
 import { clampRect, defaultRect, dockRect, isRect, moveRect, resizeRect, type Edge, type Rect } from "@/lib/panelRect";
 
 const REMOTE = isRemote();
@@ -107,7 +111,8 @@ function initialRect(): Rect {
  * editor padrão sozinho (só os botões explícitos). Fica por cima de tudo
  * mas não bloqueia o terminal atrás; redimensionável (bordas esquerda e de
  * baixo) e maximizável. Esc fecha; Ctrl+A seleciona só o conteúdo do
- * painel. Texto (.md/.txt/.log mostrado inteiro) tem o modo "Editar": Ctrl+S
+ * painel. Texto (código, .md, .txt, .log, mostrado inteiro) abre no editor
+ * com realce. Ctrl+S
  * grava no próprio arquivo; se ele mudou no disco depois de aberto, pergunta
  * antes de sobrescrever; fechar/abrir outro com alteração pendente pergunta.
  * Fora do modo editar, Ctrl+S salva uma cópia.
@@ -131,6 +136,8 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
   const [maximized, setMaximized] = useState(false);
   const [rect, setRect] = useState<Rect>(initialRect);
   const rectRef = useRef(rect);
+  const cancelGesture = useRef<(() => void) | null>(null);
+  useEffect(() => () => cancelGesture.current?.(), []);
   rectRef.current = rect;
   const [hasSel, setHasSel] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -145,6 +152,7 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
   const kind = localFileKind(path);
   const name = untitled ? "Sem título" : fileBaseName(path);
   const markdown = untitled || /\.(md|markdown)$/i.test(path);
+  const codeLang = untitled || markdown ? "plain" : langOf(name);
   const isText = doc.phase === "text";
 
   // Notas: o "Sem título" é salvo sozinho em <dados>\notes (um .md com timestamp
@@ -300,14 +308,20 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
         const { blob, headers } = await conn.getBlob(localFileURL(path));
         const raw = await blob.text();
         if (!alive) return;
+        const truncated = headers.get("X-Truncated") === "1";
         setDoc({
           phase: "text",
           raw,
-          truncated: headers.get("X-Truncated") === "1",
+          truncated,
           size: Number(headers.get("X-File-Size") || raw.length),
           markdown,
           mtime: headers.get("X-File-Mtime") ?? "",
         });
+        // código abre já no editor; markdown continua na vista formatada
+        if (!markdown && !truncated) {
+          setEol(detectEol(raw));
+          setDraft(editableText(raw));
+        }
       } catch (e) {
         if (alive) setDoc({ phase: "error", message: e instanceof Error ? e.message : String(e) });
       }
@@ -546,29 +560,78 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
   };
 
   // --- mover (arrastar o título) e redimensionar (qualquer borda ou canto) -----
-  const dragRect = (apply: (start: Rect, dx: number, dy: number) => Rect) => (e: RPointerEvent) => {
-    if (maximized || e.button !== 0) return;
+  const dragRect = (apply: (start: Rect, dx: number, dy: number) => Rect, translate = false) => (e: RPointerEvent) => {
+    const panel = rootRef.current;
+    if (!panel || maximized || e.button !== 0 || cancelGesture.current) return;
     e.preventDefault();
-    const sx = e.clientX;
-    const sy = e.clientY;
+    const { clientX: sx, clientY: sy, pointerId } = e;
     const start = rectRef.current;
-    const el = e.currentTarget as HTMLElement;
-    el.setPointerCapture(e.pointerId);
-    const move = (ev: PointerEvent) => setRect(apply(start, ev.clientX - sx, ev.clientY - sy));
-    const up = () => {
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", up);
-      el.removeEventListener("pointercancel", up);
-      savePref(PREF_RECT, rectRef.current);
+    const el = e.currentTarget;
+    let next = start;
+    let frame = 0;
+    let deltaX = 0;
+    let deltaY = 0;
+    el.setPointerCapture(pointerId);
+    const move = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      deltaX = ev.clientX - sx;
+      deltaY = ev.clientY - sy;
+      if (!panel.classList.contains("bt-preview-interacting")) {
+        if (Math.abs(deltaX) + Math.abs(deltaY) < 3) return;
+        panel.classList.add("bt-preview-interacting");
+      }
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        next = apply(start, deltaX, deltaY);
+        if (translate) {
+          panel.style.transform = `translate3d(${next.x - start.x}px, ${next.y - start.y}px, 0)`;
+        } else {
+          Object.assign(panel.style, {
+            left: `${next.x}px`, top: `${next.y}px`, width: `${next.w}px`, height: `${next.h}px`,
+          });
+        }
+      });
     };
+    const cleanup = () => {
+      if (frame) cancelAnimationFrame(frame);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", finish);
+      el.removeEventListener("pointercancel", finish);
+      el.removeEventListener("lostpointercapture", finish);
+      panel.style.removeProperty("transform");
+      if (!translate) {
+        Object.assign(panel.style, {
+          left: `${start.x}px`, top: `${start.y}px`, width: `${start.w}px`, height: `${start.h}px`,
+        });
+      }
+      panel.classList.remove("bt-preview-interacting");
+      cancelGesture.current = null;
+    };
+    const finish = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      if (!panel.classList.contains("bt-preview-interacting")) {
+        cleanup();
+        return;
+      }
+      if (ev.type === "pointerup") next = apply(start, ev.clientX - sx, ev.clientY - sy);
+      else next = apply(start, deltaX, deltaY);
+      const finalRect = clampRect(next, window.innerWidth, window.innerHeight);
+      cleanup();
+      rectRef.current = finalRect;
+      setRect(finalRect);
+      savePref(PREF_RECT, finalRect);
+    };
+    cancelGesture.current = cleanup;
     el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", up);
+    el.addEventListener("pointerup", finish);
+    el.addEventListener("pointercancel", finish);
+    el.addEventListener("lostpointercapture", finish);
   };
   const startResize = (edge: Edge) => dragRect((start, dx, dy) => resizeRect(start, edge, dx, dy, window.innerWidth, window.innerHeight));
   const startMove = (e: RPointerEvent) => {
     if ((e.target as Element).closest("button")) return; // botões do título não arrastam
-    dragRect((start, dx, dy) => moveRect(start, dx, dy, window.innerWidth, window.innerHeight))(e);
+    dragRect((start, dx, dy) => moveRect(start, dx, dy, window.innerWidth, window.innerHeight), true)(e);
   };
   const dock = (side: "left" | "right") => {
     setMaximized(false);
@@ -593,21 +656,22 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
         tabIndex={-1}
         onKeyDown={onKeyDown}
         className={cn(
-          "pointer-events-auto absolute flex flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl outline-none",
+          "pointer-events-auto absolute flex flex-col overflow-hidden bt-dialog bt-preview outline-none",
           maximized && "inset-4",
         )}
         style={maximized ? undefined : { left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
       >
         {/* título + janela */}
         <div
-          className={cn("flex h-9 shrink-0 select-none items-center gap-2 border-b border-border px-3", !maximized && "cursor-move")}
+          className={cn("bt-preview-title flex h-10 shrink-0 select-none items-center gap-2 border-b border-border px-3", !maximized && "cursor-grab touch-none active:cursor-grabbing")}
           onPointerDown={startMove}
           onDoubleClick={(e) => !(e.target as Element).closest("button") && setMaximized((m) => !m)}
           title={maximized ? undefined : "Arraste para mover · duplo clique maximiza"}
         >
-          <div className="min-w-0 flex-1 truncate text-[13px] font-semibold text-text-1" title={path}>
-            {dirty && !untitled && <span className="mr-1 text-accent" title="Alterações não salvas">●</span>}
-            {name}
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[13px] font-semibold text-text-1" title={path}>
+            {!untitled && <FileKindIcon name={name} size={18} />}
+            {dirty && !untitled && <span className="text-accent" title="Alterações não salvas">●</span>}
+            <span className="truncate">{name}</span>
             {draft !== null && !untitled && <span className="ml-2 text-[11px] font-normal text-text-3">editando</span>}
             {untitled && (
               <span className="ml-2 text-[11px] font-normal text-text-3">
@@ -643,7 +707,7 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
 
         <div className="flex min-h-0 flex-1">
         {notesOpen && (
-          <div className="flex w-[190px] shrink-0 flex-col border-r border-border bg-bg-panel">
+          <div className="bt-preview-notes flex w-[190px] shrink-0 flex-col border-r border-border bg-bg-panel">
             <div className="flex h-8 shrink-0 items-center gap-1 border-b border-border px-2">
               <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-text-1">Notas</span>
               <IconButton label="Nova nota em branco" onClick={() => void newNote()}>
@@ -695,7 +759,7 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
         )}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* ações */}
-        <div className="flex shrink-0 flex-wrap items-center gap-0.5 border-b border-border px-2 py-1">
+        <div className="bt-preview-tools flex shrink-0 flex-wrap items-center gap-1 border-b border-border px-2.5 py-1.5">
           {kind !== "image" && (
             <>
               <IconButton
@@ -923,7 +987,17 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
                   setMenu({ x: e.clientX, y: e.clientY, editing: e.target instanceof HTMLTextAreaElement });
                 }}
               >
-                {showSource && draft !== null ? (
+                {showSource && draft !== null && !markdown ? (
+                  <CodeEditor
+                    value={draft}
+                    onChange={setDraft}
+                    lang={codeLang}
+                    wrap={wrap}
+                    fontPx={font}
+                    label={`Editar ${name}`}
+                    textareaRef={textareaRef}
+                  />
+                ) : showSource && draft !== null ? (
                   <textarea
                     ref={textareaRef}
                     value={draft}
@@ -934,6 +1008,8 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
                     style={textStyle}
                     aria-label={`Editar ${name}`}
                   />
+                ) : showSource && !markdown ? (
+                  <CodeView value={doc.raw} lang={codeLang} wrap={wrap} fontPx={font} />
                 ) : showSource ? (
                   <pre
                     className={cn("font-mono text-text-1", wrap ? "whitespace-pre-wrap break-words" : "whitespace-pre")}
@@ -979,24 +1055,20 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
       </div>
 
       {menu && (
-        <div
-          className="pointer-events-auto fixed z-[60] min-w-[200px] rounded-md border border-border-strong bg-bg-card py-1 shadow-xl"
-          style={{ left: Math.min(menu.x, window.innerWidth - 210), top: Math.min(menu.y, window.innerHeight - 170) }}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
+        <GlassMenu x={menu.x} y={menu.y} onClose={() => setMenu(null)} className="min-w-[200px]">
           {menu.editing ? (
             <>
-              <MenuItem icon={<Scissors size={14} />} label="Recortar" onClick={() => (setMenu(null), void editCut())} />
-              <MenuItem icon={<Copy size={14} />} label="Copiar" onClick={() => (setMenu(null), void editCopy())} />
-              <MenuItem icon={<ClipboardPaste size={14} />} label="Colar" onClick={() => (setMenu(null), void editPaste())} />
+              <MenuItem icon={<Scissors size={14} />} symbol="scissors" label="Recortar" onClick={() => (setMenu(null), void editCut())} />
+              <MenuItem icon={<Copy size={14} />} symbol="copy" label="Copiar" onClick={() => (setMenu(null), void editCopy())} />
+              <MenuItem icon={<ClipboardPaste size={14} />} symbol="paste" label="Colar" onClick={() => (setMenu(null), void editPaste())} />
             </>
           ) : (
-            <MenuItem icon={<Copy size={14} />} label={hasSel ? "Copiar seleção" : "Copiar tudo"} onClick={() => (setMenu(null), void (hasSel ? copySelection() : copyAll()))} />
+            <MenuItem icon={<Copy size={14} />} symbol="copy" label={hasSel ? "Copiar seleção" : "Copiar tudo"} onClick={() => (setMenu(null), void (hasSel ? copySelection() : copyAll()))} />
           )}
-          <MenuItem icon={<TextSelect size={14} />} label="Selecionar tudo" onClick={() => (setMenu(null), selectAll())} />
-          <MenuItem icon={<Link size={14} />} label="Copiar caminho" onClick={() => (setMenu(null), void copyPath())} />
-          <MenuItem icon={<FileOutput size={14} />} label="Salvar uma cópia como…" onClick={() => (setMenu(null), void saveAs())} />
-        </div>
+          <MenuItem icon={<TextSelect size={14} />} symbol="text-select" label="Selecionar tudo" onClick={() => (setMenu(null), selectAll())} />
+          <MenuItem icon={<Link size={14} />} symbol="link" label="Copiar caminho" onClick={() => (setMenu(null), void copyPath())} />
+          <MenuItem icon={<FileOutput size={14} />} symbol="save" label="Salvar uma cópia como…" onClick={() => (setMenu(null), void saveAs())} />
+        </GlassMenu>
       )}
     </div>
   );
@@ -1006,11 +1078,4 @@ function Sep() {
   return <span className="mx-1 h-4 w-px bg-border-strong" />;
 }
 
-function MenuItem({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-text-1 hover:bg-bg-hover" onClick={onClick}>
-      {icon}
-      {label}
-    </button>
-  );
-}
+

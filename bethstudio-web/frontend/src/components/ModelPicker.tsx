@@ -71,7 +71,7 @@ export function ModelPicker(p: Props) {
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/50 pt-[4vh]" onMouseDown={p.onClose}>
       <div
-        className="flex h-[88vh] w-[min(1000px,96vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex h-[88vh] w-[min(1000px,96vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && p.onClose()}
       >
@@ -82,7 +82,7 @@ export function ModelPicker(p: Props) {
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
-          <div className="flex h-8 min-w-[220px] flex-1 items-center gap-2 rounded border border-border bg-bg-term px-2">
+          <div className="flex h-8 min-w-[220px] flex-1 items-center gap-2 bt-field bg-bg-term px-2">
             <Search size={14} className="text-text-3" />
             <input
               autoFocus
@@ -95,7 +95,7 @@ export function ModelPicker(p: Props) {
               className="min-w-0 flex-1 bg-transparent text-text-1 outline-none"
             />
           </div>
-          <div className="flex overflow-hidden rounded border border-border">
+          <div className="flex overflow-hidden bt-field">
             {funcs.map((f) => (
               <button
                 key={f.id}

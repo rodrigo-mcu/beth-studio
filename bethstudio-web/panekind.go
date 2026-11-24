@@ -32,6 +32,8 @@ type PaneKind struct {
 	Host   string `json:"ssh_host,omitempty"`    // so' ssh: rotulo user@host:port (ou host solto)
 	HostID string `json:"ssh_host_id,omitempty"` // so' ssh salvo: id hex do ssh-hosts.json
 	Agent  bool   `json:"agent"`
+	// grok | cursor | claude | codex, quando o pane é uma dessas ferramentas.
+	Tool   string `json:"tool,omitempty"`
 	Source string `json:"kind_source"` // gui | web | heuristic
 }
 
@@ -254,7 +256,65 @@ func classifyPane(id int, title, cwd string, gui map[int][]string, spawned map[i
 		}
 	}
 	k.Agent = agentTitle(title)
+	k.Tool = detectTool(title, argvOf(id, gui, spawned))
 	return k
+}
+
+// detectTool: Grok, Cursor, Claude ou Codex, pelo comando gravado ou pelo
+// título que a ferramenta põe na janela. Vazio quando não é nenhuma. O nome
+// tem que ser a palavra inteira: "grok" vale, "agrok" não.
+func detectTool(title string, argv []string) string {
+	blob := strings.ToLower(title)
+	for _, a := range argv {
+		blob += " " + strings.ToLower(a)
+	}
+	has := func(word string) bool {
+		return strings.Contains(blob, word) && toolWord(blob, word)
+	}
+	switch {
+	case has("gemini"):
+		return "gemini"
+	case has("grok"):
+		return "grok"
+	case has("codex"):
+		return "codex"
+	case has("claude"):
+		return "claude"
+	case has("cursor"):
+		return "cursor"
+	}
+	return ""
+}
+
+func toolWord(blob, word string) bool {
+	i := strings.Index(blob, word)
+	for i >= 0 {
+		before := i == 0 || !isWordRune(rune(blob[i-1]))
+		after := i+len(word) >= len(blob) || !isWordRune(rune(blob[i+len(word)]))
+		if before && after {
+			return true
+		}
+		next := strings.Index(blob[i+len(word):], word)
+		if next < 0 {
+			return false
+		}
+		i += len(word) + next
+	}
+	return false
+}
+
+func isWordRune(r rune) bool {
+	return (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9')
+}
+
+func argvOf(id int, gui map[int][]string, spawned map[int]string) []string {
+	if argv, ok := gui[id]; ok {
+		return argv
+	}
+	if sh, ok := spawned[id]; ok && sh != "" {
+		return []string{sh}
+	}
+	return nil
 }
 
 // enrichList acrescenta kind/kind_label/distro/agent a cada pane da lista.
@@ -273,6 +333,9 @@ func enrichList(list []byte, gui map[int][]string, spawned map[int]string) []byt
 		cwd, _ := p["cwd"].(string)
 		k := classifyPane(int(id), title, cwd, gui, spawned)
 		p["kind"], p["kind_label"], p["agent"], p["kind_source"] = k.Kind, k.Label, k.Agent, k.Source
+		if k.Tool != "" {
+			p["tool"] = k.Tool
+		}
 		if k.Distro != "" {
 			p["distro"] = k.Distro
 		}

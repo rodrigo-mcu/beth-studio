@@ -345,7 +345,7 @@ export function DbQueryPanel({
       {/* barra */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[12px]">
         <select
-          className="max-w-[240px] rounded border border-border bg-bg-panel px-1.5 py-1 text-text-1"
+          className="max-w-[240px] bt-field bg-bg-panel px-1.5 py-1 text-text-1"
           value={connId}
           title="Conexão"
           disabled={!!running}
@@ -366,7 +366,7 @@ export function DbQueryPanel({
         </select>
         {info?.has_database_level && pinnedDb && (
           <span
-            className="max-w-[200px] truncate rounded border border-border bg-bg-panel px-1.5 py-1 font-mono text-text-1"
+            className="max-w-[200px] truncate bt-field bg-bg-panel px-1.5 py-1 font-mono text-text-1"
             title="Banco inicial desta conexão"
           >
             {pinnedDb}
@@ -374,7 +374,7 @@ export function DbQueryPanel({
         )}
         {listAllDbs && databases.length > 0 && (
           <select
-            className="max-w-[200px] rounded border border-border bg-bg-panel px-1.5 py-1 text-text-1"
+            className="max-w-[200px] bt-field bg-bg-panel px-1.5 py-1 text-text-1"
             value={database}
             title="Banco"
             disabled={!!running}
@@ -480,7 +480,7 @@ export function DbQueryPanel({
         <div className="ml-auto flex items-center gap-2 text-text-2">
           <label className="flex items-center gap-1" title="Linhas trazidas por vez em cada resultado (o resto vem em “Carregar mais”)">
             linhas
-            <select className="rounded border border-border bg-bg-panel px-1 py-0.5 text-text-1" value={maxRows} onChange={(e) => setMaxRows(Number(e.target.value))}>
+            <select className="bt-field bg-bg-panel px-1 py-0.5 text-text-1" value={maxRows} onChange={(e) => setMaxRows(Number(e.target.value))}>
               {ROW_CHOICES.filter((n) => n <= catalog.limits.max_rows).map((n) => (
                 <option key={n} value={n}>
                   {formatCount(n)}
@@ -490,7 +490,7 @@ export function DbQueryPanel({
           </label>
           <label className="flex items-center gap-1" title="Tempo máximo; passou disso a consulta é cancelada no banco">
             tempo máx.
-            <select className="rounded border border-border bg-bg-panel px-1 py-0.5 text-text-1" value={timeoutS} onChange={(e) => setTimeoutS(Number(e.target.value))}>
+            <select className="bt-field bg-bg-panel px-1 py-0.5 text-text-1" value={timeoutS} onChange={(e) => setTimeoutS(Number(e.target.value))}>
               {TIMEOUT_CHOICES.filter((n) => n <= catalog.limits.max_timeout_s).map((n) => (
                 <option key={n} value={n}>
                   {n < 60 ? `${n} s` : `${n / 60} min`}
@@ -513,12 +513,12 @@ export function DbQueryPanel({
               }}
               ref={saveNameRef}
               placeholder="Nome para salvar esta consulta"
-              className="h-7 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 text-text-1 outline-none focus:border-accent"
+              className="h-7 min-w-0 flex-1 bt-field bg-bg-term px-2 text-text-1 outline-none"
             />
             <select
               value={saveAll ? "all" : "one"}
               onChange={(e) => setSaveAll(e.target.value === "all")}
-              className="h-7 rounded border border-border bg-bg-term px-1 text-text-1"
+              className="h-7 bt-field bg-bg-term px-1 text-text-1"
               title="Onde a consulta salva aparece"
             >
               <option value="all">Todas as conexões</option>
@@ -565,7 +565,7 @@ export function DbQueryPanel({
       )}
 
       {askOn && c && (
-        <div className="mx-2 mb-1 shrink-0 rounded border border-border bg-bg-panel px-2 py-1.5 text-[12px]">
+        <div className="mx-2 mb-1 shrink-0 bt-field bg-bg-panel px-2 py-1.5 text-[12px]">
           <div className="flex items-center gap-1">
             <input
               value={question}
@@ -577,7 +577,7 @@ export function DbQueryPanel({
                 }
               }}
               placeholder="Pergunta sobre este banco ou este SQL"
-              className="h-7 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 text-text-1 outline-none focus:border-accent"
+              className="h-7 min-w-0 flex-1 bt-field bg-bg-term px-2 text-text-1 outline-none"
             />
             <button className="rounded bg-bg-hover px-2 py-1 text-text-1 hover:bg-border disabled:opacity-40" disabled={assistBusy || !question.trim()} onClick={() => assist("ask")}>
               {assistBusy ? "…" : "Perguntar"}

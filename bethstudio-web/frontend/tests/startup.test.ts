@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { markScreen, screenedPanes, startupItems, startupLogLine, startupStage } from "../src/lib/startup.ts";
+import { LIST_MAX_MS, markScreen, screenedPanes, startupBlocked, startupItems, startupLogLine, startupStage } from "../src/lib/startup.ts";
 
 const base = { socket: "open" as const, paneCount: 42, layoutReady: true, activePanes: [1, 2, 3], screened: new Set<number>(), stageMs: 0 };
 
@@ -15,6 +15,13 @@ test("etapas na ordem: conectar, lista, organização, telas, pronto", () => {
   assert.match(s.text, /1 de 3/);
   assert.equal(startupStage({ ...base, screened: new Set([1, 2, 3]) }).done, true);
   assert.equal(startupStage({ ...base, activePanes: [] }).done, true); // aba vazia
+});
+
+test("a lista não segura a abertura para sempre", () => {
+  const waiting = { ...base, paneCount: null as number | null, stageMs: 0 };
+  assert.equal(startupBlocked(waiting), true);
+  assert.equal(startupBlocked({ ...waiting, stageMs: LIST_MAX_MS }), false);
+  assert.equal(startupStage({ ...waiting, stageMs: LIST_MAX_MS }).key, "list");
 });
 
 test("demora: aviso depois de 10 s; telas desistem de esperar aos 15 s", () => {

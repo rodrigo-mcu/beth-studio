@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
-  Folder,
-  FolderOpen,
+
   HardDrive,
   RefreshCw,
   Server,
@@ -23,6 +22,7 @@ import { makeHttpClient } from "@/lib/httpClient";
 import { formatSize } from "@/lib/sshUtil";
 import { cn } from "@/lib/utils";
 import { SshAskSecret, SshBtn, SshKeyFlow, type SshKeyIssue } from "./SshCommon";
+import { FileKindIcon } from "./FileKindIcon";
 import { TopResizeEdges, WindowControls } from "./WindowControls";
 import { isFrameless, startDrag, useWindowState, winCommand } from "@/lib/windowFrame";
 
@@ -124,7 +124,7 @@ function PaneList({
             onClick={() => onSelect(e.name)}
             onDoubleClick={() => onOpen(e)}
           >
-            {e.is_dir ? <FolderOpen size={14} className="shrink-0 text-accent" /> : <Folder size={14} className="shrink-0 opacity-40" />}
+            <FileKindIcon name={e.name} isDir={e.is_dir} open={e.is_dir} size={18} />
             <span className="min-w-0 flex-1 truncate">{e.name}</span>
             <span className="shrink-0 tabular-nums text-text-3">{e.is_dir ? "" : formatSize(e.size)}</span>
           </button>

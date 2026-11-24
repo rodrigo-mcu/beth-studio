@@ -1,12 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent as RDragEvent, type ReactNode } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
   LayoutGrid,
   MoreHorizontal,
+  PanelRight,
   RotateCcw,
-  PanelLeftClose,
-  PanelLeftOpen,
   Pencil,
   Plus,
   Power,
@@ -14,13 +11,16 @@ import {
   Type,
   X,
 } from "lucide-react";
-import { isFrameless, startDrag, useWindowState, winCommand } from "@/lib/windowFrame";
+import { dragMacWindow, isFrameless, isMacTitlebar, startDrag, useWindowState, winCommand, zoomMacWindow } from "@/lib/windowFrame";
 import { ICON_W, labelWidth, planBarActions } from "@/lib/tabBarLayout";
 import { WindowControls } from "./WindowControls";
+import { GlassMenu, MenuItem, MenuRule } from "./GlassMenu";
 import { buildStudioActions, type StudioAction } from "./StudioActions";
 import type { Layout, WebTab } from "@/lib/layout";
-import { countLeaves } from "@/lib/layout";
+import { countLeaves, leaves } from "@/lib/layout";
 import { PANE_MIME, TAB_MIME, draggedPane, endDrag, startTabDrag, useDrag } from "@/lib/dnd";
+import { ToolIcon } from "./ToolIcon";
+import { paneIdentity } from "@/lib/paneIdentity";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -38,6 +38,9 @@ interface Props {
   onSearch: () => void;
   /** popup com todos os terminais em grade (prints, nome, caminho), inclusive os sem aba */
   onGrid?: () => void;
+  /** pasta da guia ativa (arquivos e git), à direita */
+  filesOpen?: boolean;
+  onToggleFiles?: () => void;
   /** Gerenciador de tarefas (memoria, CPU, GPU, disco, terminais, WSL) */
   onTaskManager?: () => void;
   /** painel Banco de dados */
@@ -55,9 +58,15 @@ interface Props {
   /** "+ Nova aba" abre o popup "Novo terminal" (null = so' cria aba vazia) */
   onNewTab?: () => void;
   sidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
+  onToggleSidebar?: () => void;
   /** nome exibido (o do usuario ou o do terminal) */
   tabTitle: (t: WebTab, index: number) => string;
+  /** Ferramenta e texto da tela do pane, os mesmos campos da lista. */
+  tabIdentity?: (t: WebTab) => { name: string; tool?: string };
+  /** Pede o texto da tela, para achar a ferramenta quando o título não diz. */
+  paneScreen?: (pane: number) => string | undefined;
+  /** Grava a ferramenta na aba, para o ícone continuar quando a aba fecha. */
+  onTool?: (tabId: string, tool: string) => void;
   /** LED da conexao (fica a' direita) */
   status?: ReactNode;
   /** microfone para o terminal em foco (ausente = sem botao) */
@@ -85,6 +94,8 @@ export function TabBar({
   onDropPane,
   onSearch,
   onGrid,
+  filesOpen,
+  onToggleFiles,
   onTaskManager,
   onDatabase,
   onTools,
@@ -97,6 +108,9 @@ export function TabBar({
   onToggleSidebar,
   alerts,
   tabTitle,
+  tabIdentity,
+  paneScreen,
+  onTool,
   status,
   onSpeak,
   hideActions,
@@ -108,6 +122,8 @@ export function TabBar({
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const win = useWindowState();
   const frameless = isFrameless();
+  // macOS: os botões do sistema ocupam a esquerda da faixa de abas.
+  const macBar = isMacTitlebar();
   // largura da barra -> quais acoes mostram texto / vao para o "…"
   const barRef = useRef<HTMLDivElement>(null);
   const [barW, setBarW] = useState(1400);
@@ -147,16 +163,9 @@ export function TabBar({
   const acts: StudioAction[] = hideActions ? [] : buildStudioActions({ onSearch, onGeneral, onTaskManager, onDatabase, onTools, onOpenFile, onNewFile, onSpeak });
   // o que fica fixo: icone, recolher, minimo das abas, "Nova aba", area de arraste, LED, botoes da janela
   const newTabLabel = false; // acoes sempre so' icone (produto para devs)
-  const reserved = (frameless ? 30 + 138 : 0) + 32 + 170 + (newTabLabel ? labelWidth("Nova aba") : ICON_W) + (onGrid ? 34 : 0) + 56 + 20 + 16;
+  const reserved = (frameless ? 30 + 138 : 0) + 32 + 190 + (newTabLabel ? labelWidth("Nova aba") : ICON_W) + (onGrid ? 34 : 0) + 56 + 20 + 16;
   const plan = planBarActions(barW - reserved, acts);
   const actById = new Map(acts.map((a) => [a.id, a]));
-
-  useEffect(() => {
-    if (!menu) return;
-    const close = () => setMenu(null);
-    window.addEventListener("mousedown", close);
-    return () => window.removeEventListener("mousedown", close);
-  }, [menu]);
 
   const accepts = (e: RDragEvent) => e.dataTransfer.types.includes(PANE_MIME) || e.dataTransfer.types.includes(TAB_MIME);
 
@@ -165,35 +174,38 @@ export function TabBar({
       ref={barRef}
       data-term-drop="tabs"
       className={cn(
-        "flex h-7 shrink-0 items-end gap-0.5 overflow-hidden border-b border-border px-2 pt-1 select-none",
+        "bt-tabstrip flex shrink-0 overflow-hidden px-1.5 select-none",
+        macBar ? "h-10 items-center" : "h-10 items-end pt-1",
+        macBar && sidebarCollapsed && "pl-8",
+        macBar && "bt-tabstrip-mac",
         frameless && !win.active && "opacity-75",
       )}
-      onMouseDown={startDrag}
+      onMouseDown={(e) => {
+        if (macBar) {
+          if (e.button !== 0 || e.detail > 1) return;
+          const t = e.target as Element | null;
+          if (t && t !== e.currentTarget && t.closest("button,input,[data-no-drag],[draggable=true],.bt-tab,.bt-tab-tool")) return;
+          e.preventDefault();
+          dragMacWindow();
+          return;
+        }
+        startDrag(e);
+      }}
       onDoubleClick={(e) => {
-        if (!frameless || (e.target as Element).closest("button,input,[draggable=true],[data-no-drag]")) return;
+        if ((e.target as Element).closest("button,input,[draggable=true],[data-no-drag]")) return;
+        if (macBar) {
+          zoomMacWindow();
+          return;
+        }
+        if (!frameless) return;
         winCommand("toggle");
       }}
     >
-      <button
-        className="mb-0.5 mr-1 flex h-5 w-7 shrink-0 items-center justify-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1"
-        title={sidebarCollapsed ? "Mostrar a barra lateral" : "Recolher a barra lateral"}
-        onClick={onToggleSidebar}
-      >
-        {sidebarCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
-      </button>
-      {scrollL && (
-        <button
-          className="mb-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-text-2 hover:bg-bg-hover"
-          title="Abas à esquerda"
-          onClick={() => tabsRef.current?.scrollBy({ left: -240, behavior: "smooth" })}
-        >
-          <ChevronLeft size={14} />
-        </button>
-      )}
+      <div className="relative flex min-w-0 shrink self-stretch">
       <div
         ref={tabsRef}
         onScroll={checkScroll}
-        className="flex min-w-[120px] shrink items-end gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex items-end overflow-x-auto pl-2 pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {layout.tabs.map((t, i) => {
           const active = t.id === layout.active;
@@ -229,62 +241,61 @@ export function TabBar({
               }}
               data-tab-active={active ? "" : undefined}
               className={cn(
-                "group flex h-6 min-w-[96px] max-w-[220px] shrink-0 cursor-pointer items-center gap-1.5 rounded-t-md border border-b-0 px-3 text-[12.5px]",
-                active ? "border-border bg-bg-panel text-text-1" : "border-transparent text-text-2 hover:bg-bg-hover hover:text-text-1",
-                over === t.id && "border-accent bg-accent-soft text-text-1",
-                drag?.kind === "pane" && !active && "border-dashed border-border-strong",
+                "bt-tab group flex shrink-0 cursor-pointer items-center gap-1.5 text-[12.5px]",
+                active && "bt-tab-active",
+                over === t.id && "bt-tab-over",
               )}
-              title={`${tabTitle(t, i)}${t.name ? "" : " (nome do terminal)"} — ${n} terminal(is)\nClique para abrir, duplo clique para renomear, arraste para reordenar`}
+              title={`${tabTitle(t, i)} — ${n} terminal(is)`}
             >
-              {editing === t.id ? (
-                <RenameBox
-                  initial={t.name || tabTitle(t, i)}
-                  onDone={(v) => {
-                    setEditing(null);
-                    if (v === null) return;
-                    // sem mudar nada numa aba sem nome: continua acompanhando o terminal
-                    if (!t.name && v.trim() === tabTitle(t, i)) return;
-                    onRename(t.id, v);
-                  }}
-                />
-              ) : (
-                <span className={cn("truncate", !t.name && "italic")}>{tabTitle(t, i)}</span>
-              )}
+              {(() => {
+                const id = tabIdentity?.(t);
+                const stored = leaves(t.root).map((l) => l.leaf.tool).find((s) => s);
+                if (id?.tool && id.tool !== stored) onTool?.(t.id, id.tool);
+                const name = id?.tool === "codex" ? "Codex" : id?.name || tabTitle(t, i);
+                return (
+                  <>
+                    {id?.tool ? <ToolIcon tool={id.tool} size={14} /> : null}
+                    {editing === t.id ? (
+                      <RenameBox
+                        initial={t.name || name}
+                        onDone={(v) => {
+                          setEditing(null);
+                          if (v === null) return;
+                          if (!t.name && v.trim() === name) return;
+                          onRename(t.id, v);
+                        }}
+                      />
+                    ) : (
+                      <span className={cn("truncate", !t.name && "italic")}>{name}</span>
+                    )}
+                  </>
+                );
+              })()}
               {waitingTabs.has(t.id) && (
                 <span className="relative inline-flex h-2 w-2 shrink-0" title="Um agente nesta aba aguarda sua resposta">
                   <span className="absolute inset-0 animate-ping rounded-full bg-status-warn opacity-60" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-status-warn" />
                 </span>
               )}
-              <span className="shrink-0 rounded bg-bg-hover px-1 text-[10px] text-text-3">{n}</span>
+              <span className="shrink-0 text-[10px] text-text-3">{n}</span>
+              <span className="min-w-2 flex-1" />
               <button
-                className={cn("shrink-0 rounded p-0.5 hover:bg-bg-card", active ? "text-text-2" : "text-transparent group-hover:text-text-2")}
+                className="bt-tab-close"
                 title={n > 0 ? "Fechar aba — os terminais continuam rodando em Não organizados" : "Fechar aba"}
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose(t.id);
                 }}
               >
-                <X size={12} />
+                <X size={14} />
               </button>
             </div>
           );
         })}
       </div>
-      {scrollR && (
-        <button
-          className="mb-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-text-2 hover:bg-bg-hover"
-          title="Abas à direita"
-          onClick={() => tabsRef.current?.scrollBy({ left: 240, behavior: "smooth" })}
-        >
-          <ChevronRight size={14} />
-        </button>
-      )}
+      </div>
       <button
-        className={cn(
-          "ml-0.5 flex h-6 w-8 shrink-0 items-center justify-center self-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1",
-          over === "+" && "bg-accent-soft text-text-1 ring-1 ring-accent",
-        )}
+        className={cn("bt-tab-tool bt-tab-tool-plus", over === "+" && "bt-tab-tool-over")}
         aria-label="Nova aba"
         title={
           onNewTab
@@ -306,17 +317,28 @@ export function TabBar({
           endDrag();
         }}
       >
-        <Plus size={16} />
+        <Plus size={16} strokeWidth={2.25} />
         {newTabLabel && "Nova aba"}
       </button>
       {onGrid && (
         <button
-          className="flex h-6 w-8 shrink-0 items-center justify-center self-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1"
-          aria-label="Todos os terminais"
-          title="Todos os terminais: grade com print, nome e pasta de cada um, com busca (inclui os de abas fechadas)"
+          className="bt-tab-tool"
+          aria-label="Ver todas as abas"
+          title="Ver todas as abas: grade com print, nome e pasta de cada terminal, com busca (inclui os de abas fechadas)"
           onClick={onGrid}
         >
-          <LayoutGrid size={15} />
+          <LayoutGrid size={15} strokeWidth={2} />
+        </button>
+      )}
+      {onToggleFiles && (
+        <button
+          className={cn("bt-tab-tool", filesOpen && "text-text-1")}
+          aria-label="Pasta desta guia"
+          aria-pressed={filesOpen}
+          title="Pasta desta guia: arquivos e mudanças de git do terminal em foco. Cada guia abre e fecha a sua."
+          onClick={onToggleFiles}
+        >
+          <PanelRight size={15} strokeWidth={2} />
         </button>
       )}
       <div
@@ -353,28 +375,24 @@ export function TabBar({
             <MoreHorizontal size={15} />
           </button>
           {moreOpen && (
-            <div
-              className="fixed z-50 mt-1 min-w-[190px] rounded-md border border-border-strong bg-bg-card py-1 shadow-xl"
-              style={{ right: frameless ? 150 : 8 }}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
+            <GlassMenu x={window.innerWidth - (frameless ? 340 : 200)} y={36} onClose={() => setMoreOpen(false)} className="min-w-[190px]">
               {plan.overflow.map((id) => {
                 const a = actById.get(id)!;
                 return (
-                  <button
+                  <MenuItem
                     key={id}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover"
+                    icon={a.icon}
+                    symbol={a.symbol}
+                    label={a.label}
                     title={a.title}
                     onClick={() => {
                       setMoreOpen(false);
                       a.onClick();
                     }}
-                  >
-                    {a.icon} {a.label}
-                  </button>
+                  />
                 );
               })}
-            </div>
+            </GlassMenu>
           )}
         </div>
       )}
@@ -383,84 +401,56 @@ export function TabBar({
       </span>
       <WindowControls state={win} />
       {menu && (
-        <div
-          className="fixed z-50 min-w-[170px] rounded-md border border-border-strong bg-bg-card py-1 shadow-xl"
-          style={{ left: menu.x, top: menu.y }}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <button
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover"
-            onClick={() => {
-              setEditing(menu.id);
-              setMenu(null);
-            }}
-          >
-            <Pencil size={14} /> Renomear…
-          </button>
+        <GlassMenu x={menu.x} y={menu.y} onClose={() => setMenu(null)} className="min-w-[190px]">
+          <MenuItem icon={<Pencil size={14} />} symbol="pencil" label="Renomear…" onClick={() => { setEditing(menu.id); setMenu(null); }} />
           {layout.tabs.find((tt) => tt.id === menu.id)?.name && (
-            <button
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover"
-              onClick={() => {
-                onRename(menu.id, "");
-                setMenu(null);
-              }}
+            <MenuItem
+              icon={<Type size={14} />}
+              symbol="type"
+              label="Usar o nome do terminal"
               title="A aba passa a mostrar o nome do terminal (e acompanha quando ele muda)"
-            >
-              <Type size={14} /> Usar o nome do terminal
-            </button>
+              onClick={() => { onRename(menu.id, ""); setMenu(null); }}
+            />
           )}
-          <button
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover"
-            onClick={() => {
-              onClose(menu.id);
-              setMenu(null);
-            }}
-          >
-            <X size={14} /> Fechar aba
-          </button>
+          <MenuItem icon={<X size={14} />} symbol="x" label="Fechar aba" onClick={() => { onClose(menu.id); setMenu(null); }} />
           {(() => {
             const term = tabTerminal?.(menu.id);
             if (!term) return null;
             return (
               <>
-                <div className="my-1 border-t border-border" />
-                <button
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover disabled:cursor-default disabled:text-text-3 disabled:hover:bg-transparent"
+                <MenuRule />
+                <MenuItem
+                  icon={<RotateCw size={14} />}
+                  symbol="rotate-cw"
+                  label="Reiniciar este terminal…"
                   disabled={!term.onRestart}
                   title={term.restartBlocked ?? "Abre um shell novo do mesmo tipo e na mesma pasta, no mesmo lugar, e encerra este (pede confirmação)"}
-                  onClick={() => {
-                    setMenu(null);
-                    term.onRestart?.();
-                  }}
-                >
-                  <RotateCw size={14} /> Reiniciar este terminal…
-                </button>
-                <button
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-status-err hover:bg-status-err/10"
+                  onClick={() => { setMenu(null); term.onRestart?.(); }}
+                />
+                <MenuItem
+                  icon={<Power size={14} />}
+                  symbol="power"
+                  label="Matar terminal…"
+                  danger
                   title="Encerra o terminal em foco e tudo o que ele abriu, e o tira da aba (pede confirmação)"
-                  onClick={() => {
-                    setMenu(null);
-                    term.onKill();
-                  }}
-                >
-                  <Power size={14} /> Matar terminal…
-                </button>
+                  onClick={() => { setMenu(null); term.onKill(); }}
+                />
               </>
             );
           })()}
           {onReopenClosed && (
-            <button
-              className="flex w-full items-center gap-2 border-t border-border px-3 py-1.5 text-left text-text-1 hover:bg-bg-hover"
-              onClick={() => {
-                onReopenClosed();
-                setMenu(null);
-              }}
-              title="Volta a última aba fechada, com o nome e a divisão"
-            >
-              <RotateCcw size={14} /> Reabrir aba fechada
-            </button>
+            <>
+              <MenuRule />
+              <MenuItem
+                icon={<RotateCcw size={14} />}
+                symbol="rotate-ccw"
+                label="Reabrir aba fechada"
+                title="Volta a última aba fechada, com o nome e a divisão"
+                onClick={() => { onReopenClosed(); setMenu(null); }}
+              />
+            </>
           )}
-        </div>
+        </GlassMenu>
       )}
     </div>
   );

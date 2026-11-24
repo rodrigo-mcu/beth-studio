@@ -74,7 +74,7 @@ export function withTextExt(name: string, ext: string): string {
 
 /** Arquivo que o painel de arquivo abre (texto ou imagem). */
 export function openableFile(name: string): boolean {
-  return /\.(md|markdown|txt|log|png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
+  return /\.(md|markdown|txt|log|crs|mika|mui|rs|go|py|jsx?|tsx?|mjs|cjs|c|h|hh|cc|cpp|hpp|java|kt|kts|cs|swift|rb|php|lua|zig|hs|exs?|scala|pl|pm|r|dart|vue|svelte|sh|bash|zsh|ps1|jsonl?|ya?ml|toml|xml|html?|css|scss|sql|ini|cfg|conf|env|csv|mod|sum|lock|gitignore|png|jpe?g|gif|webp|bmp|svg)$/i.test(name) || /^app\.bundle$/i.test(name);
 }
 
 /** Caminho do texto "Sem título" do painel de arquivo (ainda não está no disco). */

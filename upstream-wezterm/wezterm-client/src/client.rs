@@ -1433,6 +1433,14 @@ impl Client {
 fn bethstudio_host_socket() -> Option<std::path::PathBuf> {
     let dir = if cfg!(windows) {
         std::env::var_os("APPDATA").map(std::path::PathBuf::from)?
+    } else if cfg!(target_os = "macos") {
+        // Same folder as wtinator::session::session_dir and the Studio
+        // (patch 0205): ~/Library/Application Support/bethstudio.
+        std::env::var_os("HOME").map(|h| {
+            std::path::PathBuf::from(h)
+                .join("Library")
+                .join("Application Support")
+        })?
     } else {
         std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config"))?
     };

@@ -21,8 +21,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/sys/windows"
 )
 
 const ponteMCPFlag = "ponte-mcp"
@@ -102,25 +100,7 @@ func ponteRawSessionID(explicit string) string {
 	return sid
 }
 
-// ponteDataDir: como dataDir, mas sem depender do ambiente — chamado pelo
-// WSL via interop, o processo não recebe APPDATA nem USERPROFILE.
-func ponteDataDir() string {
-	if os.Getenv("APPDATA") != "" || os.Getenv("BETHSTUDIO_DATA_DIR") != "" {
-		return dataDir()
-	}
-	base, err := windows.KnownFolderPath(windows.FOLDERID_RoamingAppData, 0)
-	if err != nil || base == "" {
-		return dataDir()
-	}
-	d := filepath.Join(base, "bethstudio")
-	if _, err := os.Stat(d); err != nil {
-		legacy := filepath.Join(base, "wezterminator")
-		if st, err := os.Stat(legacy); err == nil && st.IsDir() {
-			return legacy
-		}
-	}
-	return d
-}
+
 
 // ponteDetectSide: --lado; senão WSL_DISTRO_NAME; senão pasta UNC do WSL.
 func ponteDetectSide(flagSide, cwd string) string {

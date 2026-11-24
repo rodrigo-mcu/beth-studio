@@ -176,7 +176,7 @@ export function UpdateSection({ conn, readOnly }: { conn: Connection; readOnly: 
                 </button>
               </div>
               {confirmLaunch && (
-                <div className="space-y-2 rounded border border-border bg-bg-card p-2">
+                <div className="space-y-2 bt-field bg-bg-card p-2">
                   <p className="text-[12px] text-text-1">
                     Abrir o instalador agora? O Beth Studio não marca Encerrar tudo. Se você marcar essa opção no instalador, o host encerra e os terminais abertos serão perdidos.
                   </p>

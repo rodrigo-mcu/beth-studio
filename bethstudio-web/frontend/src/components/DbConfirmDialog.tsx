@@ -41,7 +41,7 @@ export function DbConfirmDialog({
         aria-modal="true"
         aria-label="Confirmar alteração no banco"
         className={cn(
-          "flex max-h-[80vh] w-[min(760px,94vw)] flex-col rounded-lg border bg-bg-card p-4 text-[12px] text-text-1 shadow-2xl",
+          "bt-dialog flex max-h-[80vh] w-[min(760px,94vw)] flex-col p-4 text-[12px] text-text-1",
           danger ? "border-status-err/60" : "border-status-warn/60",
         )}
         onMouseDown={(e) => e.stopPropagation()}
@@ -90,7 +90,7 @@ export function DbConfirmDialog({
             <input
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
-              className="rounded border border-border bg-bg-panel px-2 py-1.5 font-mono text-text-1 outline-none focus:border-accent"
+              className="bt-field bg-bg-panel px-2 py-1.5 font-mono text-text-1 outline-none"
               style={{ userSelect: "text" }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && ok) onConfirm();

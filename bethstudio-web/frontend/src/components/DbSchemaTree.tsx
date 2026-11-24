@@ -422,7 +422,7 @@ export function DbSchemaTree({
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filtrar…"
-          className="min-w-0 flex-1 rounded border border-border bg-bg-panel px-2 py-1 text-[12px] text-text-1 outline-none focus:border-accent"
+          className="min-w-0 flex-1 bt-field bg-bg-panel px-2 py-1 text-[12px] text-text-1 outline-none"
           style={{ userSelect: "text" }}
         />
         <button className="flex shrink-0 items-center gap-1 rounded bg-accent px-2 py-1 text-[12px] font-semibold text-white hover:bg-accent-hover" onClick={onNew} title="Nova conexão">

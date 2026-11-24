@@ -57,7 +57,7 @@ export function DbAssistSettings({ conn, onProviders }: { conn: Connection; onPr
         <label className="flex items-center gap-2 text-[13px] text-text-2">
           <span className="w-24 shrink-0">Provedor</span>
           <select
-            className="h-8 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 text-text-1"
+            className="h-8 min-w-0 flex-1 bt-field bg-bg-term px-2 text-text-1"
             value={v.db_assist_provider || ""}
             onChange={(e) => {
               const id = e.target.value;
@@ -82,7 +82,7 @@ export function DbAssistSettings({ conn, onProviders }: { conn: Connection; onPr
             value={v.db_assist_model || ""}
             onChange={(e) => patch({ db_assist_model: e.target.value })}
             placeholder={models[0] || "id do modelo"}
-            className="h-8 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 font-mono text-[12px] text-text-1 outline-none focus:border-accent"
+            className="h-8 min-w-0 flex-1 bt-field bg-bg-term px-2 font-mono text-[12px] text-text-1 outline-none"
           />
           <datalist id="db-assist-models">
             {models.map((m) => (

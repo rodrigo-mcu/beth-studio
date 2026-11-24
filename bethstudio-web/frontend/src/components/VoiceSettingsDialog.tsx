@@ -93,9 +93,9 @@ export function VoiceSettingsDialog({
   if (embedded) return body;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 pt-[4vh]" onMouseDown={onClose}>
+    <div className="bt-modal fixed inset-0 z-[80] flex items-start justify-center bg-black/50 pt-[6vh] backdrop-blur-xl" onMouseDown={onClose}>
       <div
-        className="flex max-h-[92vh] w-[min(860px,95vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex max-h-[92vh] w-[min(860px,95vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
@@ -204,7 +204,7 @@ function VoiceTab({
         </Row>
         <Row label="Idioma">
           <select
-            className="h-8 rounded border border-border bg-bg-term px-2 text-text-1"
+            className="h-8 bt-field bg-bg-term px-2 text-text-1"
             value={v.language}
             onChange={(e) => patch({ language: e.target.value })}
           >
@@ -231,7 +231,7 @@ function VoiceTab({
             </Row>
             <Row label="Prazo">
               <select
-                className="h-8 rounded border border-border bg-bg-term px-2 text-text-1"
+                className="h-8 bt-field bg-bg-term px-2 text-text-1"
                 value={v.correct_timeout_sec || 30}
                 onChange={(e) => patch({ correct_timeout_sec: Number(e.target.value) })}
               >
@@ -268,7 +268,7 @@ function VoiceTab({
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onBlur={() => prompt !== v.prompt && patch({ prompt })}
-            className="h-36 w-full resize-y rounded border border-border bg-bg-term p-2 text-[12px] text-text-1 outline-none focus:border-accent"
+            className="h-36 w-full resize-y bt-field bg-bg-term p-2 text-[12px] text-text-1 outline-none"
           />
         </div>
         <div className="mt-2">
@@ -292,7 +292,7 @@ function VoiceTab({
             onChange={(e) => setVocab(e.target.value)}
             onBlur={() => vocab !== v.vocabulary && patch({ vocabulary: vocab })}
             placeholder={"BethStudio\nWezTerm\nWSL\nPowerShell"}
-            className="h-24 w-full resize-y rounded border border-border bg-bg-term p-2 font-mono text-[12px] text-text-1 outline-none focus:border-accent"
+            className="h-24 w-full resize-y bt-field bg-bg-term p-2 font-mono text-[12px] text-text-1 outline-none"
           />
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-text-2">
             <label className="flex items-center gap-1.5">
@@ -320,7 +320,7 @@ function VoiceTab({
               value={prefix}
               onChange={(e) => setPrefix(e.target.value)}
               onBlur={() => prefix !== v.prefix_text && patch({ prefix_text: prefix })}
-              className="h-16 flex-1 resize-y rounded border border-border bg-bg-term p-2 text-[12px] text-text-1 outline-none focus:border-accent"
+              className="h-16 flex-1 resize-y bt-field bg-bg-term p-2 text-[12px] text-text-1 outline-none"
             />
             <button
               className="flex items-center gap-1 rounded bg-bg-hover px-2 py-1 text-[12px] text-text-1 hover:bg-border"
@@ -381,7 +381,7 @@ function ProvidersTab({
   return (
     <div className="space-y-2">
       <div className="sticky top-0 z-10 -mx-4 bg-bg-card px-4 pb-2">
-        <div className="flex items-center gap-1.5 rounded border border-border bg-bg-term px-2">
+        <div className="flex items-center gap-1.5 bt-field bg-bg-term px-2">
           <Search size={14} className="shrink-0 text-text-3" />
           <input
             autoFocus
@@ -501,7 +501,7 @@ function ProviderCard({
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
                 placeholder="Cole a chave de API"
-                className="h-7 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 text-[12px] text-text-1 outline-none focus:border-accent"
+                className="h-7 min-w-0 flex-1 bt-field bg-bg-term px-2 text-[12px] text-text-1 outline-none"
               />
               <Btn
                 disabled={!key.trim()}
@@ -555,7 +555,7 @@ function ProviderCard({
             onChange={(e) => setBase(e.target.value)}
             onBlur={() => base !== (prefs.base_url ?? "") && savePrefs({ base_url: base.trim() })}
             placeholder={p.kind === "azure" ? "https://<recurso>.openai.azure.com" : p.base_url || "URL base compatível com OpenAI (…/v1)"}
-            className="h-7 w-full rounded border border-border bg-bg-term px-2 font-mono text-[11px] text-text-1 outline-none focus:border-accent"
+            className="h-7 w-full bt-field bg-bg-term px-2 font-mono text-[11px] text-text-1 outline-none"
           />
           {p.audio_url !== undefined && p.audio_url !== "" && (
             <input
@@ -563,7 +563,7 @@ function ProviderCard({
               onChange={(e) => setAudio(e.target.value)}
               onBlur={() => audio !== (prefs.audio_url ?? "") && savePrefs({ audio_url: audio.trim() })}
               placeholder={`URL do áudio (${p.audio_url})`}
-              className="h-7 w-full rounded border border-border bg-bg-term px-2 font-mono text-[11px] text-text-1 outline-none focus:border-accent"
+              className="h-7 w-full bt-field bg-bg-term px-2 font-mono text-[11px] text-text-1 outline-none"
             />
           )}
           {p.kind === "azure" && (
@@ -572,7 +572,7 @@ function ProviderCard({
               onChange={(e) => setApiVer(e.target.value)}
               onBlur={() => apiVer !== (prefs.api_version ?? "") && savePrefs({ api_version: apiVer.trim() })}
               placeholder="api-version (ex. 2024-10-21)"
-              className="h-7 w-full rounded border border-border bg-bg-term px-2 font-mono text-[11px] text-text-1 outline-none focus:border-accent"
+              className="h-7 w-full bt-field bg-bg-term px-2 font-mono text-[11px] text-text-1 outline-none"
             />
           )}
         </div>
@@ -600,7 +600,7 @@ function ProviderCard({
         <label className="mt-2 flex items-center gap-2 text-[11px] text-text-2">
           Rota da transcrição
           <select
-            className="h-7 rounded border border-border bg-bg-term px-1 text-[12px] text-text-1"
+            className="h-7 bt-field bg-bg-term px-1 text-[12px] text-text-1"
             value={prefs.route === "openai" ? "openai" : "native"}
             onChange={(e) => savePrefs({ route: e.target.value === "openai" ? "openai" : "" })}
           >
@@ -632,7 +632,7 @@ function ProviderCard({
         {result && <span className={cn("text-[11px]", result.ok ? "text-status-ok" : "text-status-err")}>{result.text}</span>}
       </div>
       {models && models.length > 0 && (
-        <div className="mt-1 max-h-32 overflow-y-auto rounded border border-border bg-bg-term p-1 font-mono text-[11px] text-text-2">
+        <div className="mt-1 max-h-32 overflow-y-auto bt-field bg-bg-term p-1 font-mono text-[11px] text-text-2">
           {models.map((m) => (
             <div key={m} className="flex items-center gap-1 px-1 hover:bg-bg-hover">
               <span className="min-w-0 flex-1 truncate">{m}</span>
@@ -676,7 +676,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 function ProviderSelect({ list, value, onChange }: { list: ProviderView[]; value: string; onChange: (id: string) => void }) {
   return (
-    <select className="h-8 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 text-text-1" value={value} onChange={(e) => onChange(e.target.value)}>
+    <select className="h-8 min-w-0 flex-1 bt-field bg-bg-term px-2 text-text-1" value={value} onChange={(e) => onChange(e.target.value)}>
       {list.map((p) => (
         <option key={p.id} value={p.id}>
           {p.name}
@@ -710,7 +710,7 @@ function ModelInput({ value, options, onChange, id }: { value: string; options: 
         value={text}
         onChange={(e) => setText(e.target.value)}
         onBlur={() => text !== value && onChange(text.trim())}
-        className="h-8 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 font-mono text-[12px] text-text-1 outline-none focus:border-accent"
+        className="h-8 min-w-0 flex-1 bt-field bg-bg-term px-2 font-mono text-[12px] text-text-1 outline-none"
       />
       <datalist id={id}>
         {options.map((o) => (
@@ -805,12 +805,12 @@ function AccountLogin({
   return (
     <div className="mt-2 space-y-1.5">
       {phase === "wait" && code && (
-        <div className="rounded border border-border bg-bg-term px-2 py-1.5">
+        <div className="bt-field bg-bg-term px-2 py-1.5">
           <div className="text-[11px] text-text-3">Digite este código em {name}</div>
           <div className="flex items-center gap-2">
             <div className="font-mono text-[18px] font-semibold tracking-widest text-text-1">{code}</div>
             <button
-              className="flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[11px] text-text-1 hover:bg-bg-hover"
+              className="flex items-center gap-1 bt-field px-1.5 py-0.5 text-[11px] text-text-1 hover:bg-bg-hover"
               onClick={() =>
                 void copyText(code).then((ok) => {
                   if (!ok) {

@@ -1,3 +1,4 @@
+import { AGENT_COMMAND, agentFolder } from "../src/lib/agents.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applyAgent, cwdFromPickedFolder, explorerStart, Pending, requestIdFromError, shellKind, spawnCwd, waitingList, type AgentState } from "../src/lib/agents.ts";
@@ -69,4 +70,13 @@ test("seletor de pasta: abre no caminho Windows e devolve o formato do shell", (
   assert.equal(cwdFromPickedFolder("C:\\src\\repo", "powershell"), "C:\\src\\repo");
   assert.equal(cwdFromPickedFolder("C:\\src\\repo", "wsl.ubuntu"), "/mnt/c/src/repo");
   assert.equal(cwdFromPickedFolder("D:\\", "wsl.default"), "/mnt/d");
+});
+
+test("troca de pasta do agente passa o caminho separadamente do comando", () => {
+  assert.equal(agentFolder("/Volumes/Code Space/main", "file://mac/Users/brian", "login"), "/Volumes/Code Space/main");
+  assert.equal(agentFolder("nova pasta", "file://mac/Users/brian", "login"), "/Users/brian/nova pasta");
+  assert.equal(agentFolder("nova", "file://host/C:/src", "pwsh"), "C:\\src\\nova");
+  assert.equal(agentFolder("D:\\repo", "file://host/home/brian", "wsl.ubuntu"), "/mnt/d/repo");
+  assert.equal(agentFolder("/Volumes", "file://mac/Users/brian", "login"), "/Volumes");
+  assert.equal(AGENT_COMMAND.cursor, "cursor-agent");
 });

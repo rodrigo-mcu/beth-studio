@@ -139,7 +139,7 @@ export function SshHostEditor({
         </div>
 
         {f.auth === "password" && (
-          <div className="col-span-2 grid grid-cols-2 gap-3 rounded border border-border p-2">
+          <div className="col-span-2 grid grid-cols-2 gap-3 bt-field p-2">
             {hasSavedPw ? (
               <div className="col-span-2 flex items-center gap-2 text-[12px] text-text-2">
                 <KeyRound size={14} className="text-status-ok" /> Senha salva (cifrada neste computador).
@@ -163,7 +163,7 @@ export function SshHostEditor({
           </div>
         )}
         {f.auth === "key" && (
-          <div className="col-span-2 grid grid-cols-2 gap-3 rounded border border-border p-2">
+          <div className="col-span-2 grid grid-cols-2 gap-3 bt-field p-2">
             <SshField label="Arquivo da chave privada" hint="ex.: ~/.ssh/id_ed25519 (formato OpenSSH ou PEM; converta .ppk no PuTTYgen)">
               <input className={sshInput} value={f.key_path ?? ""} onChange={(e) => set("key_path", e.target.value)} placeholder="~/.ssh/id_ed25519" />
             </SshField>
@@ -184,7 +184,7 @@ export function SshHostEditor({
           </div>
         )}
         {f.auth === "agent" && (
-          <div className="col-span-2 rounded border border-border p-2 text-[12px] text-text-2">
+          <div className="col-span-2 bt-field p-2 text-[12px] text-text-2">
             Usa as chaves carregadas no serviço “OpenSSH Authentication Agent” do Windows (adicione com <code>ssh-add</code>). Nenhuma credencial
             é salva aqui.
           </div>

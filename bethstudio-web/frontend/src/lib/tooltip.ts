@@ -36,24 +36,38 @@ export interface TipPlace {
   arrowX: number;
   /** true = acima do elemento (nao coube embaixo) */
   above: boolean;
+  /** lado do elemento em que o balão ficou */
+  side: "below" | "above" | "right" | "left";
 }
 
 export const TIP_GAP = 8;
 export const TIP_MARGIN = 6;
 
-/** Abaixo do elemento, centralizado; empurrado para dentro da janela nas bordas. */
+/** Escolhe o lado com espaço. Prefere embaixo, depois acima, depois a
+ *  direita, depois a esquerda. A seta aponta para o elemento. */
 export function placeTip(anchor: Rect, tipW: number, tipH: number, viewW: number, viewH: number): TipPlace {
   const cx = anchor.left + anchor.width / 2;
+  const cy = anchor.top + anchor.height / 2;
+  const below = viewH - (anchor.top + anchor.height) - TIP_MARGIN;
+  const above = anchor.top - TIP_MARGIN;
+  const right = viewW - (anchor.left + anchor.width) - TIP_MARGIN;
+  const leftRoom = anchor.left - TIP_MARGIN;
+  const order: Array<"below" | "above" | "right" | "left"> = ["below", "above", "right", "left"];
+  const room = { below, above, right, left: leftRoom };
+  const need = { below: tipH + TIP_GAP, above: tipH + TIP_GAP, right: tipW + TIP_GAP, left: tipW + TIP_GAP };
+  const side = order.find((s) => room[s] >= need[s]) ?? order.reduce((a, b) => (room[b] > room[a] ? b : a));
+  if (side === "right" || side === "left") {
+    let top = cy - tipH / 2;
+    top = Math.max(TIP_MARGIN, Math.min(top, viewH - tipH - TIP_MARGIN));
+    const left = side === "right" ? anchor.left + anchor.width + TIP_GAP : anchor.left - TIP_GAP - tipW;
+    const arrowX = side === "right" ? 0 : tipW;
+    return { left: Math.max(TIP_MARGIN, Math.min(left, viewW - tipW - TIP_MARGIN)), top, arrowX, above: false, side };
+  }
   let left = cx - tipW / 2;
   left = Math.max(TIP_MARGIN, Math.min(left, viewW - tipW - TIP_MARGIN));
-  let top = anchor.top + anchor.height + TIP_GAP;
-  let above = false;
-  if (top + tipH > viewH - TIP_MARGIN && anchor.top - TIP_GAP - tipH >= TIP_MARGIN) {
-    top = anchor.top - TIP_GAP - tipH;
-    above = true;
-  }
+  const top = side === "above" ? anchor.top - TIP_GAP - tipH : anchor.top + anchor.height + TIP_GAP;
   const arrowX = Math.max(10, Math.min(cx - left, tipW - 10));
-  return { left, top, arrowX, above };
+  return { left, top, arrowX, above: side === "above", side };
 }
 
 export const TIP_DELAY_MS = 350;

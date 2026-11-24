@@ -10,6 +10,7 @@ declare global {
     __bethstudioFrameless?: boolean;
     __bethstudioWin?: (max: boolean, active: boolean) => void;
     chrome?: { webview?: { postMessage: (m: string) => void } };
+    webkit?: { messageHandlers?: { bethMenu?: { postMessage: (v: string) => void } } };
   }
 }
 
@@ -18,6 +19,27 @@ export type WinCommand = "drag" | "toggle" | "min" | "close" | "state" | "resize
 /** Estamos na janela propria sem moldura? (no navegador comum/celular: nao) */
 export function isFrameless(): boolean {
   return typeof window !== "undefined" && !!window.__bethstudioFrameless && !!window.chrome?.webview;
+}
+
+/**
+ * macOS: a janela nativa esconde a barra de título e a página desenha as
+ * abas no lugar dela. Windows continua com a barra do sistema.
+ */
+export function isMacTitlebar(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Mac/.test(navigator.platform) && !isFrameless();
+}
+
+/** Arrasta a janela do macOS a partir da faixa de abas. */
+export function dragMacWindow() {
+  const w = window as unknown as { webkit?: { messageHandlers?: { bethDrag?: { postMessage: (v: string) => void } } } };
+  w.webkit?.messageHandlers?.bethDrag?.postMessage("drag");
+}
+
+/** Duplo clique na topbar: maximiza ou restaura, como nas outras janelas do macOS. */
+export function zoomMacWindow() {
+  const w = window as unknown as { webkit?: { messageHandlers?: { bethDrag?: { postMessage: (v: string) => void } } } };
+  w.webkit?.messageHandlers?.bethDrag?.postMessage("zoom");
 }
 
 export function winCommand(c: WinCommand) {

@@ -187,6 +187,18 @@ pub fn session_dir() -> Result<PathBuf> {
                 })
             })
             .context("could not resolve %APPDATA% or %USERPROFILE%")?
+    } else if cfg!(target_os = "macos") {
+        // Same folder the Studio uses on macOS
+        // (`$HOME/Library/Application Support/bethstudio`), so the host
+        // socket and the Studio data dir are one place.
+        std::env::var_os("HOME")
+            .map(|p| {
+                let mut pb = PathBuf::from(p);
+                pb.push("Library");
+                pb.push("Application Support");
+                pb
+            })
+            .unwrap_or_else(|| PathBuf::from("."))
     } else {
         let xdg = std::env::var_os("XDG_CONFIG_HOME")
             .map(PathBuf::from)

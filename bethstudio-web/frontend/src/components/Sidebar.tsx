@@ -10,6 +10,9 @@ import { IconButton } from "./IconButton";
 import { AppTitle } from "./AppTitle";
 import type { StudioAction } from "./StudioActions";
 import { AgentBadge, KindIcon } from "./KindIcon";
+import { ToolIcon } from "./ToolIcon";
+import { paneIdentity } from "@/lib/paneIdentity";
+import { isMacTitlebar } from "@/lib/windowFrame";
 import { AGENT_FILTER, KIND_LABEL, countKinds, groupByKind, kindOrder, passesKindFilter } from "@/lib/kinds";
 import type { SearchResult } from "@/lib/search";
 import { AgentDot } from "./AgentDot";
@@ -56,6 +59,8 @@ interface Props {
   onSplitByKind: (on: boolean) => void;
   /** reabre o grupo fechado (aba fechada) de indice i */
   onReopenClosed: (index: number) => void;
+  /** Texto da tela do pane, para o nome e o ícone baterem com a aba. */
+  paneScreen?: (pane: number) => string | undefined;
 }
 
 export function Sidebar(p0: Props) {
@@ -73,7 +78,7 @@ export function Sidebar(p0: Props) {
   const shownResults = p.search.results.filter(acceptResult);
   return (
     <div className="flex h-full flex-col">
-      <AppTitle right={p0.status} />
+      {!isMacTitlebar() && <AppTitle right={p0.status} />}
       {p0.actions && p0.actions.length > 0 && (
         <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-2 py-1">
           {p0.actions
@@ -85,19 +90,21 @@ export function Sidebar(p0: Props) {
             ))}
         </div>
       )}
-      <div className="border-b border-border p-2">
-        <div className="flex items-start gap-1">
+      <div className="border-b border-border px-2 py-2">
+        <div className="flex items-center gap-1">
           <div className="min-w-0 flex-1">
-            <SearchInput s={p.search} compact />
+            <SearchInput s={p.search} compact inputId="beth-search" />
           </div>
-          <IconButton label="Recolher a barra lateral" onClick={p.onCollapse} className="mt-0.5">
+          <IconButton label="Recolher a barra lateral" onClick={p.onCollapse}>
             <PanelLeftClose size={15} />
           </IconButton>
         </div>
-        <KindChips panes={p0.panes ?? []} selected={p0.kindFilter} onChange={p0.onKindFilter} order={p0.kindOrder} />
         <WaitingBar {...p0} />
       </div>
-      <div className={cn("grid grid-cols-2 gap-1 p-2", p.search.query.trim() && "hidden")}>
+      <div className="px-2 pt-2">
+        <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-3">Ver</div>
+      </div>
+      <div className={cn("grid grid-cols-2 gap-1 px-2", p.search.query.trim() && "hidden")}>
         <ModeButton active={p.mode === "web"} onClick={() => p.onMode("web")} icon={<LayoutGrid size={13} />}>
           Minha organização
         </ModeButton>
@@ -111,10 +118,13 @@ export function Sidebar(p0: Props) {
           Por pasta
         </ModeButton>
       </div>
+      <div className="px-2 pb-1 pt-2">
+        <KindChips panes={p0.panes ?? []} selected={p0.kindFilter} onChange={p0.onKindFilter} order={p0.kindOrder} />
+      </div>
       {(p.mode === "web" || p.mode === "host") && !p.search.query.trim() && (
-        <label className="-mt-1 flex cursor-pointer items-center gap-1.5 px-3 pb-1 text-[11px] text-text-2" title="Subdivide a lista por tipo de terminal (WSL, PowerShell, SSH…)">
+        <label className="flex cursor-pointer items-center gap-1.5 px-3 pb-1.5 text-[11px] text-text-2" title="Subdivide a lista por tipo de terminal (WSL, PowerShell, SSH…)">
           <input type="checkbox" checked={p.splitByKind} onChange={(e) => p.onSplitByKind(e.target.checked)} />
-          Separar por tipo
+          Separar a lista por tipo
         </label>
       )}
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -146,13 +156,13 @@ function ModeButton({ active, onClick, icon, children }: { active: boolean; onCl
   return (
     <button
       className={cn(
-        "flex flex-1 items-center justify-center gap-1 rounded px-1.5 py-1 text-[11px] leading-tight",
-        active ? "bg-accent text-white" : "bg-bg-card text-text-2 hover:text-text-1",
+        "bt-mode bt-glass flex min-h-16 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[11px] leading-tight",
+        active ? "bt-glass-on bg-accent text-white" : "bg-bg-hover text-text-2 hover:text-text-1",
       )}
       onClick={onClick}
     >
       {icon}
-      {children}
+      <span className="min-w-0 whitespace-normal text-center leading-tight">{children}</span>
     </button>
   );
 }
@@ -189,8 +199,8 @@ function WebTree(p: Props & { panes: PaneInfo[]; hideGone?: boolean }) {
           <div key={t.id} className={cn("rounded-md", over === t.id && "bg-accent-soft ring-1 ring-accent")} {...dropProps(t.id, (pane) => p.onDropToTab(pane, t.id))}>
             <button
               className={cn(
-                "flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-[11px] font-semibold uppercase tracking-wide",
-                t.id === p.layout.active ? "text-accent-text" : "text-text-2 hover:text-text-1",
+                "flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[11px] font-medium uppercase tracking-wide",
+                t.id === p.layout.active ? "text-text-2" : "text-text-3 hover:text-text-2",
               )}
               onClick={() => p.onActivateTab(t.id)}
               title="Abrir esta aba (solte um terminal aqui para movê-lo para ela)"
@@ -205,7 +215,7 @@ function WebTree(p: Props & { panes: PaneInfo[]; hideGone?: boolean }) {
               <span className="ml-auto font-normal text-text-3">{ls.length}</span>
             </button>
             {ls.length === 0 && <div className="px-2 pb-1 pl-6 text-[11px] text-text-3">vazia — arraste terminais para cá</div>}
-            <ul className="flex flex-col gap-0.5">
+            <ul className="flex flex-col gap-0.5 pl-2">
               {ls.map(({ leaf, path }) => {
                 const info = leaf.gone ? undefined : byId.get(leaf.pane);
                 // com filtro de tipo: some o que nao passa (e os encerrados)
@@ -229,6 +239,8 @@ function WebTree(p: Props & { panes: PaneInfo[]; hideGone?: boolean }) {
                     key={leaf.pane}
                     agent={p.agents[leaf.pane]}
                     info={info}
+                    screen={p.paneScreen?.(leaf.pane)}
+                    stored={leaf.tool}
                     focused={p.focusedPane === leaf.pane && t.id === p.layout.active}
                     open
                     onClick={() => p.onOpen(leaf.pane)}
@@ -252,6 +264,8 @@ function WebTree(p: Props & { panes: PaneInfo[]; hideGone?: boolean }) {
               key={x.pane_id}
               agent={p.agents[x.pane_id]}
               info={x}
+              screen={p.paneScreen?.(x.pane_id)}
+              stored={storedTool(p.layout, x.pane_id)}
               focused={false}
               open={false}
               onClick={() => p.onOpen(x.pane_id)}
@@ -295,7 +309,7 @@ function HostTree(p: Props & { panes: PaneInfo[] }) {
   const groups = useMemo(() => groupPanes(p.panes), [p.panes]);
   if (p.panes.length === 0) return <div className="p-4 text-text-2">Nenhum terminal aberto no BethStudio.</div>;
   return (
-    <nav className="flex flex-col gap-3 px-2 pb-3">
+    <nav className="flex flex-col gap-2 px-2 pb-3">
       {groups.map((w) => (
         <div key={w.windowId}>
           <div className="flex items-center gap-1.5 px-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-2">
@@ -324,6 +338,8 @@ function HostTree(p: Props & { panes: PaneInfo[] }) {
                       key={x.pane_id}
                       agent={p.agents[x.pane_id]}
                       info={x}
+                      screen={p.paneScreen?.(x.pane_id)}
+                      stored={storedTool(p.layout, x.pane_id)}
                       focused={p.focusedPane === x.pane_id}
                       open={!!where}
                       badge={tabName}
@@ -342,6 +358,14 @@ function HostTree(p: Props & { panes: PaneInfo[] }) {
   );
 }
 
+function storedTool(layout: Layout, pane: number): string | undefined {
+  for (const t of layout.tabs) {
+    const hit = leaves(t.root).find((l) => l.leaf.pane === pane);
+    if (hit?.leaf.tool) return hit.leaf.tool;
+  }
+  return undefined;
+}
+
 function PaneItem(p: {
   agent?: AgentInfo;
   info: PaneInfo;
@@ -353,8 +377,14 @@ function PaneItem(p: {
   onMenu: (x: number, y: number) => void;
   /** "Por pasta": a pasta ja' esta' no cabecalho do grupo */
   hideCwd?: boolean;
+  /** Texto da tela, para o nome e o ícone baterem com a aba. */
+  screen?: string;
+  /** Ferramenta gravada na aba, a mesma que a faixa de abas usa. */
+  stored?: string;
 }) {
   const x = p.info;
+  const id = paneIdentity({ title: x.title, kind_label: x.kind_label, tool: x.tool, screen: p.screen, stored: p.stored }, paneLabel(x));
+  const sidebarName = id.tool === "codex" ? "Codex" : id.name;
   const cwd = p.hideCwd ? { parent: "", name: "" } : splitCwd(x.cwd);
   return (
     <li>
@@ -370,31 +400,29 @@ function PaneItem(p: {
           p.onMenu(e.clientX, e.clientY);
         }}
         className={cn(
-          "group flex cursor-pointer items-start gap-2 rounded-md border-l-2 px-2 py-1.5",
-          p.focused ? "border-accent bg-accent-soft" : p.open ? "border-accent/60 bg-bg-card hover:bg-bg-hover" : "border-transparent hover:bg-bg-hover",
+          "bt-chat group flex min-h-9 cursor-pointer items-start gap-2 rounded-lg px-2 py-1.5",
+          p.focused ? "bt-glass-on" : "hover:bg-bg-hover",
         )}
-        title={`${paneLabel(x)}\n${x.cwd || ""}\n${x.size.cols}×${x.size.rows} — pane ${x.pane_id}\nClique: abre (numa aba nova, se ainda não estiver numa) · arraste para uma aba ou para a borda de um terminal · botão direito para organizar`}
+        title={`${paneLabel(x)}${x.cwd ? ` — ${x.cwd}` : ""}`}
       >
         {p.agent ? (
-          <AgentDot agent={p.agent} className="mt-[4px]" />
+          <AgentDot agent={p.agent} className="mt-1.5" />
         ) : (
           <span
-            className={cn("mt-[5px] h-2 w-2 shrink-0 rounded-full", x.is_active ? "bg-status-ok" : "bg-border-strong")}
+            className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", x.is_active ? "bg-status-ok" : "bg-border-strong")}
             title={x.is_active ? "Pane ativo na aba do Beth Studio" : "Pane inativo"}
           />
         )}
+        <span className="mt-0.5 shrink-0">{id.tool ? <ToolIcon tool={id.tool} size={14} /> : <KindIcon pane={x} />}</span>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
             <KindIcon pane={x} />
-            <span className={cn("truncate text-[13px] text-text-1", p.focused && "font-semibold")}>{paneLabel(x)}</span>
+            <span className={cn("truncate text-[13px] text-text-1", p.focused && "font-semibold")}>{sidebarName}</span>
             {(x.agent_name || x.agent) && <AgentBadge name={x.agent_name} />}
           </div>
           {cwd.name && (
-            <div className="flex min-w-0 items-center gap-1 font-mono text-[11px]">
-              <Folder size={10} className="shrink-0 text-text-2" />
-              {/* o nome da pasta e' o que diferencia: em destaque; o comeco do caminho, apagado */}
-              {cwd.parent && <span className="min-w-0 shrink truncate text-text-3">{cwd.parent}</span>}
-              <span className="max-w-[85%] shrink-0 truncate font-semibold text-text-1">{cwd.name}</span>
+            <div className="truncate font-mono text-[11px] text-text-3" title={x.cwd}>
+              {cwd.name}
             </div>
           )}
           {p.badge && <div className="mt-0.5 truncate text-[10px] text-accent-text">na aba “{p.badge}”</div>}
@@ -418,7 +446,7 @@ function WaitingBar(p: Props) {
   if (list.length === 0) return null;
   const byId = new Map((p.panes ?? []).map((x) => [x.pane_id, x]));
   return (
-    <div className="mt-2">
+    <div className="mt-1.5">
       <button
         className="flex w-full items-center gap-2 rounded bg-status-warn/15 px-2 py-1 text-left text-[12px] font-semibold text-status-warn ring-1 ring-status-warn/40 hover:bg-status-warn/25"
         onClick={() => setOpen((v) => !v)}
@@ -462,8 +490,8 @@ function KindChips({ panes, selected, onChange, order }: { panes: PaneInfo[]; se
     <button
       key={key}
       className={cn(
-        "flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
-        selected.includes(key) ? "bg-accent text-white" : "bg-bg-card text-text-2 hover:text-text-1",
+        "bt-chip flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px]",
+        selected.includes(key) ? "bt-glass-on text-white" : "text-text-2 hover:text-text-1",
       )}
       onClick={() => toggle(key)}
       title={title}
@@ -474,9 +502,9 @@ function KindChips({ panes, selected, onChange, order }: { panes: PaneInfo[]; se
   );
   const kinds = kindOrder(order);
   return (
-    <div className="mt-2 flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1">
       <button
-        className={cn("rounded-full px-2 py-0.5 text-[11px]", selected.length === 0 ? "bg-accent text-white" : "bg-bg-card text-text-2 hover:text-text-1")}
+        className={cn("bt-chip rounded-lg px-2 py-0.5 text-[11px]", selected.length === 0 ? "bt-glass-on text-white" : "text-text-2 hover:text-text-1")}
         onClick={() => onChange([])}
         title="Mostrar todos os tipos"
       >
@@ -517,7 +545,7 @@ function FolderTreeView(p: Props & { panes: PaneInfo[] }) {
       {groups.map((g) => (
         <div key={g.key}>
           <button
-            className="flex w-full min-w-0 items-center gap-1.5 rounded px-1.5 py-1 text-left text-[13px] font-semibold text-text-1 hover:bg-bg-hover"
+            className="bt-folder flex w-full min-w-0 items-center gap-1.5 rounded-lg px-1.5 py-1 text-left text-[13px] font-semibold text-text-1 hover:bg-bg-hover"
             onClick={() => toggle(g.key)}
             title={`${g.path || "Terminais sem pasta conhecida"}\n${closed[g.key] ? "Mostrar o grupo" : "Recolher o grupo"}`}
           >
@@ -543,6 +571,8 @@ function LoosePane({ p, x, hideCwd }: { p: Props; x: PaneInfo; hideCwd?: boolean
     <PaneItem
       agent={p.agents[x.pane_id]}
       info={x}
+      screen={p.paneScreen?.(x.pane_id)}
+      stored={storedTool(p.layout, x.pane_id)}
       focused={p.focusedPane === x.pane_id}
       open={!!where}
       badge={tabName}
@@ -569,7 +599,7 @@ function KindSections({ panes, order, render, compact }: { panes: PaneInfo[]; or
         <div key={s.key}>
           <button
             className={cn(
-              "flex w-full items-center gap-1.5 rounded px-1.5 text-left font-semibold text-text-2 hover:text-text-1",
+              "bt-folder flex w-full items-center gap-1.5 rounded-lg px-1.5 text-left font-semibold text-text-2 hover:text-text-1",
               compact ? "py-0.5 pl-3 text-[10px] uppercase tracking-wide" : "py-1 text-[11px] uppercase tracking-wide",
             )}
             onClick={() => toggle(s.key)}

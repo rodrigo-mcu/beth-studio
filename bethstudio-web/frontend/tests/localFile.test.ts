@@ -21,6 +21,7 @@ test("localFileKind: por extensão, sem distinguir maiúsculas", () => {
   assert.equal(localFileKind("img.jpeg"), "image");
   assert.equal(localFileKind("icone.svg"), "image");
   assert.equal(localFileKind("app.exe"), null);
+  assert.equal(localFileKind("/proj/app.bundle"), "text");
   assert.equal(localFileKind("semextensao"), null);
 });
 

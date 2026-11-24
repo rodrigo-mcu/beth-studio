@@ -278,7 +278,8 @@ fn id_running(id: Option<&str>) -> bool {
     }
     #[cfg(not(windows))]
     {
-        socket_for(id).exists()
+        // A leftover socket is not a live host. The lock file is.
+        unix_lock_held(id)
     }
 }
 
@@ -459,6 +460,7 @@ fn pid_path_for(id: Option<&str>) -> PathBuf {
 pub fn start_quit_watcher() {
     #[cfg(windows)]
     {
+        // Windows path is unchanged: named event, pid file, heartbeat.
         note_life(&format!(
             "host process became the PTY owner; {}; started by {}",
             describe_exe(),
@@ -472,6 +474,10 @@ pub fn start_quit_watcher() {
             log::warn!("bethstudio-host: quit watcher: {err:#}");
         }
         spawn_alive_heartbeat();
+    }
+    #[cfg(not(windows))]
+    {
+        start_quit_watcher_unix();
     }
 }
 
@@ -525,20 +531,81 @@ fn life_role() -> String {
     }
 }
 
-/// Patch 0168: `name (pid N)` for a running process, via ToolHelp.
-#[cfg(windows)]
+/// Patch 0168: `name (pid N)` for a running process.
 pub fn describe_process(pid: u32) -> String {
-    match process_entry(pid) {
-        Some((name, _)) => format!("{name} (pid {pid})"),
-        None => format!("pid {pid} (gone)"),
+    #[cfg(windows)]
+    {
+        return match process_entry(pid) {
+            Some((name, _)) => format!("{name} (pid {pid})"),
+            None => format!("pid {pid} (gone)"),
+        };
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = pid;
+        if std::path::Path::new(&format!("/proc/{pid}")).exists() {
+            if let Ok(comm) = std::fs::read_to_string(format!("/proc/{pid}/comm")) {
+                let name = comm.trim();
+                if !name.is_empty() {
+                    return format!("{name} (pid {pid})");
+                }
+            }
+            return format!("pid {pid}");
+        }
+        // macOS has no /proc. `ps` is enough for a life-log label.
+        if let Some(name) = unix_process_name(pid) {
+            return format!("{name} (pid {pid})");
+        }
+        format!("pid {pid}")
     }
 }
 
 /// Patch 0168: this process's parent, e.g. `explorer.exe (pid 812)`.
-#[cfg(windows)]
 pub fn describe_parent() -> String {
-    match process_entry(std::process::id()) {
-        Some((_, ppid)) => describe_process(ppid),
+    #[cfg(windows)]
+    {
+        return match process_entry(std::process::id()) {
+            Some((_, ppid)) => describe_process(ppid),
+            None => "unknown".to_string(),
+        };
+    }
+    #[cfg(not(windows))]
+    {
+        unix_parent_label()
+    }
+}
+
+#[cfg(not(windows))]
+fn unix_process_name(pid: u32) -> Option<String> {
+    let out = std::process::Command::new("ps")
+        .args(["-p", &pid.to_string(), "-o", "comm="])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if name.is_empty() {
+        None
+    } else {
+        Some(name)
+    }
+}
+
+#[cfg(not(windows))]
+fn unix_parent_label() -> String {
+    let out = std::process::Command::new("ps")
+        .args(["-p", &std::process::id().to_string(), "-o", "ppid="])
+        .output();
+    let Ok(out) = out else {
+        return "unknown".to_string();
+    };
+    let ppid = String::from_utf8_lossy(&out.stdout)
+        .trim()
+        .parse::<u32>()
+        .ok();
+    match ppid {
+        Some(ppid) => describe_process(ppid),
         None => "unknown".to_string(),
     }
 }
@@ -636,43 +703,47 @@ pub fn request_stop_all() -> Result<()> {
 }
 
 fn request_stop_id(id: Option<&str>) -> Result<()> {
-    #[cfg(windows)]
-    {
-        let label = id.unwrap_or("legacy");
-        note_life(&format!(
-            "Encerrar host confirmed by pid {}; signaling quit for {label}",
-            std::process::id()
-        ));
-        write_quit_request(id, "tray Encerrar Beth Studio (user confirmed)");
-        signal_quit_event_for(id);
-        let deadline = Instant::now() + Duration::from_secs(5);
-        while id_running(id) && Instant::now() < deadline {
-            std::thread::sleep(Duration::from_millis(50));
-        }
-        if id_running(id) {
-            note_life(&format!(
-                "quit event did not stop host {label} within 5s; TerminateProcess"
-            ));
-            terminate_host_process(id);
-        }
-        let deadline = Instant::now() + Duration::from_secs(2);
-        while id_running(id) && Instant::now() < deadline {
-            std::thread::sleep(Duration::from_millis(50));
-        }
-        let _ = std::fs::remove_file(socket_for(id));
-        // Keep the pid file: it tells the GUI this host was stopped
-        // with terminals in it (patch 0165). `prune_stale_host_files`
-        // removes it on the next start.
-        if id_running(id) {
-            anyhow::bail!("bethstudio-host {label} did not exit");
-        }
-        Ok(())
-    }
     #[cfg(not(windows))]
     {
-        let _ = std::fs::remove_file(socket_path());
-        Ok(())
+        return request_stop_id_unix(id);
     }
+    #[cfg(windows)]
+    {
+        request_stop_id_windows(id)
+    }
+}
+
+#[cfg(windows)]
+fn request_stop_id_windows(id: Option<&str>) -> Result<()> {
+    let label = id.unwrap_or("legacy");
+    note_life(&format!(
+        "Encerrar host confirmed by pid {}; signaling quit for {label}",
+        std::process::id()
+    ));
+    write_quit_request(id, "tray Encerrar Beth Studio (user confirmed)");
+    signal_quit_event_for(id);
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while id_running(id) && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    if id_running(id) {
+        note_life(&format!(
+            "quit event did not stop host {label} within 5s; TerminateProcess"
+        ));
+        terminate_host_process_win(id);
+    }
+    let deadline = Instant::now() + Duration::from_secs(2);
+    while id_running(id) && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let _ = std::fs::remove_file(socket_for(id));
+    // Keep the pid file: it tells the GUI this host was stopped
+    // with terminals in it (patch 0165). `prune_stale_host_files`
+    // removes it on the next start.
+    if id_running(id) {
+        anyhow::bail!("bethstudio-host {label} did not exit");
+    }
+    Ok(())
 }
 
 /// Create the single-instance mutex. `Ok(false)` means another host lives.
@@ -683,7 +754,7 @@ pub fn try_become_owner() -> Result<bool> {
     }
     #[cfg(not(windows))]
     {
-        Ok(true)
+        take_unix_lock()
     }
 }
 
@@ -847,7 +918,7 @@ pub(crate) fn life_stamp() -> String {
     }
     #[cfg(not(windows))]
     {
-        "now".to_string()
+        chrono::Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string()
     }
 }
 
@@ -872,7 +943,7 @@ fn signal_quit_event_for(id: Option<&str>) {
 /// version killed every `bethstudio-host.exe`, so one stuck window host
 /// took every other window's terminals with it.
 #[cfg(windows)]
-fn terminate_host_process(id: Option<&str>) {
+fn terminate_host_process_win(id: Option<&str>) {
     let label = id.unwrap_or("legacy");
     let pid = std::fs::read_to_string(pid_path_for(id))
         .ok()
@@ -928,6 +999,229 @@ fn terminate_host_pid(pid: u32) {
     unsafe {
         CloseHandle(snap);
     }
+}
+
+// ---------------------------------------------------------------------------
+// Unix single-instance lock (patch 0205).
+//
+// Windows uses a named mutex plus a quit event. On macOS and Linux the same
+// contract is a lock file next to the socket (`host.lock` / `hosts/<id>.lock`)
+// held with `flock`, plus a `host.quit` file the Studio writes when the user
+// confirms "Encerrar tudo". The lock drops when the host process dies, so a
+// crash never leaves a second Studio unable to start a new host. The socket
+// itself is not the lock: a leftover socket from a crash must not look alive.
+// ---------------------------------------------------------------------------
+
+#[cfg(not(windows))]
+fn lock_path_for(id: Option<&str>) -> PathBuf {
+    socket_for(id).with_extension("lock")
+}
+
+#[cfg(not(windows))]
+fn unix_quit_path(id: Option<&str>) -> PathBuf {
+    socket_for(id).with_extension("quit")
+}
+
+#[cfg(not(windows))]
+fn unix_lock_held(id: Option<&str>) -> bool {
+    use std::os::unix::io::AsRawFd;
+    let path = lock_path_for(id);
+    let Ok(file) = std::fs::OpenOptions::new().read(true).open(&path) else {
+        return false;
+    };
+    // LOCK_NB | LOCK_EX fails when another process already holds it.
+    let rc = unsafe { libc_flock(file.as_raw_fd(), 2 | 4) };
+    if rc == 0 {
+        // We got the lock, so nobody else holds it. Drop it immediately.
+        unsafe { libc_flock(file.as_raw_fd(), 8) };
+        return false;
+    }
+    true
+}
+
+#[cfg(not(windows))]
+fn take_unix_lock() -> Result<bool> {
+    use std::os::unix::io::AsRawFd;
+    let path = lock_path_for(current_id());
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    let file = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(&path)
+        .with_context(|| format!("open {}", path.display()))?;
+    // LOCK_EX | LOCK_NB. Held until this process exits (the fd stays open).
+    let rc = unsafe { libc_flock(file.as_raw_fd(), 2 | 4) };
+    if rc != 0 {
+        return Ok(false);
+    }
+    use std::io::Write;
+    let mut file = file;
+    let _ = file.set_len(0);
+    let _ = write!(file, "{}\n", std::process::id());
+    let _ = file.flush();
+    // Leak the fd so the lock survives for the process lifetime.
+    std::mem::forget(file);
+    Ok(true)
+}
+
+#[cfg(not(windows))]
+fn signal_unix_quit(id: Option<&str>) {
+    let path = unix_quit_path(id);
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    if std::fs::write(&path, b"quit\n").is_err() {
+        note_life("Encerrar host could not write the quit file; host was not signaled");
+    }
+}
+
+#[cfg(not(windows))]
+fn start_quit_watcher_unix() {
+    note_life(&format!(
+        "host process became the PTY owner; {}; started by {}",
+        describe_exe(),
+        describe_parent()
+    ));
+    let _ = std::fs::write(pid_path_for(current_id()), std::process::id().to_string());
+    let _ = std::fs::remove_file(quit_request_path(current_id()));
+    if let Err(err) = spawn_quit_watcher() {
+        note_life(&format!("quit watcher failed: {err:#}"));
+        log::warn!("bethstudio-host: quit watcher: {err:#}");
+    }
+    spawn_alive_heartbeat();
+}
+
+#[cfg(not(windows))]
+fn request_stop_id_unix(id: Option<&str>) -> Result<()> {
+    let label = id.unwrap_or("legacy");
+    note_life(&format!(
+        "Encerrar host confirmed by pid {}; signaling quit for {label}",
+        std::process::id()
+    ));
+    write_quit_request(id, "tray Encerrar Beth Studio (user confirmed)");
+    signal_unix_quit(id);
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while id_running(id) && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    if id_running(id) {
+        note_life(&format!(
+            "quit file did not stop host {label} within 5s; terminating the pid"
+        ));
+        terminate_host_process_unix(id);
+    }
+    let deadline = Instant::now() + Duration::from_secs(2);
+    while id_running(id) && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let _ = std::fs::remove_file(socket_for(id));
+    if id_running(id) {
+        anyhow::bail!("bethstudio-host {label} did not exit");
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn spawn_quit_watcher() -> Result<()> {
+    let path = unix_quit_path(current_id());
+    let _ = std::fs::remove_file(&path);
+    let _ = std::thread::Builder::new()
+        .name("bethstudio-host-quit".into())
+        .spawn(move || {
+            let started = Instant::now();
+            loop {
+                std::thread::sleep(Duration::from_millis(200));
+                if path.is_file() {
+                    let when = if started.elapsed() < Duration::from_secs(2) {
+                        "quit file was already present when this host started"
+                    } else {
+                        "quit file written"
+                    };
+                    let request = quit_request_path(current_id());
+                    let who = match std::fs::read_to_string(&request) {
+                        Ok(text) => format!("requested by: {}", text.trim()),
+                        Err(_) => "requester UNKNOWN: no quit-request file, so it was not \
+                                   the Beth Studio tray (another program wrote the quit file)"
+                            .to_string(),
+                    };
+                    let _ = std::fs::remove_file(&request);
+                    let _ = std::fs::remove_file(&path);
+                    let panes = mux::Mux::try_get().map(|m| m.iter_panes().len()).unwrap_or(0);
+                    note_life(&format!(
+                        "{when}; host exiting on purpose (no crash), closing {panes} pane(s); {who}"
+                    ));
+                    let _ = std::fs::remove_file(socket_path());
+                    std::process::exit(0);
+                }
+            }
+        });
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn spawn_alive_heartbeat() {
+    let _ = std::thread::Builder::new()
+        .name("bethstudio-host-alive".into())
+        .spawn(|| {
+            loop {
+                std::thread::sleep(Duration::from_secs(60));
+                let panes = mux::Mux::try_get().map(|m| m.iter_panes().len()).unwrap_or(0);
+                note_life(&format!("alive panes={panes}"));
+            }
+        });
+}
+
+#[cfg(not(windows))]
+fn terminate_host_process_unix(id: Option<&str>) {
+    let label = id.unwrap_or("legacy");
+    let Some(pid) = std::fs::read_to_string(pid_path_for(id))
+        .ok()
+        .and_then(|s| s.trim().parse::<i32>().ok())
+    else {
+        note_life(&format!(
+            "host {label} has no pid file; not killing it (other hosts stay up)"
+        ));
+        return;
+    };
+    if pid <= 1 {
+        return;
+    }
+    let name = unix_process_name(pid as u32).unwrap_or_default();
+    let base = std::path::Path::new(&name)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if base != "bethstudio-host" && !base.starts_with("bethstudio-host") {
+        note_life(&format!(
+            "pid {pid} is {name:?}, not bethstudio-host; not killing it"
+        ));
+        return;
+    }
+    note_life(&format!("killing host pid {pid}"));
+    unsafe {
+        libc_kill(pid, 15);
+    }
+}
+
+#[cfg(not(windows))]
+unsafe fn libc_flock(fd: i32, op: i32) -> i32 {
+    extern "C" {
+        fn flock(fd: i32, op: i32) -> i32;
+    }
+    flock(fd, op)
+}
+
+#[cfg(not(windows))]
+unsafe fn libc_kill(pid: i32, sig: i32) -> i32 {
+    extern "C" {
+        fn kill(pid: i32, sig: i32) -> i32;
+    }
+    kill(pid, sig)
 }
 
 #[cfg(test)]

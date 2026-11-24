@@ -78,7 +78,7 @@ export function SshConfirm({
       <div
         role="alertdialog"
         aria-modal="true"
-        className={cn("w-[min(460px,92vw)] rounded-lg border bg-bg-card p-4 shadow-2xl", danger ? "border-status-err/50" : "border-border-strong")}
+        className={cn("w-[min(460px,92vw)] bt-dialog p-4", danger ? "border-status-err/50" : "border-border-strong")}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onCancel()}
       >
@@ -166,7 +166,7 @@ export function SshAskSecret({
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/50 pt-[16vh]" onMouseDown={onCancel}>
       <form
-        className="w-[min(420px,92vw)] rounded-lg border border-border-strong bg-bg-card p-4 shadow-2xl"
+        className="w-[min(420px,92vw)] bt-dialog p-4"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onCancel()}
         onSubmit={(e) => {

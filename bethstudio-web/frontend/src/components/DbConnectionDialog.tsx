@@ -144,7 +144,7 @@ export function DbConnectionDialog({
         role="dialog"
         aria-modal="true"
         aria-label={editing ? "Editar conexão" : "Nova conexão"}
-        className="flex max-h-[90vh] w-[min(640px,94vw)] flex-col rounded-lg border border-border bg-bg-card text-[12px] text-text-1 shadow-2xl"
+        className="flex max-h-[90vh] w-[min(640px,94vw)] flex-col bt-dialog text-[12px] text-text-1"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
       >
@@ -260,7 +260,7 @@ export function DbConnectionDialog({
                     {info?.has_database_level && (
                       <button
                         type="button"
-                        className="flex shrink-0 items-center gap-1 rounded border border-border bg-bg-hover px-2 text-[12px] text-text-1 hover:bg-border disabled:opacity-50"
+                        className="flex shrink-0 items-center gap-1 bt-field bg-bg-hover px-2 text-[12px] text-text-1 hover:bg-border disabled:opacity-50"
                         title="Conecta com os dados acima e lista os bancos para escolher"
                         aria-expanded={!!dbList}
                         disabled={listing || !!busy}
@@ -273,7 +273,7 @@ export function DbConnectionDialog({
                   </div>
                   {listError && <span className="text-[11px] text-status-err">{listError}</span>}
                   {dbList && (
-                    <div className="max-h-[180px] overflow-auto rounded border border-border bg-bg-panel" role="listbox" aria-label="Bancos disponíveis">
+                    <div className="max-h-[180px] overflow-auto bt-field bg-bg-panel" role="listbox" aria-label="Bancos disponíveis">
                       {dbList.length === 0 && <div className="px-2 py-1.5 text-text-3">Nenhum banco acessível</div>}
                       {dbList.map((name) => (
                         <button
@@ -331,7 +331,7 @@ export function DbConnectionDialog({
             </>
           )}
 
-          <label className="flex items-start gap-2 rounded border border-border bg-bg-panel p-2 text-text-1">
+          <label className="flex items-start gap-2 bt-field bg-bg-panel p-2 text-text-1">
             <input type="checkbox" className="mt-0.5" checked={form.read_only} onChange={(e) => set("read_only", e.target.checked)} />
             <span>
               <span className="flex items-center gap-1 font-semibold">

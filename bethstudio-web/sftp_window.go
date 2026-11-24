@@ -15,10 +15,7 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -49,33 +46,7 @@ func (s *server) serveSFTPWindow(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
-func launchSFTPWindow(hostID string) error {
-	self, err := os.Executable()
-	if err != nil {
-		return err
-	}
-	if resolved, err := filepath.EvalSymlinks(self); err == nil {
-		self = resolved
-	}
-	cmd := exec.Command(self, "--sftp", hostID)
-	cmd.Dir = filepath.Dir(self)
-	// Sem HideWindow: STARTF_USESHOWWINDOW+SW_HIDE faz o Windows ignorar o
-	// primeiro ShowWindow do filho, e a janela SFTP fica invisível (o processo
-	// sobe, a UI só diz "janela aberta"). CREATE_NO_WINDOW evita console.
-	allowForeground()
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		CreationFlags: 0x08000000 | 0x00000008 | 0x00000200, // CREATE_NO_WINDOW | DETACHED | NEW_GROUP
-	}
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("não foi possível abrir a janela SFTP: %w", err)
-	}
-	go func() { _ = cmd.Wait() }()
-	log.Printf("sftp: janela aberta para host %s (pid %d)", hostID, cmd.Process.Pid)
-	return nil
-}
-
-// runSFTPMode: processo dedicado so' com a UI SFTP (sem ponte com o host).
-func runSFTPMode(hostID string, noWindow, devtools bool, port int, winSize, devOrig string) {
+func runSFTPModeWindows(hostID string, noWindow, devtools bool, port int, winSize, devOrig string) {
 	hostID = strings.TrimSpace(hostID)
 	if !sshHostIDRe.MatchString(hostID) {
 		fatal("--sftp: id de host inválido")
@@ -114,7 +85,6 @@ func runSFTPMode(hostID string, noWindow, devtools bool, port int, winSize, devO
 
 	title := sshEndpointLabel(h)
 	windowTitle = "SFTP · " + title
-	webviewDataName = "WebView2-sftp"
 	log.Printf("bethstudio-web sftp: host=%s label=%s em %s", hostID, title, base)
 	fmt.Fprintln(os.Stdout, url)
 

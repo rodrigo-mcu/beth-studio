@@ -121,16 +121,16 @@ export function PhoneDevicesSection({ conn, onMessage }: { conn: Connection; onM
               readOnly
               value={pairing.link}
               aria-label="Link para conectar o celular"
-              className="mt-2 w-full rounded border border-border bg-bg-term px-2 py-1.5 font-mono text-[12px] text-text-1"
+              className="mt-2 w-full bt-field bg-bg-term px-2 py-1.5 font-mono text-[12px] text-text-1"
               onFocus={(e) => e.currentTarget.select()}
             />
             <div className="mt-2 flex gap-2">
-              <button type="button" className="rounded border border-border px-2.5 py-1 text-[12px] text-text-1" onClick={() => void copyLink()}>
+              <button type="button" className="bt-field px-2.5 py-1 text-[12px] text-text-1" onClick={() => void copyLink()}>
                 Copiar link
               </button>
               <button
                 type="button"
-                className="rounded border border-border px-2.5 py-1 text-[12px] text-text-1"
+                className="bt-field px-2.5 py-1 text-[12px] text-text-1"
                 onClick={() => void post("/api/phone/devices/pairing/cancel").then((ok) => ok && setPairing(null))}
               >
                 Cancelar
@@ -146,7 +146,7 @@ export function PhoneDevicesSection({ conn, onMessage }: { conn: Connection; onM
         {devices.length === 0 ? (
           <p className="text-[13px] text-text-3">Nenhum celular conectado ainda.</p>
         ) : (
-          <ul className="divide-y divide-border rounded border border-border">
+          <ul className="divide-y divide-border bt-field">
             {devices.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
                 <div className="min-w-0 flex-1">
@@ -163,7 +163,7 @@ export function PhoneDevicesSection({ conn, onMessage }: { conn: Connection; onM
                         value={editing.name}
                         maxLength={40}
                         aria-label="Nome do aparelho"
-                        className="w-48 rounded border border-border bg-bg-term px-2 py-1 text-[13px] text-text-1"
+                        className="w-48 bt-field bg-bg-term px-2 py-1 text-[13px] text-text-1"
                         onChange={(e) => setEditing({ id: d.id, name: e.target.value })}
                       />
                       <button type="submit" className="rounded bg-accent px-2.5 py-1 text-[12px] text-white">

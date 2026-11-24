@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, ChevronRight, File, FileText, Folder, FolderPlus, HardDrive, Home, Loader2, RefreshCw, TerminalSquare, X } from "lucide-react";
+import { ArrowUp, ChevronRight, FileText, Folder, FolderPlus, HardDrive, Home, Loader2, RefreshCw, TerminalSquare, X } from "lucide-react";
+import { FileKindIcon } from "./FileKindIcon";
 import type { Connection } from "@/lib/connection";
 import { crumbs, joinPath, NEW_FILE_EXTS, newFileNameError, openableFile, rootLabel, withTextExt, wslFromUNC } from "@/lib/folderBrowser";
 import { cn } from "@/lib/utils";
@@ -182,7 +183,7 @@ export function FolderBrowser({
       }}
     >
       <div
-        className="flex h-[min(640px,86vh)] w-[min(820px,95vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex h-[min(640px,86vh)] w-[min(820px,95vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
       >
@@ -226,7 +227,7 @@ export function FolderBrowser({
             />
           ) : (
           <div
-            className="flex min-w-0 flex-1 cursor-text items-center overflow-x-auto rounded border border-border bg-bg-term px-1.5 py-1 text-[12px]"
+            className="flex min-w-0 flex-1 cursor-text items-center overflow-x-auto bt-field bg-bg-term px-1.5 py-1 text-[12px]"
             title="Clique aqui para digitar ou colar um caminho"
             onClick={(e) => e.target === e.currentTarget && setTyped(cur)}
           >
@@ -245,7 +246,7 @@ export function FolderBrowser({
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
           <button
-            className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[12px] text-text-1 hover:bg-bg-hover"
+            className="flex items-center gap-1 bt-field px-2 py-1 text-[12px] text-text-1 hover:bg-bg-hover"
             title="Criar uma pasta aqui"
             onClick={() => setNewDir("")}
           >
@@ -259,7 +260,7 @@ export function FolderBrowser({
               autoFocus
               value={newDir}
               placeholder="Nome da pasta nova"
-              className="h-7 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 text-[13px] text-text-1 outline-none focus:border-accent"
+              className="h-7 min-w-0 flex-1 bt-field bg-bg-term px-2 text-[13px] text-text-1 outline-none"
               onChange={(e) => setNewDir(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void mkdir();
@@ -327,13 +328,7 @@ export function FolderBrowser({
                   onClick={() => setSelected(p)}
                   onDoubleClick={() => activate(e)}
                 >
-                  {e.is_dir ? (
-                    <Folder size={15} className="shrink-0 text-accent-text" />
-                  ) : openableFile(e.name) ? (
-                    <FileText size={15} className="shrink-0 text-text-2" />
-                  ) : (
-                    <File size={15} className="shrink-0 text-text-3" />
-                  )}
+                  <FileKindIcon name={e.name} isDir={e.is_dir} size={18} />
                   <span className="min-w-0 flex-1 truncate text-text-1">{e.name}</span>
                   {!e.is_dir && <span className="shrink-0 text-[11px] text-text-3">{fmtSize(e.size)}</span>}
                   <span className="w-24 shrink-0 text-right text-[11px] text-text-3">{fmtDate(e.mtime)}</span>
@@ -355,13 +350,13 @@ export function FolderBrowser({
                 ref={nameRef}
                 value={fileName}
                 placeholder="notas"
-                className="h-8 min-w-0 flex-1 rounded border border-border bg-bg-term px-2 text-[13px] text-text-1 outline-none focus:border-accent"
+                className="h-8 min-w-0 flex-1 bt-field bg-bg-term px-2 text-[13px] text-text-1 outline-none"
                 onChange={(e) => setFileName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && void create()}
               />
               <select
                 value={ext}
-                className="h-8 rounded border border-border bg-bg-term px-1.5 text-[13px] text-text-1"
+                className="h-8 bt-field bg-bg-term px-1.5 text-[13px] text-text-1"
                 title="Tipo do arquivo (se o nome não disser)"
                 onChange={(e) => setExt(e.target.value)}
               >

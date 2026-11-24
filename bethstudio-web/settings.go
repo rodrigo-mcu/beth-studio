@@ -90,6 +90,12 @@ type webSettings struct {
 	AgentProcs *AgentProcSettings `json:"agent_procs,omitempty"`
 	// Atalhos para abrir agentes pelo celular (launchers.go).
 	Launchers *LauncherSettings `json:"launchers,omitempty"`
+	// Atalho da busca da barra lateral. Vazio = o padrão do sistema
+	// (Command+F no macOS, Ctrl+F no Windows). Mantido para versões
+	// anteriores; a página nova lê Shortcuts.
+	SearchShortcut string `json:"search_shortcut,omitempty"`
+	// Atalhos da página, por id (search, new_tab, …). Vazio = o padrão.
+	Shortcuts map[string]string `json:"shortcuts,omitempty"`
 }
 
 type SidebarPrefs struct {
@@ -101,6 +107,8 @@ type SidebarPrefs struct {
 	// listas de "Nao organizados" / "Como no Beth Studio" (nil = ligado).
 	KindOrder   []string `json:"kind_order,omitempty"`
 	SplitByKind *bool    `json:"split_by_kind,omitempty"`
+	// Largura da pasta da guia (sidebar da direita). 0 = padrão.
+	FilesWidth int `json:"files_width,omitempty"`
 }
 
 // SpawnedPane: pane criado pelo web (a GUI nao grava o comando desses).
@@ -116,6 +124,15 @@ type SpawnedPane struct {
 type UITheme struct {
 	Mode    string `json:"mode"`
 	ThemeID string `json:"theme_id,omitempty"`
+	// Vibrancy: no macOS, a barra lateral deixa ver o material da janela
+	// (NSVisualEffectView). O Windows ignora.
+	// Sem omitempty: false tem de ir na resposta. Omitido, o cliente trata
+	// como “ainda não carregou” e o localStorage religa o material.
+	Vibrancy bool `json:"vibrancy"`
+	// Glass é a potência do véu do liquid glass no macOS, de 15 a 100. 0 vale 55.
+	Glass int `json:"glass,omitempty"`
+	// GlassAlpha é a transparência do liquid glass, de 15 a 100. 0 vale 70.
+	GlassAlpha int `json:"glass_alpha,omitempty"`
 }
 
 // SettingsSnapshot is what the UI gets (GET /api/settings and the
@@ -135,6 +152,9 @@ type SettingsSnapshot struct {
 	Sidebar         SidebarPrefs              `json:"sidebar"`
 	// pane id -> nome de aba dado pelo usuario (so' os do host atual)
 	PaneNames map[string]string `json:"pane_names"`
+	// Atalho da busca. Vazio = padrão do sistema.
+	SearchShortcut string `json:"search_shortcut,omitempty"`
+	Shortcuts      map[string]string `json:"shortcuts,omitempty"`
 }
 
 type paneMeta struct{ title, cwd string }
@@ -387,6 +407,15 @@ func (st *settingsStore) snapshotLocked() SettingsSnapshot {
 	if st.s.UITheme != nil {
 		snap.UITheme = *st.s.UITheme
 		snap.UITheme.Mode = legacyUIMode(snap.UITheme.Mode)
+	}
+	snap.SearchShortcut = st.s.SearchShortcut
+	if st.s.Shortcuts == nil {
+		snap.Shortcuts = map[string]string{}
+	} else {
+		snap.Shortcuts = st.s.Shortcuts
+	}
+	if snap.Shortcuts["search"] == "" && st.s.SearchShortcut != "" {
+		snap.Shortcuts["search"] = st.s.SearchShortcut
 	}
 	snap.Sidebar = SidebarPrefs{Width: defaultSidebarWidth}
 	if st.s.Sidebar != nil {
@@ -716,6 +745,86 @@ func (st *settingsStore) setUITheme(u UITheme) (SettingsSnapshot, error) {
 		return SettingsSnapshot{}, fmt.Errorf("modo inválido: %s", u.Mode)
 	}
 	return st.mutate(func() error {
+		// Vibrancy é independente do modo. Quem não manda o campo (as
+		// telas antigas) mantém o que já estava salvo.
+		if st.s.UITheme != nil {
+			u.Vibrancy = st.s.UITheme.Vibrancy
+			if u.Glass == 0 {
+				u.Glass = st.s.UITheme.Glass
+			}
+			if u.GlassAlpha == 0 {
+				u.GlassAlpha = st.s.UITheme.GlassAlpha
+			}
+		}
+		st.s.UITheme = &u
+		return st.saveLocked()
+	})
+}
+
+// setSearchShortcut grava a combinação da busca. Vazio volta ao padrão.
+func (st *settingsStore) setSearchShortcut(s string) (SettingsSnapshot, error) {
+	return st.setShortcut("search", s)
+}
+
+// setShortcut grava uma combinação. Vazio volta ao padrão daquele id.
+func (st *settingsStore) setShortcut(id, s string) (SettingsSnapshot, error) {
+	id = strings.TrimSpace(id)
+	s = strings.TrimSpace(s)
+	if id == "" || len(id) > 32 || len(s) > 40 {
+		return SettingsSnapshot{}, fmt.Errorf("atalho inválido")
+	}
+	return st.mutate(func() error {
+		if st.s.Shortcuts == nil {
+			st.s.Shortcuts = map[string]string{}
+		}
+		if s == "" {
+			delete(st.s.Shortcuts, id)
+		} else {
+			st.s.Shortcuts[id] = s
+		}
+		if id == "search" {
+			st.s.SearchShortcut = s
+		}
+		return st.saveLocked()
+	})
+}
+
+// setVibrancy liga o material da barra lateral no macOS. Não mexe no tema.
+func (st *settingsStore) setVibrancy(on bool) (SettingsSnapshot, error) {
+	return st.mutate(func() error {
+		u := UITheme{Mode: "dark"}
+		if st.s.UITheme != nil {
+			u = *st.s.UITheme
+		}
+		u.Vibrancy = on
+		st.s.UITheme = &u
+		return st.saveLocked()
+	})
+}
+
+func clampGlass(v int) int {
+	if v < 15 {
+		return 15
+	}
+	if v > 100 {
+		return 100
+	}
+	return v
+}
+
+// setGlassTune grava potência e transparência do liquid glass. nil mantém o valor.
+func (st *settingsStore) setGlassTune(power, alpha *int) (SettingsSnapshot, error) {
+	return st.mutate(func() error {
+		u := UITheme{Mode: "dark"}
+		if st.s.UITheme != nil {
+			u = *st.s.UITheme
+		}
+		if power != nil {
+			u.Glass = clampGlass(*power)
+		}
+		if alpha != nil {
+			u.GlassAlpha = clampGlass(*alpha)
+		}
 		st.s.UITheme = &u
 		return st.saveLocked()
 	})
@@ -734,6 +843,7 @@ func (st *settingsStore) clearPanes() (SettingsSnapshot, int, error) {
 
 const (
 	defaultSidebarWidth = 288
+	defaultFilesWidth   = 308
 	minSidebarWidth     = 200
 	maxSidebarWidth     = 640
 )
@@ -747,6 +857,18 @@ func (st *settingsStore) setSidebar(p SidebarPrefs) (SettingsSnapshot, error) {
 	}
 	if p.Width > maxSidebarWidth {
 		p.Width = maxSidebarWidth
+	}
+	if p.FilesWidth == 0 && st.s.Sidebar != nil {
+		p.FilesWidth = st.s.Sidebar.FilesWidth
+	}
+	if p.FilesWidth == 0 {
+		p.FilesWidth = defaultFilesWidth
+	}
+	if p.FilesWidth < minSidebarWidth {
+		p.FilesWidth = minSidebarWidth
+	}
+	if p.FilesWidth > maxSidebarWidth {
+		p.FilesWidth = maxSidebarWidth
 	}
 	switch p.View {
 	case "", "web", "host", "kind", "folder":

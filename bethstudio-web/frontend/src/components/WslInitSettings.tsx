@@ -84,7 +84,7 @@ function DistroRow({
   const field = "w-full rounded border border-border bg-bg-term px-2 py-1 text-[13px] text-text-1 outline-none focus:border-accent";
 
   return (
-    <div className="space-y-2 rounded border border-border bg-bg-panel p-3">
+    <div className="space-y-2 bt-field bg-bg-panel p-3">
       <label className="flex items-center gap-2 text-[13px] font-semibold text-text-1">
         <input type="checkbox" checked={cfg.enabled} onChange={(e) => commit({ ...cfg, enabled: e.target.checked })} />
         {distro}: perguntar se roda o comando de inicialização quando faltar uma pasta

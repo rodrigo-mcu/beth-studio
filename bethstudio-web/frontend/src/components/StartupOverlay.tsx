@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Connection } from "@/lib/connection";
-import { onScreened, screenedPanes, startupItems, startupLogLine, startupStage, type StageKey } from "@/lib/startup";
+import { dragMacWindow } from "@/lib/windowFrame";
+import { onScreened, screenedPanes, startupBlocked, startupItems, startupLogLine, startupStage, type StageKey } from "@/lib/startup";
 import type { SocketState } from "@/lib/types";
 
 // quando o módulo do App terminou de carregar (ms desde o início da página)
@@ -47,7 +48,14 @@ export function StartupOverlay({ conn, socket, paneCount, layoutReady, activePan
     screened: screenedPanes(),
     stageMs: now - stageRef.current.since,
   });
-  const done = finished || skipped || stage.done;
+  const done = finished || skipped || stage.done || !startupBlocked({
+    socket,
+    paneCount,
+    layoutReady,
+    activePanes,
+    screened: screenedPanes(),
+    stageMs: now - stageRef.current.since,
+  });
 
   // etapa nova: guarda quando a anterior terminou
   if (stage.key !== stageRef.current.key) {
@@ -68,7 +76,15 @@ export function StartupOverlay({ conn, socket, paneCount, layoutReady, activePan
   if (done) return null;
   const list = startupItems(stage.key, allPanes, activePanes, screenedPanes());
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3.5 bg-bg-body text-[15px] text-text-2">
+    <div
+      className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-3.5 bg-bg-body text-[15px] text-text-2"
+      onMouseDown={(e) => {
+        if (e.button !== 0 || e.detail > 1) return;
+        const t = e.target as Element | null;
+        if (t?.closest("button")) return;
+        dragMacWindow();
+      }}
+    >
       {/* mesmo giro do #boot: animação de CSS (compositor), gira mesmo com a página ocupada */}
       <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-text-3/25 border-t-accent" />
       <div>{stage.text}</div>

@@ -32,8 +32,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"golang.org/x/sys/windows"
 )
 
 // textFileExt / imageFileExt: extensoes permitidas (minusculas, com ponto).
@@ -42,6 +40,38 @@ var textFileExt = map[string]string{
 	".markdown": "text/markdown; charset=utf-8",
 	".txt":      "text/plain; charset=utf-8",
 	".log":      "text/plain; charset=utf-8",
+	// código e configuração: o painel abre como texto e pinta a sintaxe
+	".crs": "text/plain; charset=utf-8", ".mika": "text/plain; charset=utf-8", ".mui": "text/plain; charset=utf-8",
+	".rs": "text/plain; charset=utf-8", ".go": "text/plain; charset=utf-8",
+	".py": "text/plain; charset=utf-8", ".js": "text/plain; charset=utf-8",
+	".jsx": "text/plain; charset=utf-8", ".ts": "text/plain; charset=utf-8",
+	".tsx": "text/plain; charset=utf-8", ".mjs": "text/plain; charset=utf-8",
+	".cjs": "text/plain; charset=utf-8", ".c": "text/plain; charset=utf-8",
+	".h": "text/plain; charset=utf-8", ".cpp": "text/plain; charset=utf-8",
+	".cc": "text/plain; charset=utf-8", ".hpp": "text/plain; charset=utf-8",
+	".hh": "text/plain; charset=utf-8", ".java": "text/plain; charset=utf-8",
+	".kt": "text/plain; charset=utf-8", ".kts": "text/plain; charset=utf-8",
+	".cs": "text/plain; charset=utf-8", ".swift": "text/plain; charset=utf-8",
+	".rb": "text/plain; charset=utf-8", ".php": "text/plain; charset=utf-8",
+	".lua": "text/plain; charset=utf-8", ".zig": "text/plain; charset=utf-8",
+	".hs": "text/plain; charset=utf-8", ".ex": "text/plain; charset=utf-8",
+	".exs": "text/plain; charset=utf-8", ".scala": "text/plain; charset=utf-8",
+	".pl": "text/plain; charset=utf-8", ".pm": "text/plain; charset=utf-8",
+	".r": "text/plain; charset=utf-8", ".dart": "text/plain; charset=utf-8",
+	".vue": "text/plain; charset=utf-8", ".svelte": "text/plain; charset=utf-8",
+	".sh": "text/plain; charset=utf-8", ".bash": "text/plain; charset=utf-8",
+	".zsh": "text/plain; charset=utf-8", ".ps1": "text/plain; charset=utf-8",
+	".json": "text/plain; charset=utf-8", ".jsonl": "text/plain; charset=utf-8",
+	".yaml": "text/plain; charset=utf-8", ".yml": "text/plain; charset=utf-8",
+	".toml": "text/plain; charset=utf-8", ".xml": "text/plain; charset=utf-8",
+	".html": "text/plain; charset=utf-8", ".htm": "text/plain; charset=utf-8",
+	".css": "text/plain; charset=utf-8", ".scss": "text/plain; charset=utf-8",
+	".sql": "text/plain; charset=utf-8", ".ini": "text/plain; charset=utf-8",
+	".cfg": "text/plain; charset=utf-8", ".conf": "text/plain; charset=utf-8",
+	".env": "text/plain; charset=utf-8", ".csv": "text/plain; charset=utf-8",
+	".mod": "text/plain; charset=utf-8", ".sum": "text/plain; charset=utf-8",
+	".lock": "text/plain; charset=utf-8", ".gitignore": "text/plain; charset=utf-8",
+	"app.bundle": "application/json; charset=utf-8",
 }
 
 var imageFileExt = map[string]string{
@@ -112,6 +142,10 @@ func validateLocalPath(raw string) (string, error) {
 // localFileCategory: "text" | "image" | "" (extensao nao permitida).
 func localFileCategory(path string) (mime, category string) {
 	ext := strings.ToLower(filepath.Ext(path))
+	base := strings.ToLower(filepath.Base(path))
+	if m, ok := textFileExt[base]; ok {
+		return m, "text"
+	}
 	if m, ok := textFileExt[ext]; ok {
 		return m, "text"
 	}
@@ -327,16 +361,6 @@ func serveOpenLocalFileDefault(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"path": path})
 }
 
-// ShellExecute abre com a associação do Windows, sem passar por cmd.exe
-// (um nome com & ou | não vira outro comando).
-var launchLocalFileDefault = func(path string) error {
-	verb, err := windows.UTF16PtrFromString("open")
-	if err != nil {
-		return err
-	}
-	file, err := windows.UTF16PtrFromString(path)
-	if err != nil {
-		return err
-	}
-	return windows.ShellExecute(0, verb, file, nil, nil, windows.SW_SHOWNORMAL)
-}
+// launchLocalFileDefault abre com a associação do sistema. No Windows é
+// ShellExecute (localfile_windows.go); nos outros, `open` / `xdg-open`.
+var launchLocalFileDefault = openWithSystem

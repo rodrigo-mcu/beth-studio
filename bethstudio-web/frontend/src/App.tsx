@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { AlertTriangle, Lock, PanelLeftOpen, TerminalSquare, X } from "lucide-react";
+import { AlertTriangle, Lock, PanelLeftOpen, X } from "lucide-react";
+import { WorktreePanel } from "@/components/WorktreePanel";
+
+import { shortCwd } from "@/lib/panes";
 import { Connection } from "@/lib/connection";
 import { loadCatalog } from "@/lib/appearance";
 import type { PaneInfo, SettingsEvent, StatusEvent } from "@/lib/types";
 import * as L from "@/lib/layout";
-import { beginExternalPaneDrag, dispatchPaneDrag, endDrag, startPaneDrag, useDrag, draggedPane, PANE_MIME } from "@/lib/dnd";
+import { beginExternalPaneDrag, dispatchPaneDrag, endDrag, startPaneDrag, useDrag } from "@/lib/dnd";
 import { pointInPage, shouldCloseAfterDrop, toCssPoint } from "@/lib/termDrop";
 import { Sidebar, type SidebarMode } from "@/components/Sidebar";
 import { TerminalView } from "@/components/TerminalView";
@@ -26,6 +29,7 @@ import type { ResultActions } from "@/components/SearchResults";
 import { useSearch } from "@/lib/useSearch";
 import { SettingsDialog, type SettingsSection } from "@/components/SettingsDialog";
 import { NewTerminalDialog } from "@/components/NewTerminalDialog";
+import { EmptyTabBoard } from "@/components/EmptyTabBoard";
 import { SplitShellMenu } from "@/components/SplitShellMenu";
 import { TaskManager } from "@/components/TaskManager";
 import { FilePreviewPanel } from "@/components/FilePreviewPanel";
@@ -33,12 +37,15 @@ import { FolderBrowser, type FolderBrowserMode } from "@/components/FolderBrowse
 import { UNTITLED_PATH } from "@/lib/folderBrowser";
 import { StartupOverlay } from "@/components/StartupOverlay";
 import { resolveLinkPath } from "@/lib/localFile";
+import { paneFolder } from "@/lib/worktree";
+import { nativeGlassPlates, toggleFolderPanel } from "@/lib/sidebarFrame";
+import { shellVibrancyOn } from "@/lib/appearanceTune";
 import { installLinkGuard } from "@/lib/links";
 import { SshScreen, type ToolKind } from "@/components/SshScreen";
 import { TopResizeEdges } from "@/components/WindowControls";
 import { AppTitle } from "@/components/AppTitle";
 import { TooltipLayer } from "@/components/TooltipLayer";
-import { useWindowState } from "@/lib/windowFrame";
+import { dragMacWindow, isMacTitlebar, useWindowState, zoomMacWindow } from "@/lib/windowFrame";
 import { isRemote, openRemoteTab } from "@/lib/remote";
 import { RemoteConnectedBadge } from "@/components/RemoteStudioSection";
 import { returnFocus, withTabFocus } from "@/lib/termFocus";
@@ -53,6 +60,10 @@ import { VoiceSettingsDialog } from "@/components/VoiceSettingsDialog";
 import { useAgentAlerts, useNotifyPrefs } from "@/lib/notify";
 import { aloneInHostTab } from "@/lib/hostFit";
 import { paneLabel } from "@/lib/panes";
+import { displayName, paneIdentity } from "@/lib/paneIdentity";
+import { AGENT_COMMAND, agentFolder } from "@/lib/agents";
+import { cn } from "@/lib/utils";
+import { eventMatches, shortcutOf } from "@/lib/shortcut";
 import { useCatalog } from "@/lib/appearance";
 import { LIGHT, NAVY_DARK, VSCODE_DARK, applyUI, deriveUI, normalizeUIMode, uiCSSPayload, type UIColors } from "@/lib/uiTheme";
 
@@ -429,7 +440,7 @@ export function App() {
   const focusedFolder = () => {
     const p = focusedPane !== null ? paneById.get(focusedPane) : undefined;
     return p?.cwd
-      ? (resolveLinkPath(p.cwd, { paneKind: p.kind, paneWsl: p.wsl, paneDistro: p.wsl_distro || p.distro, paneCwd: p.cwd }) ?? "")
+      ? paneFolder(p.cwd, { paneKind: p.kind, paneWsl: p.wsl, paneDistro: p.wsl_distro || p.distro, paneCwd: p.cwd }, !/Windows/.test(navigator.userAgent))
       : "";
   };
   const openFileDialog = () => {
@@ -466,6 +477,38 @@ export function App() {
       };
       tick();
     });
+  const agentFolderRequests = useRef(new Set<number>());
+  const openAgentFolder = (paneId: number, dest: string): boolean => {
+    const info = paneById.get(paneId);
+    if (!info) return false;
+    const tool = paneIdentity({ title: info.title, tool: info.tool, screen: conn.lastScreenText(paneId) }, "").tool;
+    if (!tool) return false;
+    if (agentFolderRequests.current.has(paneId)) return true;
+    agentFolderRequests.current.add(paneId);
+    void (async () => {
+      if (info.kind === "ssh" || info.kind === "serial") throw new Error("esta ação requer um terminal local");
+      const shells = await conn.ensureShells();
+      const localShell = shells.find((s) => ["login", "zsh", "bash", "sh"].includes(s.id))?.id;
+      const wsl = info.wsl || info.kind === "wsl";
+      const sameShell = sameShellId(wsl ? { kind: "wsl", distro: info.wsl_distro ?? info.distro } : info, shells);
+      const shell = sameShell ?? (wsl ? null : localShell ?? shells.find((s) => ["pwsh", "powershell", "cmd"].includes(s.id))?.id);
+      if (!shell) throw new Error("nenhum shell compatível disponível");
+      const cwd = agentFolder(dest, info.cwd, shell);
+      if (!cwd) throw new Error("o caminho informado não é válido para este shell");
+      return conn.spawn({ shell_id: shell, window_id: info.window_id, cwd });
+    })().then(async ({ pane_id }) => {
+        await untilListed(pane_id);
+        const latest = getLayout();
+        if (!latest) throw new Error("a organização das abas não está disponível");
+        const next = L.addTab(latest, displayName(tool), pane_id);
+        commit(next);
+        focusPane(next.active, pane_id);
+        if (!conn.send(pane_id, AGENT_COMMAND[tool] + "\r")) throw new Error("sem conexão com o terminal novo");
+      })
+      .catch((e: Error) => setError(`Não foi possível abrir ${displayName(tool)} na nova pasta: ${e.message}`))
+      .finally(() => agentFolderRequests.current.delete(paneId));
+    return true;
+  };
   const newSplit = (target: number, zone: SplitZone, shellId: string, label: string) => {
     const info = paneById.get(target);
     if (!info) return;
@@ -735,8 +778,51 @@ export function App() {
   });
 
   const bridgeDown = snap.socket === "open" && snap.status && snap.status.state !== "up";
+  const shortcuts = snap.settings?.shortcuts;
+  const searchShortcut = shortcutOf(shortcuts, "search");
 
   // Abas do web com algum agente aguardando.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      const typing = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement | null)?.isContentEditable;
+      const hit = (id: string) => eventMatches(e, shortcutOf(shortcuts, id));
+      if (hit("search") && (!typing || (e.target as HTMLElement).id === "beth-search")) {
+        e.preventDefault();
+        document.getElementById("beth-search")?.focus();
+        return;
+      }
+      if (typing) return;
+    if (hit("settings")) {
+      e.preventDefault();
+      openSettings("atalhos");
+      return;
+    }
+    if (!layout) return;
+    if (hit("new_tab")) {
+      e.preventDefault();
+      commit(L.addTab(layout, ""));
+      return;
+    }
+    if (hit("close_tab")) {
+      e.preventDefault();
+      commit(L.closeTab(layout, layout.active));
+      return;
+    }
+    if (hit("next_tab") || hit("prev_tab")) {
+      e.preventDefault();
+      const ids = layout.tabs.map((t) => t.id);
+      const i = ids.indexOf(layout.active);
+      if (i < 0 || ids.length < 2) return;
+      const step = hit("next_tab") ? 1 : -1;
+      const next = ids[(i + step + ids.length) % ids.length];
+      commit(L.setActive(layout, next));
+    }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [searchShortcut, shortcuts, layout]);
+
   const waitingTabs = useMemo(() => {
     const s = new Set<string>();
     if (layout) for (const t of layout.tabs) if (L.leaves(t.root).some((l) => !l.leaf.gone && snap.agents[l.leaf.pane])) s.add(t.id);
@@ -750,12 +836,212 @@ export function App() {
     kinds?: string[];
     kind_order?: string[];
     split_by_kind?: boolean;
+    files_width?: number;
   };
   const [sidebarLocal, setSidebarLocal] = useState<SidebarPrefs | null>(null);
+  // Pasta da guia: gravada no layout (web-settings.json), não no localStorage.
+  // O WebView do macOS não guarda o localStorage entre aberturas.
+  // Aberto nesta sessão. O layout gravado também vale, mas o botão não
+  // pode depender só dele: um servidor antigo descarta files_open.
+  const [filesNow, setFilesNow] = useState<Record<string, boolean>>({});
+  const filesOpen = activeTab ? (filesNow[activeTab.id] ?? activeTab.files_open === true) : false;
+  const setFilesOpen = (open: boolean) => {
+    if (!activeTab) return;
+    setFilesNow((cur) => ({ ...cur, [activeTab.id]: open }));
+    if (layout) commit(L.setTabFilesOpen(layout, activeTab.id, open));
+  };
   const sidebarPrefs: SidebarPrefs = sidebarLocal ?? snap.settings?.sidebar ?? { collapsed: false, width: 288 };
+  // Depois que /api/settings chegou, campo ausente é desligado. O
+  // localStorage só cobre o instante anterior à resposta; senão um "1"
+  // antigo religa o material quando o JSON omite false.
+  const vibrancy = isMacTitlebar() && shellVibrancyOn(
+    snap.settings?.ui_theme,
+    snap.settings != null,
+    typeof localStorage !== "undefined" && localStorage.getItem("bethstudio-vibrancy") === "1",
+  );
+  const [paneTools, setPaneTools] = useState<Record<number, string>>({});
+  useEffect(() => {
+    if (!layout) return;
+    const ids = layout.tabs.flatMap((t) => L.leaves(t.root).map((l) => l.leaf.pane));
+    const missing = ids.filter((id) => !paneTools[id] && !conn.lastScreenText(id));
+    if (missing.length === 0) return;
+    const stops = missing.map((id) =>
+      conn.peekScreen(id, (text) => setPaneTools((m) => (m[id] === text ? m : { ...m, [id]: text }))),
+    );
+    return () => stops.forEach((s) => s());
+  }, [layout, conn, paneTools]);
   const sidebarCollapsed = sidebarPrefs.collapsed;
   const [dragWidth, setSidebarWidth] = useState<number | null>(null);
+  const [dragFiles, setFilesWidth] = useState<number | null>(null);
   const sidebarWidth = dragWidth ?? sidebarPrefs.width ?? 288;
+  const filesWidth = dragFiles ?? sidebarPrefs.files_width ?? 308;
+  useEffect(() => {
+    if (!isMacTitlebar()) return;
+    const w = window as unknown as {
+      webkit?: { messageHandlers?: { bethVibrancy?: { postMessage: (v: string) => void }; bethSidebar?: { postMessage: (v: string) => void } } };
+    };
+    document.documentElement.classList.toggle("bt-vibrancy", vibrancy);
+    document.documentElement.style.setProperty("--bt-side", `${sidebarCollapsed ? 48 : sidebarWidth}px`);
+    const dark = document.documentElement.classList.contains("dark");
+    const topbarRgb = dark ? "19 19 19" : "236 236 236";
+    document.documentElement.style.setProperty("--bt-topbar-rgb", topbarRgb);
+    document.documentElement.style.setProperty("--bt-topbar", `rgb(${topbarRgb})`);
+    // O vão tem de ser opaco. Transparente deixa o material nativo aparecer.
+    document.body.style.background = vibrancy ? "transparent" : "";
+    w.webkit?.messageHandlers?.bethVibrancy?.postMessage(vibrancy ? "1" : "0");
+    const power = (snap.settings?.ui_theme?.glass || 55) / 100;
+    const alpha = (snap.settings?.ui_theme?.glass_alpha || 70) / 100;
+    document.documentElement.style.setProperty("--bt-preview-vibrancy-opacity", String(0.34 + alpha * 0.32));
+    (w.webkit?.messageHandlers as { bethGlassTune?: { postMessage: (v: string) => void } } | undefined)?.bethGlassTune?.postMessage(`${power},${alpha}`);
+    const width = !vibrancy ? 0 : sidebarCollapsed ? 48 : sidebarWidth;
+    w.webkit?.messageHandlers?.bethSidebar?.postMessage(String(width));
+    const probe = document.createElement("span");
+    probe.style.background = getComputedStyle(document.documentElement).getPropertyValue("--bt-topbar").trim() || "rgb(26, 26, 26)";
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    document.body.appendChild(probe);
+    const gutter = getComputedStyle(probe).backgroundColor || "rgb(18, 18, 18)";
+    probe.remove();
+    (w.webkit?.messageHandlers as { bethGutter?: { postMessage: (v: string) => void } } | undefined)?.bethGutter?.postMessage(gutter);
+  }, [vibrancy, sidebarCollapsed, sidebarWidth, snap.settings?.ui_theme?.glass, snap.settings?.ui_theme?.glass_alpha]);
+  const previewOpen = !!filePreviewPath;
+  useEffect(() => {
+    if (!isMacTitlebar() || !vibrancy || previewOpen) {
+      const off = window as unknown as { webkit?: { messageHandlers?: { bethGlass?: { postMessage: (v: string) => void } } } };
+      off.webkit?.messageHandlers?.bethGlass?.postMessage("[]");
+      return;
+    }
+    const pngCache = new Map<string, string>();
+    const iconPng = (el: Element): Promise<string> => {
+      const svg = el.querySelector("svg");
+      if (!svg) return Promise.resolve("");
+      const key = svg.outerHTML;
+      const hit = pngCache.get(key);
+      if (hit) return Promise.resolve(hit);
+      const clone = svg.cloneNode(true) as SVGElement;
+      if (!clone.getAttribute("xmlns")) clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("width", "32");
+      clone.setAttribute("height", "32");
+      clone.setAttribute("color", "#ffffff");
+      clone.querySelectorAll("*").forEach((n) => {
+        const stroke = n.getAttribute("stroke");
+        const fill = n.getAttribute("fill");
+        if (stroke === "currentColor" || stroke == null) n.setAttribute("stroke", "#ffffff");
+        if (fill === "currentColor") n.setAttribute("fill", "#ffffff");
+      });
+      const xml = new XMLSerializer().serializeToString(clone);
+      const src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement("canvas");
+          c.width = 64;
+          c.height = 64;
+          const ctx = c.getContext("2d");
+          if (!ctx) return resolve("");
+          ctx.drawImage(img, 0, 0, 64, 64);
+          const data = c.toDataURL("image/png").split(",")[1] || "";
+          if (data) pngCache.set(key, data);
+          resolve(data);
+        };
+        img.onerror = () => resolve("");
+        img.src = src;
+      });
+    };
+    const w = window as unknown as { webkit?: { messageHandlers?: { bethGlass?: { postMessage: (v: string) => void } } } };
+    let last = "";
+    let disposed = false;
+    let request = 0;
+    let delivered = 0;
+    const send = () => {
+      const modal = !!document.querySelector(".bt-modal");
+      const sequence = ++request;
+      const found = modal
+        ? [...document.querySelectorAll(".bt-glass-sample")]
+        : [...document.querySelectorAll(".bt-tab:not(.bt-tab-active), .bt-tab-tool, .bt-sidebar .bt-glass, .bt-sidebar .bt-search, .bt-sidebar .bt-chat, .bt-sidebar .bt-chip")];
+      const nodes = nativeGlassPlates(true, found);
+      void Promise.all(nodes.map(iconPng)).then((pngs) => {
+        if (disposed || sequence < delivered) return;
+        delivered = sequence;
+        const rects: { x: number; y: number; w: number; h: number; r: number; p: string; t: string; sub: string; hov: number; f: number; on: number; ph: number; tip: number; side: string; ax: number; wrap: number; row: number }[] = [];
+        nodes.forEach((el, i) => {
+          const b = el.getBoundingClientRect();
+          if (b.width < 8 || b.height < 4 || b.height > 110 || b.width > 420) return;
+          if (b.bottom < 0 || b.top > window.innerHeight) return;
+          const rad = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 8;
+          const field = el.classList.contains("bt-search");
+          const tip = el.classList.contains("bt-tip");
+          const chat = el.classList.contains("bt-chat");
+          const input = el.querySelector("input");
+          const typed = input?.value || "";
+          const name = field
+            ? typed || input?.placeholder || "Buscar terminal ou pasta"
+            : tip
+              ? (el.querySelector(".font-medium")?.textContent || "").trim()
+              : chat
+                ? (el.querySelector("span.truncate")?.textContent || "").replace(/\s+/g, " ").trim()
+                : (el.textContent || "").replace(/\s+/g, " ").trim();
+          const sub = tip
+            ? (el.querySelector(".text-white\\/70")?.textContent || "").trim()
+            : chat
+              ? (el.querySelector(".font-mono")?.textContent || "").replace(/\s+/g, " ").trim()
+              : "";
+          rects.push({
+            x: Math.round(b.x),
+            y: Math.round(b.y),
+            w: Math.round(b.width),
+            h: Math.round(b.height),
+            r: field ? 16 : Math.round(rad),
+            p: field ? "" : pngs[i] || "",
+            t: name.slice(0, 48),
+            sub: sub.slice(0, 48),
+            hov: el.matches(":hover") ? 1 : 0,
+            f: field ? 1 : 0,
+            tip: tip ? 1 : 0,
+            side: tip ? el.getAttribute("data-tip-side") || "below" : "",
+            ax: tip ? Number(el.getAttribute("data-tip-arrow") || 0) : 0,
+            on: el.classList.contains("bt-glass-on") ? 1 : 0,
+            ph: field && !typed ? 1 : 0,
+            wrap: el.classList.contains("bt-mode") ? 1 : 0,
+            row: chat || (el.closest(".bt-sidebar") && !el.classList.contains("bt-mode") && !el.classList.contains("h-7") && !field) ? 1 : 0,
+          });
+        });
+        rects.sort((a, b) => a.tip - b.tip);
+        const json = JSON.stringify(rects);
+        if (json === last) return;
+        last = json;
+        w.webkit?.messageHandlers?.bethGlass?.postMessage(json);
+      });
+    };
+    let frame = 0;
+    const kick = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        send();
+      });
+    };
+    kick();
+    const timer = window.setInterval(kick, 120);
+    window.addEventListener("resize", kick);
+    document.addEventListener("mouseover", kick);
+    document.addEventListener("mouseout", kick);
+    document.addEventListener("input", kick);
+    document.addEventListener("transitionrun", kick);
+    const watch = new MutationObserver(kick);
+    watch.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", kick);
+      document.removeEventListener("mouseover", kick);
+      document.removeEventListener("mouseout", kick);
+      document.removeEventListener("input", kick);
+      document.removeEventListener("transitionrun", kick);
+      watch.disconnect();
+    };
+  }, [vibrancy, sidebarCollapsed, sidebarWidth, snap.settings?.ui_theme?.glass, snap.settings?.ui_theme?.glass_alpha, previewOpen]);
   const saveSidebar = (patch: Partial<SidebarPrefs>) => {
     const next = { ...sidebarPrefs, ...patch };
     setSidebarLocal(next);
@@ -798,7 +1084,7 @@ export function App() {
   }, [pendingSpawn, layout, snap.panes, commit]);
 
   return (
-    <div className="flex h-full flex-col bg-bg-body text-text-1">
+    <div className={cn("flex h-full flex-col text-text-1", vibrancy ? "" : "bg-bg-body")}>
       <TopResizeEdges state={winState} />
       <TooltipLayer />
       {/* Avisos */}
@@ -810,7 +1096,9 @@ export function App() {
           </button>
         </Banner>
       )}
-      {bridgeDown && <Banner tone="warn">{snap.status?.message || "Ponte com o Beth Studio indisponível."}</Banner>}
+      {bridgeDown && (
+        <Banner tone="warn">{snap.status?.message || "Ponte com o Beth Studio indisponível."}</Banner>
+      )}
       {snap.lastError && (
         <Banner tone="warn" onClose={() => conn.clearError()}>
           {snap.lastError}
@@ -823,9 +1111,31 @@ export function App() {
       )}
 
       <div className="flex min-h-0 flex-1">
+        <div className="bt-side-col relative h-full shrink-0 self-stretch" style={{ width: sidebarCollapsed ? 48 : sidebarWidth, background: vibrancy ? "transparent" : "rgb(19, 19, 19)" }}>
+        <div
+          className="bt-mac-gutter absolute inset-x-0 top-0 z-30 h-10"
+          style={{ background: "rgb(19, 19, 19)" }}
+          title="Arraste para mover a janela"
+          onMouseDown={(e) => {
+            if (!isMacTitlebar() || e.button !== 0 || e.detail > 1) return;
+            e.preventDefault();
+            dragMacWindow();
+          }}
+          onDoubleClick={() => isMacTitlebar() && zoomMacWindow()}
+        />
+        <div className="bt-side-slot bt-side-slot-left absolute inset-x-0" style={{ top: 48, bottom: 8, padding: "0 8px", background: vibrancy ? "transparent" : undefined }}>
+        <aside
+          className={cn(
+            "bt-sidebar relative h-full overflow-hidden",
+            vibrancy ? "bg-transparent" : "bg-bg-panel",
+            "bt-side-card",
+            sidebarCollapsed && "flex flex-col items-center gap-1 overflow-y-auto overflow-x-hidden pb-2 [scrollbar-width:none]",
+          )}
+          style={{ width: "100%" }}
+        >
         {sidebarCollapsed ? (
-          <aside className="flex w-12 shrink-0 flex-col items-center gap-1 overflow-y-auto overflow-x-hidden border-r border-border bg-bg-panel pb-2 [scrollbar-width:none]">
-            <AppTitle compact />
+          <>
+            {!isMacTitlebar() && <AppTitle compact />}
             <IconButton label="Mostrar a barra lateral" onClick={() => saveSidebar({ collapsed: false })}>
               <PanelLeftOpen size={16} />
             </IconButton>
@@ -845,11 +1155,11 @@ export function App() {
                 {waitingCount}
               </button>
             )}
-          </aside>
+          </>
         ) : (
-          <aside className="relative shrink-0 border-r border-border bg-bg-panel" style={{ width: sidebarWidth }}>
+          <div className="h-full">
             <div
-              className="absolute -right-1 top-0 z-20 h-full w-2 cursor-col-resize hover:bg-accent/40"
+              className="absolute -right-1 top-10 z-20 h-[calc(100%-2.5rem)] w-2 cursor-col-resize hover:bg-accent/40"
               title="Arraste para mudar a largura"
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -885,13 +1195,14 @@ export function App() {
                 kindFilter={sidebarPrefs.kinds ?? []}
                 tabTitle={(t) => L.tabDisplayName(t, layout.tabs.indexOf(t), (p) => {
                   const info = paneById.get(p);
-                  return info ? paneLabel(info) : undefined;
+                  return info ? paneIdentity({ title: info.title, kind_label: info.kind_label, tool: info.tool, stored: L.leaves(t.root).find((l) => l.leaf.pane === p)?.leaf.tool, screen: paneTools[p] ?? conn.lastScreenText(p) }, paneLabel(info)).name : undefined;
                 }, focus[t.id] ?? null)}
                 onKindFilter={(kinds) => saveSidebar({ kinds })}
                 kindOrder={sidebarPrefs.kind_order}
                 splitByKind={sidebarPrefs.split_by_kind !== false}
                 onSplitByKind={(on) => saveSidebar({ split_by_kind: on })}
                 onReopenClosed={reopenClosedAt}
+                paneScreen={(pane) => paneTools[pane] ?? conn.lastScreenText(pane)}
                 panes={snap.panes}
                 layout={layout}
                 focusedPane={focusedPane}
@@ -900,22 +1211,28 @@ export function App() {
                 onActivateTab={(id) => commit(L.setActive(layout, id))}
                 onDropToTab={(pane, id) => act.dropOnTab(pane, id)}
                 onRemoveGone={(tabId, path) => commit(L.removeLeafAt(layout, tabId, path))}
-                onMenu={(pane, x, y) => setMenu({ pane, x, y })}
+                onMenu={(pane, x, y) => {
+                  setSplitMenu(null);
+                  setMenu({ pane, x, y });
+                }}
                 agents={snap.agents}
                 onGoAgent={goPane}
                 onDismissAgent={(pane) => conn.dismissAgent(pane)}
                 onCollapse={() => saveSidebar({ collapsed: true })}
                 actions={studioActions}
-                status={connLed}
+                status={undefined}
                 search={searchState}
                 where={where}
                 resultActions={resultActions!}
               />
             )}
-          </aside>
+          </div>
         )}
+        </aside>
+        </div>
+        </div>
 
-        <main className="flex min-w-0 flex-1 flex-col">
+        <main className={cn("bt-main flex min-w-0 flex-1 flex-col", isMacTitlebar() && "bt-main-mac")}>
           {layout && act && (
             <TabBar
               layout={layout}
@@ -923,8 +1240,17 @@ export function App() {
               onAdd={() => commit(L.addTab(layout, ""))}
               tabTitle={(t, i) => L.tabDisplayName(t, i, (p) => {
                 const info = paneById.get(p);
-                return info ? paneLabel(info) : undefined;
+                return info ? paneIdentity({ title: info.title, kind_label: info.kind_label, tool: info.tool, stored: L.leaves(t.root).find((l) => l.leaf.pane === p)?.leaf.tool, screen: paneTools[p] ?? conn.lastScreenText(p) }, paneLabel(info)).name : undefined;
               }, focus[t.id] ?? null)}
+              paneScreen={(pane) => paneTools[pane] ?? conn.lastScreenText(pane)}
+              onTool={(tabId, tool) => commit(L.setTabTool(layout, tabId, tool))}
+              tabIdentity={(t) => {
+                const ls = L.leaves(t.root).filter((l) => !l.leaf.gone);
+                const pick = ls.find((l) => l.leaf.pane === focus[t.id]) ?? ls[0];
+                const info = pick ? paneById.get(pick.leaf.pane) : undefined;
+                if (!info) return { name: "" };
+                return paneIdentity({ title: info.title, kind_label: info.kind_label, tool: info.tool, stored: pick.leaf.tool, screen: paneTools[pick.leaf.pane] ?? conn.lastScreenText(pick.leaf.pane) }, paneLabel(info));
+              }}
               onRename={renameTabAndPanes}
               onClose={closeTabKeep}
               onReopenClosed={layout.closed?.length ? reopenClosed : undefined}
@@ -932,6 +1258,13 @@ export function App() {
               onDropPane={act.dropOnTab}
               onSearch={() => setPalette(true)}
               onGrid={() => setTermGrid(true)}
+              filesOpen={filesOpen}
+              onToggleFiles={() => {
+                if (!activeTab) return;
+                const flipped = toggleFolderPanel(filesNow, activeTab.id, activeTab.files_open === true);
+                setFilesNow(flipped.next);
+                if (layout) commit(L.setTabFilesOpen(layout, activeTab.id, flipped.open));
+              }}
               onGeneral={() => openSettings("aparencia")}
               onTaskManager={() => setTaskManager(true)}
               onDatabase={openDatabase}
@@ -954,14 +1287,36 @@ export function App() {
               tabTerminal={tabTerminal}
             />
           )}
-          {hostBanner(snap.host) && <HostBanner conn={conn} info={hostBanner(snap.host)!} />}
           {!restoreDismissed && restoreInfo && <RestoreBanner conn={conn} info={restoreInfo} onDismiss={() => setRestoreDismissed(true)} />}
           {snap.resumeOffers.length > 0 && <ResumeBanner conn={conn} offers={snap.resumeOffers} nameOf={(id) => storedName(id) || undefined} />}
-          <div className="flex min-h-0 flex-1 p-2">
+          <div className={cn("bt-stage flex min-h-0 flex-1", filesOpen && "bt-stage-files")}>
+          <div className="bt-term-frame flex min-h-0 min-w-0 flex-1 flex-col bg-bg-term">
+            {hostBanner(snap.host, isMacTitlebar() ? "mac" : "windows") && (
+              <HostBanner conn={conn} info={hostBanner(snap.host, isMacTitlebar() ? "mac" : "windows")!} />
+            )}
             {!layout || !act ? (
               <div className="flex flex-1 items-center justify-center text-text-2">Carregando…</div>
             ) : !activeTab?.root ? (
-              <EmptyTab dragging={drag?.kind === "pane"} onDrop={(pane) => act.dropOnTab(pane, layout.active)} />
+              <EmptyTabBoard
+                conn={conn}
+                shells={snap.shells}
+                panes={snap.panes}
+                readOnly={readOnly}
+                dragging={drag?.kind === "pane"}
+                onDrop={(pane) => act.dropOnTab(pane, layout.active)}
+                onOpen={(pane) => act.dropOnTab(pane, layout.active)}
+                onSpawn={(shell) => {
+                  const tab = layout.active;
+                  conn
+                    .spawn({ shell_id: shell.id })
+                    .then((ev) => {
+                      commit(L.movePaneToTab(layout, ev.pane_id, tab));
+                      focusPane(tab, ev.pane_id);
+                    })
+                    .catch((e: Error) => setError(e.message));
+                }}
+                onOpenTools={(kind) => setToolScreen(kind)}
+              />
             ) : (
               <SplitView
                 node={activeTab.root}
@@ -988,7 +1343,10 @@ export function App() {
                       onClose={() => act.unorganize(pane)}
                       onHeaderDragStart={(e) => startPaneDrag(e, pane)}
                       onHeaderDragEnd={endDrag}
-                      onOrganize={(x, y) => setMenu({ pane, x, y })}
+                      onOrganize={(x, y) => {
+                        setSplitMenu(null);
+                        setMenu({ pane, x, y });
+                      }}
                       onAskKill={readOnly ? undefined : () => setKillTarget({ pane, mode: "encerrar" })}
                       onDetach={readOnly || isRemote() ? undefined : () => act.detach(pane)}
                       onAskSeparate={readOnly ? undefined : () => setSeparateTarget(pane)}
@@ -999,13 +1357,57 @@ export function App() {
                       agent={snap.agents[pane]}
                       aloneInHost={aloneInHostTab(snap.panes, pane)}
                       onDismissAgent={() => conn.dismissAgent(pane)}
-                      onNewSplit={readOnly ? undefined : (zone, x, y) => setSplitMenu({ pane, x, y, zone })}
+                      onNewSplit={readOnly ? undefined : (zone, x, y) => {
+                        setMenu(null);
+                        setSplitMenu({ pane, x, y, zone });
+                      }}
                       onOpenFile={setFilePreviewPath}
+                      onAgentFolder={readOnly ? undefined : (dest) => openAgentFolder(pane, dest)}
                     />
                   )
                 }
               />
             )}
+          </div>
+          {filesOpen && activeTab && (
+            <div className="bt-side-slot bt-side-slot-right relative h-full min-h-0 shrink-0 self-stretch" style={{ width: filesWidth + 16, background: "rgb(19, 19, 19)" }}>
+              <div
+                className="absolute -left-1 top-2 z-20 h-[calc(100%-1rem)] w-2 cursor-col-resize hover:bg-accent/40"
+                title="Arraste para mudar a largura da pasta"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const x0 = e.clientX;
+                  const w0 = filesWidth;
+                  let w = w0;
+                  const move = (ev: MouseEvent) => {
+                    w = Math.max(200, Math.min(640, w0 - (ev.clientX - x0)));
+                    setFilesWidth(w);
+                  };
+                  const up = () => {
+                    window.removeEventListener("mousemove", move);
+                    window.removeEventListener("mouseup", up);
+                    document.body.style.cursor = "";
+                    saveSidebar({ files_width: w });
+                  };
+                  document.body.style.cursor = "col-resize";
+                  window.addEventListener("mousemove", move);
+                  window.addEventListener("mouseup", up);
+                }}
+                onDoubleClick={() => {
+                  setFilesWidth(308);
+                  saveSidebar({ files_width: 308 });
+                }}
+              />
+              <WorktreePanel
+                key={activeTab.id}
+                conn={conn}
+                folder={focusedFolder()}
+                folderLabel={focusedPane !== null ? shortCwd(paneById.get(focusedPane)?.cwd ?? "", 2) : ""}
+                onClose={() => setFilesOpen(false)}
+                onOpenFile={setFilePreviewPath}
+              />
+            </div>
+          )}
           </div>
         </main>
       </div>
@@ -1250,41 +1652,19 @@ function OpeningLeaf({ title }: { title?: string }) {
   );
 }
 
-function EmptyTab({ dragging, onDrop }: { dragging: boolean; onDrop: (pane: number) => void }) {
-  const [over, setOver] = useState(false);
-  return (
-    <div
-      className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed text-text-2 ${
-        over ? "border-accent bg-accent-soft" : dragging ? "border-border-strong" : "border-transparent"
-      }`}
-      onDragOver={(e) => {
-        if (!e.dataTransfer.types.includes(PANE_MIME)) return;
-        e.preventDefault();
-        setOver(true);
-      }}
-      onDragLeave={() => setOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setOver(false);
-        const p = draggedPane(e);
-        endDrag();
-        if (p !== null) onDrop(p);
-      }}
-    >
-      <TerminalSquare size={36} className="text-text-3" />
-      <div className="text-[15px] text-text-1">Aba vazia</div>
-      <div>Clique num terminal à esquerda ou arraste-o para cá.</div>
-    </div>
-  );
-}
-
 function Banner({ tone, children, onClose }: { tone: "err" | "warn"; children: ReactNode; onClose?: () => void }) {
   return (
     <div
-      className={
-        "flex shrink-0 items-center gap-2 border-b px-3 py-1.5 text-[12px] " +
-        (tone === "err" ? "border-status-err/30 bg-status-err/10 text-status-err" : "border-status-warn/30 bg-status-warn/10 text-status-warn")
-      }
+      className={cn(
+        "flex shrink-0 items-center gap-2 border-b px-3 py-1.5 text-[12px]",
+        false && "mt-7",
+        tone === "err" ? "border-status-err/30 bg-status-err/10 text-status-err" : "border-status-warn/30 bg-status-warn/10 text-status-warn",
+      )}
+      onMouseDown={(e) => {
+        if (!isMacTitlebar() || e.button !== 0) return;
+        if ((e.target as Element).closest("button")) return;
+        dragMacWindow();
+      }}
     >
       <AlertTriangle size={14} className="shrink-0" />
       <div className="flex-1">{children}</div>
@@ -1308,7 +1688,7 @@ function ConnLed({ socket, status, readOnly, onClick }: { socket: string; status
       : `${socket !== "open" ? "Sem conexão com o bethstudio-web" : status?.message || "Beth Studio indisponível"} — clique para reconectar`;
   return (
     <button
-      className="mb-0.5 flex h-7 shrink-0 items-center gap-1.5 rounded px-1.5 hover:bg-bg-hover"
+      className="fixed right-3 top-3 z-40 flex h-6 w-6 items-center justify-center rounded-full hover:bg-bg-hover"
       title={tip + (readOnly ? " · somente leitura" : "")}
       onClick={onClick}
     >

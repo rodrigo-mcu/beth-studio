@@ -154,16 +154,6 @@ func serialOpen(p SerialProfile) (*winSerialPort, error) {
 
 // --- listagem de portas --------------------------------------------------------
 
-// SerialPortInfo: uma porta presente agora.
-type SerialPortInfo struct {
-	Port         string `json:"port"`
-	FriendlyName string `json:"friendly_name,omitempty"`
-	Manufacturer string `json:"manufacturer,omitempty"`
-	VID          string `json:"vid,omitempty"`
-	PID          string `json:"pid,omitempty"`
-	Serial       string `json:"serial_number,omitempty"`
-}
-
 var serialVidPidRe = regexp.MustCompile(`(?i)VID_([0-9A-F]{4})[&+]PID_([0-9A-F]{4})`)
 
 // serialListPorts: portas em HARDWARE\DEVICEMAP\SERIALCOMM (as que existem

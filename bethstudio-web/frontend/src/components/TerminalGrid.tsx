@@ -87,7 +87,7 @@ export function TerminalGrid({ conn, panes, layout, kindOrder, onOpen, onOpenBes
   return (
     <div className="fixed inset-0 z-50 flex justify-center bg-black/40 p-[4vh]" onMouseDown={onClose}>
       <div
-        className="flex h-full w-[min(1180px,96vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex h-full w-[min(1180px,96vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Escape") onClose();
@@ -96,7 +96,7 @@ export function TerminalGrid({ conn, panes, layout, kindOrder, onOpen, onOpenBes
       >
         <div className="flex flex-col gap-2 border-b border-border p-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex min-w-[220px] flex-1 items-center gap-1.5 rounded border border-border bg-bg-term px-2 focus-within:border-accent">
+            <div className="flex min-w-[220px] flex-1 items-center gap-1.5 bt-field bg-bg-term px-2 focus-within:border-accent">
               <Search size={14} className="shrink-0 text-text-3" />
               <input
                 ref={inputRef}

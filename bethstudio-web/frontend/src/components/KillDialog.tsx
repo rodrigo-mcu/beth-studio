@@ -59,7 +59,7 @@ export function KillDialog({
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/50 pt-[14vh]" onMouseDown={onClose}>
       <div
-        className="w-[min(480px,92vw)] rounded-lg border border-status-err/50 bg-bg-card p-4 shadow-2xl"
+        className="bt-dialog w-[min(480px,92vw)] border-status-err/50 p-4"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
         role="alertdialog"

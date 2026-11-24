@@ -34,6 +34,8 @@ export interface PaneInfo {
   agent?: boolean;
   /** agente que roda no terminal, pelo processo (agent_ident.go): claude | codex | opencode | cursor | grok | gemini */
   agent_name?: string;
+  /** grok | cursor | claude | codex, quando o pane é uma dessas ferramentas */
+  tool?: string;
   kind_source?: "gui" | "web" | "heuristic";
   /** roda dentro do WSL (kind wsl, ou agente/outro com cwd Linux) — panekind.go */
   wsl?: boolean;
@@ -108,8 +110,10 @@ export interface SettingsEvent {
   gui_favorites_error?: string;
   /** organizacao do web (abas/splits), ver lib/layout.ts */
   layout?: unknown;
-  ui_theme?: { mode: "dark" | "light" | "navy" | "follow" | "theme"; theme_id?: string };
-  sidebar?: { collapsed: boolean; width: number; view?: "web" | "host" | "kind" | "folder"; kinds?: string[]; kind_order?: string[]; split_by_kind?: boolean };
+  ui_theme?: { mode: "dark" | "light" | "navy" | "follow" | "theme"; theme_id?: string; vibrancy?: boolean; glass?: number; glass_alpha?: number };
+  search_shortcut?: string;
+  shortcuts?: Record<string, string>;
+  sidebar?: { collapsed: boolean; width: number; view?: "web" | "host" | "kind" | "folder"; kinds?: string[]; kind_order?: string[]; split_by_kind?: boolean; files_width?: number };
 }
 
 export interface XtermColors {

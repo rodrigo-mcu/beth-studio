@@ -269,7 +269,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
             {state && !state.bins_embedded && (
               <p className="mt-2 text-[12px] text-status-err">Este Studio foi compilado sem o programa do servidor; o assistente não vai conseguir instalar.</p>
             )}
-            <div className="mt-3 max-w-xl rounded border border-border p-3">
+            <div className="mt-3 max-w-xl bt-field p-3">
               <h4 className="text-[13px] font-semibold text-text-1">1. Endereço (DNS) <span className="font-normal text-text-3">— opcional</span></h4>
               <p className="mt-1 text-[12px] text-text-2">
                 Cria o nome (ex.: agentes.exemplo.com) na sua zona da Cloudflare, apontando para o IP do servidor. Pule se o seu DNS é de outro provedor ou se o nome já existe: na parte 2 você só informa o nome.
@@ -281,7 +281,7 @@ export function VpsInstallWizard({ conn, onMessage }: { conn: Connection; onMess
                 {f.recordIds.length > 0 ? "Refazer o DNS" : "Configurar DNS na Cloudflare"}
               </button>
             </div>
-            <div className="mt-3 max-w-xl rounded border border-border p-3">
+            <div className="mt-3 max-w-xl bt-field p-3">
               <h4 className="text-[13px] font-semibold text-text-1">2. Servidor (VPS)</h4>
               <p className="mt-1 text-[12px] text-text-2">
                 Conecta por SSH (senha ou chave), confere a impressão digital, instala o bethstudio-proxy, o firewall e espera o certificado. <b>Não apaga nada</b>: se o servidor não estiver limpo, para e explica.

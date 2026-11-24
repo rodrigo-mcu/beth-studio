@@ -110,14 +110,14 @@ export function RemoteStudioSection({ conn, onMessage }: { conn: Connection; onM
         <button
           type="button"
           disabled={busy}
-          className="mt-2 rounded border border-border bg-bg-panel px-3 py-1.5 text-[13px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
+          className="mt-2 bt-field bg-bg-panel px-3 py-1.5 text-[13px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
           onClick={() => void startTOTP()}
         >
           {st.has_totp ? "Trocar o segundo fator" : "Configurar o segundo fator"}
         </button>
       )}
       {setup && (
-        <div className="mt-3 flex flex-wrap items-start gap-4 rounded border border-border bg-bg-panel p-3">
+        <div className="mt-3 flex flex-wrap items-start gap-4 bt-field bg-bg-panel p-3">
           <img src={setup.qr} alt="QR do segundo fator" width={180} height={180} className="rounded bg-white p-1" />
           <div className="min-w-0 flex-1">
             <p className="text-[13px] text-text-2">Leia o QR com o app autenticador. Sem câmera, digite a chave:</p>
@@ -132,7 +132,7 @@ export function RemoteStudioSection({ conn, onMessage }: { conn: Connection; onM
                 autoComplete="one-time-code"
                 maxLength={7}
                 value={code}
-                className="w-28 rounded border border-border bg-bg-term px-2.5 py-1.5 font-mono text-[14px] text-text-1 outline-none focus:border-accent"
+                className="w-28 bt-field bg-bg-term px-2.5 py-1.5 font-mono text-[14px] text-text-1 outline-none"
                 onChange={(e) => setCode(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && code.trim().length >= 6 && void confirmTOTP()}
               />
@@ -158,7 +158,7 @@ export function RemoteStudioSection({ conn, onMessage }: { conn: Connection; onM
       {sessions.length === 0 ? (
         <p className="mt-1 text-[13px] text-text-3">Nenhuma.</p>
       ) : (
-        <ul className="mt-2 divide-y divide-border rounded border border-border">
+        <ul className="mt-2 divide-y divide-border bt-field">
           {sessions.map((s) => (
             <li key={s.id} className="flex items-center gap-3 px-3 py-2 text-[13px]">
               <div className="min-w-0 flex-1">
@@ -170,7 +170,7 @@ export function RemoteStudioSection({ conn, onMessage }: { conn: Connection; onM
               <button
                 type="button"
                 disabled={busy}
-                className="rounded border border-border px-2 py-1 text-[12px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
+                className="bt-field px-2 py-1 text-[12px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
                 onClick={() => void run("/api/remote/revoke", { id: s.id }, "Sessão encerrada")}
               >
                 Encerrar
@@ -183,7 +183,7 @@ export function RemoteStudioSection({ conn, onMessage }: { conn: Connection; onM
         <button
           type="button"
           disabled={busy}
-          className="mt-2 rounded border border-border px-3 py-1.5 text-[13px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
+          className="mt-2 bt-field px-3 py-1.5 text-[13px] text-text-1 hover:bg-bg-hover disabled:opacity-50"
           onClick={() => void run("/api/remote/revoke", { id: "" }, "Todas as sessões encerradas")}
         >
           Encerrar todas

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -94,6 +96,53 @@ func TestSidebarPrefs(t *testing.T) {
 	st2.load(dir)
 	if s := st2.snapshot(); !s.Sidebar.Collapsed || s.Sidebar.Width != 333 {
 		t.Fatalf("reload sidebar = %+v", s.Sidebar)
+	}
+}
+
+func TestVibrancyToggleAndGlassSlidersPersist(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, webSettingsFile), []byte(`{"version":2,"default":{"theme":"vscode_dark"}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	st := &settingsStore{}
+	st.load(dir)
+
+	on, err := st.setVibrancy(true)
+	if err != nil || !on.UITheme.Vibrancy {
+		t.Fatalf("ligar: %v %+v", err, on.UITheme)
+	}
+	off, err := st.setVibrancy(false)
+	if err != nil || off.UITheme.Vibrancy {
+		t.Fatalf("desligar: %v %+v", err, off.UITheme)
+	}
+	raw, err := json.Marshal(off.UITheme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(raw, []byte(`"vibrancy":false`)) {
+		t.Fatalf("false omitido da resposta: %s", raw)
+	}
+	again, err := st.setVibrancy(true)
+	if err != nil || !again.UITheme.Vibrancy {
+		t.Fatalf("religar: %v %+v", err, again.UITheme)
+	}
+
+	power, alpha := 40, 90
+	tuned, err := st.setGlassTune(&power, nil)
+	if err != nil || tuned.UITheme.Glass != 40 || tuned.UITheme.GlassAlpha != 0 && tuned.UITheme.GlassAlpha != 70 {
+		t.Fatalf("potência: %v %+v", err, tuned.UITheme)
+	}
+	if !tuned.UITheme.Vibrancy {
+		t.Fatal("slider apagou o vibrancy")
+	}
+	tuned, err = st.setGlassTune(nil, &alpha)
+	if err != nil || tuned.UITheme.Glass != 40 || tuned.UITheme.GlassAlpha != 90 {
+		t.Fatalf("transparência: %v %+v", err, tuned.UITheme)
+	}
+	low := 1
+	clamped, err := st.setGlassTune(&low, nil)
+	if err != nil || clamped.UITheme.Glass != 15 || clamped.UITheme.GlassAlpha != 90 {
+		t.Fatalf("faixa: %v %+v", err, clamped.UITheme)
 	}
 }
 

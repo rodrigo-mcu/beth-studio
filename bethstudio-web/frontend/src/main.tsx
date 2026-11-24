@@ -3,6 +3,18 @@ import ReactDOM from "react-dom/client";
 import "@xterm/xterm/css/xterm.css";
 import "./index.css";
 
+(window as unknown as { __bethMark?: string }).__bethMark = "main";
+const bootLog: string[] = [];
+function boot(line: string) {
+  bootLog.push(line);
+  (window as unknown as { __bethLog?: string }).__bethLog = bootLog.join("\n");
+}
+boot("main");
+window.addEventListener("error", (e) => boot("error " + String(e.message)));
+window.addEventListener("unhandledrejection", (e) => boot("reject " + String((e as PromiseRejectionEvent).reason)));
+window.addEventListener("vite:preloadError", (e) => {
+  (window as unknown as { __bethErr?: string }).__bethErr = "preload " + String((e as Event & { payload?: unknown }).payload);
+});
 const mode = new URLSearchParams(window.location.search).get("mode");
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 
@@ -34,11 +46,19 @@ if (mode === "sftp") {
     );
   });
 } else {
+  boot("import app");
   void import("./App").then(({ App }) => {
+    boot("app loaded");
+    (window as unknown as { __bethMark?: string }).__bethMark = "app";
     root.render(
       <React.StrictMode>
         <App />
       </React.StrictMode>,
     );
+  }).catch((err) => {
+    const msg = "app " + String(err);
+    (window as unknown as { __bethErr?: string }).__bethErr = msg;
+    const boot = document.getElementById("boot");
+    if (boot) boot.textContent = msg;
   });
 }

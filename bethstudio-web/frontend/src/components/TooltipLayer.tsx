@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TIP_DELAY_MS, parseTip, placeTip, type TipPlace, type TipText } from "@/lib/tooltip";
+import { isMacTitlebar } from "@/lib/windowFrame";
+import { GlassTip } from "@/components/GlassTip";
 
 /**
  * Tooltip de todo o app: botoes com `title` (ou qualquer elemento com
@@ -25,7 +27,7 @@ export function TooltipLayer() {
       return el.getAttribute("data-tip") || el.getAttribute("data-tip-title") || "";
     };
     const target = (n: EventTarget | null) => {
-      const el = (n as Element | null)?.closest?.("button[title],button[data-tip-title],[data-tip],[role=button][title],[role=button][data-tip-title]");
+      const el = (n as Element | null)?.closest?.("button[title],button[data-tip-title],[data-tip],[role=button][title],[role=button][data-tip-title],.bt-tab[title],.bt-tab[data-tip-title]");
       return el ?? null; // desabilitado tambem mostra (explica por que)
     };
     const hide = () => {
@@ -103,19 +105,34 @@ export function TooltipLayer() {
   }, [tip]);
 
   if (!tip) return null;
+  if (isMacTitlebar() && place) {
+    return <GlassTip title={tip.text.title} desc={tip.text.desc} x={place.left} y={place.top} above={place.above} arrowX={place.arrowX} />;
+  }
   return (
     <div
       ref={boxRef}
       role="tooltip"
-      className="pointer-events-none fixed z-[9999] max-w-[320px] rounded-md bg-text-1 px-2.5 py-1.5 text-[12px] leading-snug text-bg-body shadow-xl"
+      className={
+        "pointer-events-none fixed z-[10000] max-w-[280px] rounded-lg px-3 py-2 text-[12px] leading-snug text-white " +
+        (isMacTitlebar() ? "bt-tip" : "bt-menu text-text-1")
+      }
+      data-tip-side={place?.side ?? "below"}
+      data-tip-arrow={place?.arrowX ?? 0}
       style={{ left: place?.left ?? -9999, top: place?.top ?? -9999, visibility: place ? "visible" : "hidden" }}
     >
       <span
-        className="absolute h-2 w-2 rotate-45 bg-text-1"
-        style={place?.above ? { left: (place?.arrowX ?? 0) - 4, bottom: -4 } : { left: (place?.arrowX ?? 0) - 4, top: -4 }}
+        className={
+          "absolute h-2 w-2 rotate-45 " +
+          (isMacTitlebar() ? "hidden" : "border border-border-strong bg-bg-card")
+        }
+        style={
+          place?.above
+            ? { left: (place?.arrowX ?? 0) - 4, bottom: -4 }
+            : { left: (place?.arrowX ?? 0) - 4, top: -4 }
+        }
       />
-      <div className="font-semibold">{tip.text.title}</div>
-      {tip.text.desc && <div className="mt-0.5 opacity-80">{tip.text.desc}</div>}
+      <div className="font-medium">{tip.text.title}</div>
+      {tip.text.desc && <div className={isMacTitlebar() ? "mt-0.5 text-white/70" : "mt-0.5 text-text-2"}>{tip.text.desc}</div>}
     </div>
   );
 }

@@ -57,7 +57,7 @@ export function DbDeleteDialog({
         role="alertdialog"
         aria-modal="true"
         aria-label="Confirmar exclusão de linhas"
-        className="flex max-h-[80vh] w-[min(720px,94vw)] flex-col rounded-lg border border-status-err/60 bg-bg-card p-4 text-[12px] text-text-1 shadow-2xl"
+        className="bt-dialog flex max-h-[80vh] w-[min(720px,94vw)] flex-col border-status-err/60 p-4 text-[12px] text-text-1"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && !busy && onCancel()}
       >
@@ -80,7 +80,7 @@ export function DbDeleteDialog({
         <div className="mb-2 text-text-2">
           Cada linha é identificada por <b className="font-mono text-text-1">{pk.join(" + ")}</b>. Tudo acontece numa transação: se alguma linha falhar, nada é apagado. Isto não pode ser desfeito.
         </div>
-        <div className="min-h-0 flex-1 overflow-auto rounded border border-border">
+        <div className="min-h-0 flex-1 overflow-auto bt-field">
           <table className="w-full border-collapse font-mono text-[11px]">
             <thead>
               <tr className="bg-bg-panel text-left text-text-2">
@@ -114,7 +114,7 @@ export function DbDeleteDialog({
             <input
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
-              className="rounded border border-border bg-bg-panel px-2 py-1.5 font-mono text-text-1 outline-none focus:border-accent"
+              className="bt-field bg-bg-panel px-2 py-1.5 font-mono text-text-1 outline-none"
               style={{ userSelect: "text" }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && ok) onConfirm();

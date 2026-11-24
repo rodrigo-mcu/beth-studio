@@ -57,7 +57,7 @@ export function MicPicker({ conn, value, onChange, withTest, disabled }: Props) 
       <div className="flex flex-wrap items-center gap-2">
         <Mic size={14} className="shrink-0 text-text-2" />
         <select
-          className="h-8 min-w-0 max-w-full flex-1 rounded border border-border bg-bg-term px-2 text-text-1"
+          className="h-8 min-w-0 max-w-full flex-1 bt-field bg-bg-term px-2 text-text-1"
           value={selected}
           disabled={disabled}
           onChange={(e) => {

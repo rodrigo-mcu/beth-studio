@@ -13,6 +13,8 @@ export interface LeafNode {
   title?: string;
   cwd?: string;
   host_id?: string;
+  /** grok | cursor | claude | codex | gemini, gravado com a aba. */
+  tool?: string;
 }
 
 export interface SplitNode {
@@ -33,6 +35,8 @@ export interface WebTab {
   closed_at?: string;
   /** so' nas abas fechadas: desde quando todos os terminais estao encerrados (Go) */
   gone_since?: string;
+  /** pasta da guia (sidebar da direita) aberta; gravada com o layout */
+  files_open?: boolean;
 }
 
 export interface Layout {
@@ -542,6 +546,24 @@ export function moveTab(layout: Layout, id: string, toIndex: number): Layout {
   return { ...layout, tabs };
 }
 
+/** Grava a ferramenta na primeira folha da aba, para o ícone sobreviver ao fechar. */
+export function setTabTool(layout: Layout, tabId: string, tool: string): Layout {
+  return mapTab(layout, tabId, (t) => {
+    const first = leaves(t.root)[0];
+    if (!first || first.leaf.tool === tool) return t;
+    const stamp = (n: LayoutNode): LayoutNode => {
+      if (n.type === "leaf") return n.pane === first.leaf.pane ? { ...n, tool } : n;
+      return { ...n, children: n.children.map(stamp) };
+    };
+    return t.root ? { ...t, root: stamp(t.root) } : t;
+  });
+}
+
+/** Abre ou fecha a pasta da guia. Gravado com o layout, volta no próximo início. */
+export function setTabFilesOpen(layout: Layout, tabId: string, open: boolean): Layout {
+  return mapTab(layout, tabId, (t) => (t.files_open === open ? t : { ...t, files_open: open || undefined }));
+}
+
 export function setActive(layout: Layout, id: string): Layout {
   return tabById(layout, id) ? { ...layout, active: id } : layout;
 }
@@ -651,6 +673,7 @@ export function sanitize(input: unknown, report?: DuplicatePane[]): Layout | nul
       id: t.id,
       name: typeof t.name === "string" ? t.name.trim().slice(0, 60) : "",
       root: node(t.root, 0),
+      files_open: t.files_open === true,
     });
   }
   if (tabs.length === 0) return null;
@@ -674,6 +697,7 @@ export function sanitize(input: unknown, report?: DuplicatePane[]): Layout | nul
       root,
       ...(typeof t.closed_at === "string" ? { closed_at: t.closed_at } : {}),
       ...(typeof t.gone_since === "string" ? { gone_since: t.gone_since } : {}),
+      ...(t.files_open === true ? { files_open: true } : {}),
     });
   }
   return closed.length ? { tabs, active, v: 2, closed } : { tabs, active, v: 2 };

@@ -8,7 +8,7 @@ const PAGE = 120;
 
 function Filter({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
-    <div className="flex items-center gap-1.5 rounded border border-border bg-bg-term px-2 focus-within:border-accent">
+    <div className="flex items-center gap-1.5 bt-field bg-bg-term px-2 focus-within:border-accent">
       <Search size={13} className="text-text-3" />
       <input
         value={value}
@@ -76,7 +76,7 @@ export function ThemePicker(p: {
           </button>
         ))}
       </div>
-      <div className="max-h-72 min-h-0 overflow-y-auto rounded border border-border" onMouseLeave={() => p.onHover(null)}>
+      <div className="max-h-72 min-h-0 overflow-y-auto bt-field" onMouseLeave={() => p.onHover(null)}>
         {list.slice(0, limit).map((t) => (
           <div
             key={t.id}
@@ -129,7 +129,7 @@ export function FontPicker(p: { fonts: FontInfo[]; favorites: string[]; selected
           Todas
         </button>
       </div>
-      <div className="max-h-60 overflow-y-auto rounded border border-border">
+      <div className="max-h-60 overflow-y-auto bt-field">
         {sorted.slice(0, 300).map((f) => (
           <div
             key={f.family}

@@ -8,6 +8,8 @@ export interface StudioAction {
   label: string;
   title: string;
   icon: ReactNode;
+  /** nome do SF Symbol, o mesmo que o MenuItem desenha na placa nativa */
+  symbol?: string;
   onClick: () => void;
   /** menor = vai primeiro para o "..." quando falta espaco */
   priority: number;
@@ -32,6 +34,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
       label: "SSH e Serial",
       title: "SSH e Serial: hosts SSH salvos, arquivos (SFTP) e portas seriais",
       icon: <Server size={16} />,
+      symbol: "macwindow",
       onClick: h.onTools,
       priority: 2,
     });
@@ -41,6 +44,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
       label: "Abrir arquivo",
       title: "Abrir arquivo: ver e editar texto e Markdown (.md, .txt, .log) ou ver imagem",
       icon: <FileText size={16} />,
+      symbol: "doc.on.doc",
       onClick: h.onOpenFile,
       priority: 3,
     });
@@ -50,6 +54,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
       label: "Novo arquivo",
       title: "Novo arquivo: abre o editor em branco para escrever; salvar é opcional (aí escolhe pasta e nome)",
       icon: <FilePlus size={16} />,
+      symbol: "plus",
       onClick: h.onNewFile,
       priority: 3,
     });
@@ -59,6 +64,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
       label: "Falar",
       title: "Falar: ditar um texto para o terminal em foco",
       icon: <Mic size={16} />,
+      symbol: "mic",
       onClick: h.onSpeak,
       priority: 4,
     });
@@ -67,6 +73,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
     label: "Buscar",
     title: "Buscar: ir para um terminal (título, pasta, aba, número ou texto na tela)",
     icon: <Search size={16} />,
+    symbol: "magnifyingglass",
     onClick: h.onSearch,
     priority: 5,
   });
@@ -76,6 +83,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
       label: "Tarefas",
       title: "Gerenciador de tarefas: memória, CPU, GPU, disco, consumo de cada terminal e do WSL",
       icon: <Activity size={16} />,
+      symbol: "chart.bar",
       onClick: h.onTaskManager,
       priority: 1,
     });
@@ -85,6 +93,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
       label: "Banco de dados",
       title: "Banco de dados: conexões salvas, tabelas e consultas SQL",
       icon: <Database size={16} />,
+      symbol: "cylinder",
       onClick: h.onDatabase,
       priority: 0,
     });
@@ -94,6 +103,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
       label: "Sair",
       title: "Sair do Studio remoto neste navegador (o PC e os terminais continuam como estão)",
       icon: <LogOut size={16} />,
+      symbol: "rectangle.portrait.and.arrow.right",
       onClick: remoteLogout,
       priority: 8,
     });
@@ -102,6 +112,7 @@ export function buildStudioActions(h: StudioActionHandlers): StudioAction[] {
     label: "Configurações",
     title: "Configurações: aparência, terminais, voz e IA, provedores, barra lateral e sobre",
     icon: <Settings size={16} />,
+    symbol: "gear",
     onClick: h.onGeneral,
     priority: 9,
   });

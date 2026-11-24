@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -16,9 +17,21 @@ import (
 const (
 	hostMutexName     = `Local\BethStudioHost`
 	hostQuitEventName = `Local\BethStudioHostQuit`
-	hostExeName       = "bethstudio-host.exe"
 	guiExeName        = "bethterm-gui.exe" // nome da janela nativa antiga (removida)
 )
+
+// hostExeName is the on-disk name of the PTY host. Windows keeps the .exe
+// suffix the installer ships; macOS and Linux do not. Set at init so a
+// Windows process never looks for the name without the suffix, even before
+// any other init runs.
+var hostExeName = hostExeNameFor(runtime.GOOS)
+
+func hostExeNameFor(goos string) string {
+	if goos == "windows" {
+		return "bethstudio-host.exe"
+	}
+	return "bethstudio-host"
+}
 
 // hostCtl é a fronteira com o sistema: o supervisor só fala com isto.
 type hostCtl interface {
@@ -64,7 +77,8 @@ func hostExeIn(dir string) (string, error) {
 	return p, nil
 }
 
-// hostExePath: bethstudio-host.exe ao lado do exe do Studio.
+// hostExePath: bethstudio-host ao lado do exe do Studio, ou no build de
+// desenvolvimento do repositório (o mesmo lugar onde o CLI é achado).
 func hostExePath() (string, error) {
 	// BETHSTUDIO_HOST_EXE: caminho do host escolhido à mão (testes de integração).
 	if v := strings.TrimSpace(os.Getenv("BETHSTUDIO_HOST_EXE")); v != "" {
@@ -77,7 +91,16 @@ func hostExePath() (string, error) {
 	if resolved, err := filepath.EvalSymlinks(self); err == nil {
 		self = resolved
 	}
-	return hostExeIn(filepath.Dir(self))
+	dir := filepath.Dir(self)
+	if p, err := hostExeIn(dir); err == nil {
+		return p, nil
+	}
+	// Desenvolvimento: bethstudio-web/bethstudio-web ao lado de upstream-wezterm/target/release.
+	dev := filepath.Join(dir, "..", "upstream-wezterm", "target", "release")
+	if p, err := hostExeIn(dev); err == nil {
+		return p, nil
+	}
+	return "", fmt.Errorf("%s não encontrado em %s", hostExeName, dir)
 }
 
 // hostID: o id de host de BETHSTUDIO_HOST_ID (o mesmo filtro do host Rust). Vazio

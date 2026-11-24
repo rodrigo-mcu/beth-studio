@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowUp, Download, File, Folder, FolderOpen, FolderPlus, Pencil, RefreshCw, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, ArrowUp, Download, FolderOpen, FolderPlus, Pencil, RefreshCw, Trash2, Upload } from "lucide-react";
+import { FileKindIcon } from "./FileKindIcon";
 import { sftpApi, SshApiError, type SftpEntry, type SftpListing, type SshApiClient, type SshHost, type SshTyped } from "@/lib/sshApi";
 import { breadcrumbs, formatSize, formatTime, joinRemote, validRemoteName } from "@/lib/sshUtil";
 import { cn } from "@/lib/utils";
@@ -178,7 +179,7 @@ export function SshFilesPanel({ conn, host, readOnly, onBack }: { conn: SshApiCl
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto rounded border border-border">
+      <div className="min-h-0 flex-1 overflow-auto bt-field">
         {!listing && !busy && <div className="p-4 text-[12px] text-text-3">Sem conexão.</div>}
         {listing && entries.length === 0 && <div className="p-4 text-[12px] text-text-3">Pasta vazia. Arraste arquivos para cá para enviar.</div>}
         <table className="w-full text-[12px]">
@@ -189,7 +190,7 @@ export function SshFilesPanel({ conn, host, readOnly, onBack }: { conn: SshApiCl
                 className="group border-b border-border/60 hover:bg-bg-hover"
                 onDoubleClick={() => (e.is_dir ? load(joinRemote(path, e.name)) : download(e))}
               >
-                <td className="w-6 pl-2">{e.is_dir ? <Folder size={14} className="text-accent-text" /> : <File size={14} className="text-text-3" />}</td>
+                <td className="w-6 pl-2"><FileKindIcon name={e.name} isDir={e.is_dir} size={18} /></td>
                 <td className="max-w-0 truncate py-1 text-text-1">
                   {e.is_dir ? (
                     <button className="truncate hover:underline" onClick={() => load(joinRemote(path, e.name))}>
@@ -236,7 +237,7 @@ export function SshFilesPanel({ conn, host, readOnly, onBack }: { conn: SshApiCl
       </div>
 
       {uploads.length > 0 && (
-        <div className="mt-2 max-h-24 overflow-auto rounded border border-border p-1.5 text-[11px]">
+        <div className="mt-2 max-h-24 overflow-auto bt-field p-1.5 text-[11px]">
           <div className="mb-1 flex items-center">
             <span className="text-text-2">Envios</span>
             <div className="flex-1" />
@@ -310,7 +311,7 @@ export function SshFilesPanel({ conn, host, readOnly, onBack }: { conn: SshApiCl
       {(pending?.kind === "mkdir" || pending?.kind === "rename") && (
         <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/50 pt-[16vh]" onMouseDown={() => setPending(null)}>
           <form
-            className="w-[min(420px,92vw)] rounded-lg border border-border-strong bg-bg-card p-4 shadow-2xl"
+            className="w-[min(420px,92vw)] bt-dialog p-4"
             onMouseDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.key === "Escape" && setPending(null)}
             onSubmit={(ev) => {

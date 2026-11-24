@@ -5,14 +5,26 @@
 // caminho certo). Funcoes puras, testadas em tests/localFile.test.ts.
 import { apiBase } from "./remote.ts";
 
-export const TEXT_FILE_EXT = [".md", ".markdown", ".txt", ".log"] as const;
+export const TEXT_FILE_EXT = [
+  ".md", ".markdown", ".txt", ".log",
+  ".crs", ".mika", ".mui", ".rs", ".go", ".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+  ".c", ".h", ".cpp", ".cc", ".hpp", ".hh", ".java", ".kt", ".kts", ".cs", ".swift",
+  ".rb", ".php", ".lua", ".zig", ".hs", ".ex", ".exs", ".scala", ".pl", ".pm", ".r", ".dart",
+  ".vue", ".svelte", ".sh", ".bash", ".zsh", ".ps1",
+  ".json", ".jsonl", ".kson", ".kmodel", ".yaml", ".yml", ".toml", ".xml", ".html", ".htm", ".css", ".scss", ".sql",
+  ".ini", ".cfg", ".conf", ".env", ".csv", ".mod", ".sum", ".lock", ".gitignore",
+] as const;
 export const IMAGE_FILE_EXT = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"] as const;
 
 export type LocalFileKind = "text" | "image";
 
+const TEXT_FILE_NAME = ["app.bundle"] as const;
+
 /** Extensao permitida (texto ou imagem)? So' olha o final do nome, sem tocar no disco. */
 export function localFileKind(path: string): LocalFileKind | null {
-  const low = path.toLowerCase();
+  const low = path.toLowerCase().replace(/[\\/]+$/, "");
+  const base = low.slice(low.lastIndexOf("/") + 1).slice(low.lastIndexOf("\\") + 1);
+  if ((TEXT_FILE_NAME as readonly string[]).includes(base)) return "text";
   if (TEXT_FILE_EXT.some((e) => low.endsWith(e))) return "text";
   if (IMAGE_FILE_EXT.some((e) => low.endsWith(e))) return "image";
   return null;

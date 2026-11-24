@@ -1,11 +1,11 @@
-// bethstudio-web: Go backend + React UI (WebView2) for the terminals that live
+// bethstudio-web: Go backend + React UI for the terminals that live
 // in the running Beth Studio host.
 //
-// The Go side spawns ONE `bethstudio.exe cli bridge` child (JSON lines over
+// The Go side spawns ONE `bethstudio` cli bridge child (JSON lines over
 // stdin/stdout, see upstream-wezterm/patches/0171-cli-bridge.md), serves the
 // embedded React build on 127.0.0.1:<random port>, and relays bridge events to
-// every browser connection over a WebSocket. The window is WebView2
-// (github.com/jchv/go-webview2, pure Go, no cgo, no WebView2Loader.dll).
+// every browser connection over a WebSocket. The window is WebView2 on
+// Windows and WKWebView (WebKit) on macOS.
 package main
 
 import (
@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -187,8 +188,11 @@ func main() {
 			w, h = 1440, 900
 		}
 		if err := openWindow(url, *devtools, w, h); err != nil {
-			messageBox(appTitle, "Não foi possível abrir a janela (WebView2):\n\n"+err.Error()+
-				"\n\nInstale o Microsoft Edge WebView2 Runtime ou rode com --no-window e abra a URL no navegador.")
+			hint := "Instale o Microsoft Edge WebView2 Runtime ou rode com --no-window e abra a URL no navegador."
+			if runtime.GOOS == "darwin" {
+				hint = "Rode com --no-window e abra a URL no navegador."
+			}
+			messageBox(appTitle, "Não foi possível abrir a janela:\n\n"+err.Error()+"\n\n"+hint)
 		}
 	}
 
@@ -211,18 +215,26 @@ func resolveExe(flagVal string) string {
 		return v
 	}
 	// ao lado deste exe (instalacao) ou no build de desenvolvimento do repo
+	name := cliExeName()
 	if self, err := os.Executable(); err == nil {
 		dir := filepath.Dir(self)
 		for _, c := range []string{
-			filepath.Join(dir, "bethstudio.exe"),
-			filepath.Join(dir, "..", "upstream-wezterm", "target", "release", "bethstudio.exe"),
+			filepath.Join(dir, name),
+			filepath.Join(dir, "..", "upstream-wezterm", "target", "release", name),
 		} {
 			if st, err := os.Stat(c); err == nil && !st.IsDir() {
 				return c
 			}
 		}
 	}
-	return "bethstudio.exe" // no PATH
+	return name // no PATH
+}
+
+func cliExeName() string {
+	if runtime.GOOS == "windows" {
+		return "bethstudio.exe"
+	}
+	return "bethstudio"
 }
 
 func randomToken() string {
@@ -271,11 +283,18 @@ func setupLog() func() {
 }
 
 func appDataDir() string {
-	la := os.Getenv("LOCALAPPDATA")
-	if la == "" {
-		return ""
+	if la := os.Getenv("LOCALAPPDATA"); la != "" {
+		return filepath.Join(la, "bethstudio-web")
 	}
-	return filepath.Join(la, "bethstudio-web")
+	if runtime.GOOS == "darwin" {
+		if home, err := os.UserHomeDir(); err == nil && home != "" {
+			return filepath.Join(home, "Library", "Logs", "bethstudio-web")
+		}
+	}
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		return filepath.Join(home, ".local", "state", "bethstudio-web")
+	}
+	return ""
 }
 
 func fatal(format string, args ...any) {

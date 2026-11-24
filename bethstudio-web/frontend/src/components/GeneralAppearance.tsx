@@ -7,6 +7,8 @@ import { LIGHT, NAVY_DARK, VSCODE_DARK, deriveUI, normalizeUIMode, type UIColors
 import { paneLabel } from "@/lib/panes";
 import { cn } from "@/lib/utils";
 import { isDefaultZoom, resetPageZoom, usePageZoom, zoomLabel } from "@/lib/pageZoom";
+import { isMacTitlebar } from "@/lib/windowFrame";
+import { applyGlassPatch, glassSlidersVisible, vibrancyClick, vibrancyShownAfterSave } from "@/lib/appearanceTune";
 import type { NotifyPrefs } from "@/lib/notify";
 import { FontPicker, Swatch, ThemePicker } from "./Pickers";
 
@@ -51,6 +53,12 @@ export function GeneralAppearance({
   const show = (k: "ui" | "voice" | "notify" | "terminals") => !sections || sections.includes(k);
   const ui = { mode: normalizeUIMode(settings?.ui_theme?.mode), theme_id: settings?.ui_theme?.theme_id };
   const [pickUI, setPickUI] = useState(ui.mode === "theme");
+  const [pendingVibrancy, setPendingVibrancy] = useState<boolean | null>(null);
+  // Enquanto o clique não volta, mostra o valor postado. Depois, o campo
+  // ausente (false omitido) fica desligado mesmo com localStorage "1".
+  const vibrancyOn = pendingVibrancy !== null
+    ? pendingVibrancy
+    : vibrancyShownAfterSave(settings?.ui_theme, false);
   const [pickTermTheme, setPickTermTheme] = useState(false);
   const [pickFont, setPickFont] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -142,6 +150,38 @@ export function GeneralAppearance({
                 />
               </div>
             )}
+            {isMacTitlebar() && (
+              <button
+                className={cn(
+                  "mt-3 flex w-full items-center gap-3 rounded-lg p-2 text-left",
+                  vibrancyOn ? "bg-accent-soft" : "bg-bg-card hover:bg-bg-hover",
+                )}
+                aria-pressed={vibrancyOn}
+                onClick={() => {
+                  const on = vibrancyClick(vibrancyOn).next;
+                  setPendingVibrancy(on);
+                  localStorage.setItem("bethstudio-vibrancy", on ? "1" : "0");
+                  document.documentElement.classList.toggle("bt-vibrancy", on);
+                  const w = window as unknown as {
+                    webkit?: { messageHandlers?: { bethVibrancy?: { postMessage: (v: string) => void } } };
+                  };
+                  w.webkit?.messageHandlers?.bethVibrancy?.postMessage(on ? "1" : "0");
+                  conn.api<SettingsEvent>("/api/settings/ui", { vibrancy: on }).then((s) => {
+                    setPendingVibrancy(null);
+                    conn.setSettings(s);
+                  }).catch(() => undefined);
+                }}
+              >
+                <VibrancySample on={vibrancyOn} />
+                <span className="min-w-0">
+                  <span className="block text-[13px] text-text-1">Vibrancy na barra lateral</span>
+                  <span className="block text-[12px] text-text-3">o material do macOS aparece atrás da barra</span>
+                </span>
+              </button>
+            )}
+            {isMacTitlebar() && glassSlidersVisible(vibrancyOn) && (
+              <GlassTune settings={settings} conn={conn} />
+            )}
           </section>
           )}
 
@@ -227,7 +267,7 @@ export function GeneralAppearance({
               >
                 Automático
               </button>
-              <div className="flex items-center overflow-hidden rounded border border-border">
+              <div className="flex items-center overflow-hidden bt-field">
                 <button className="p-1 text-text-2 hover:bg-bg-hover" title="Diminuir" onClick={() => run(setDefault(conn, { font_size: Math.max(5, (defSize || 14) - 1) }))}>
                   <Minus size={13} />
                 </button>
@@ -307,7 +347,7 @@ export function GeneralAppearance({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-[5vh]" onMouseDown={onClose}>
       <div
-        className="flex max-h-[90vh] w-[min(780px,94vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex max-h-[90vh] w-[min(780px,94vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
         onMouseLeave={() => preview(null)}
       >
@@ -337,6 +377,51 @@ function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; labe
     </button>
   );
 }
+
+function GlassTune({ settings, conn }: { settings: SettingsEvent; conn: Connection }) {
+  const current = applyGlassPatch(
+    { glass: settings.ui_theme?.glass || 55, glass_alpha: settings.ui_theme?.glass_alpha || 70 },
+    {},
+  );
+  const power = current.glass;
+  const alpha = current.glass_alpha;
+  const save = (patch: { glass?: number; glass_alpha?: number }) => {
+    const next = applyGlassPatch(current, patch);
+    const body = patch.glass !== undefined ? { glass: next.glass } : { glass_alpha: next.glass_alpha };
+    conn.api<SettingsEvent>("/api/settings/ui", body).then((s) => conn.setSettings(s)).catch(() => {});
+  };
+  return (
+    <div className="mt-2 flex items-center gap-3 rounded-lg bg-bg-card p-2">
+      <div className="min-w-0 flex-1 space-y-2">
+        <label className="block text-[12px] text-text-2">
+          Potência do efeito
+          <input type="range" min={15} max={100} value={power} className="mt-1 w-full" onInput={(e) => save({ glass: Number(e.currentTarget.value) })} />
+        </label>
+        <label className="block text-[12px] text-text-2">
+          Transparência
+          <input type="range" min={15} max={100} value={alpha} className="mt-1 w-full" onInput={(e) => save({ glass_alpha: Number(e.currentTarget.value) })} />
+        </label>
+      </div>
+      <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl">
+        <span className="absolute inset-0 bg-[linear-gradient(135deg,#7eb6ff,#c96442_50%,#10a37f)]" />
+        <span className="bt-glass-sample absolute inset-2 flex items-center justify-center rounded-lg text-[11px] font-medium text-white">Aa</span>
+      </span>
+    </div>
+  );
+}
+
+function VibrancySample({ on }: { on: boolean }) {
+  return (
+    <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-border">
+      <span className="absolute inset-0 bg-[linear-gradient(135deg,#7eb6ff,#c96442_55%,#10a37f)]" />
+      <span className={cn("absolute inset-y-1 left-1 w-6 rounded", on ? "bg-white/25 backdrop-blur" : "bg-[#2b2b2b]")} />
+      <span className="absolute inset-y-1 right-1 left-8 rounded bg-[#1e1e1e]" />
+      {on && <span className="absolute bottom-1 right-1.5 text-[8px] font-semibold text-white">on</span>}
+    </span>
+  );
+}
+
+
 
 function H({ children }: { children: ReactNode }) {
   return <div className="mb-1 text-[12px] font-semibold uppercase tracking-wide text-text-2">{children}</div>;

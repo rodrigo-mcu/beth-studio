@@ -66,7 +66,7 @@ export function AIUsageSection({ conn, onMessage }: { conn: Connection; onMessag
 
       <section>
         <div className="mb-1 text-[12px] font-semibold uppercase tracking-wide text-text-2">Por dia (30 dias)</div>
-        <div className="flex h-20 items-end gap-px rounded border border-border bg-bg-panel p-1">
+        <div className="flex h-20 items-end gap-px bt-field bg-bg-panel p-1">
           {s.daily.map((d) => (
             <div key={d.key} className="flex h-full flex-1 items-end" title={`${d.key.split("-").reverse().join("/")}: ${formatUSD(d.usd)} · ${d.calls} chamadas`}>
               <div className={cn("w-full rounded-t-sm", d.usd > 0 ? "bg-accent" : "bg-bg-hover")} style={{ height: `${d.usd > 0 ? Math.max(4, (d.usd / maxDay) * 100) : 2}%` }} />
@@ -105,7 +105,7 @@ export function AIUsageSection({ conn, onMessage }: { conn: Connection; onMessag
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <span className="text-[12px] font-semibold uppercase tracking-wide text-text-2">Últimas chamadas</span>
           <div className="flex-1" />
-          <select className="h-7 rounded border border-border bg-bg-term px-1 text-[12px] text-text-1" value={fn} onChange={(e) => setFn(e.target.value as typeof fn)}>
+          <select className="h-7 bt-field bg-bg-term px-1 text-[12px] text-text-1" value={fn} onChange={(e) => setFn(e.target.value as typeof fn)}>
             <option value="">todas</option>
             <option value="transcricao">transcrição</option>
             <option value="correcao">correção</option>
@@ -115,10 +115,10 @@ export function AIUsageSection({ conn, onMessage }: { conn: Connection; onMessag
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="filtrar (provedor, modelo, erro…)"
-            className="h-7 w-52 rounded border border-border bg-bg-term px-2 text-[12px] text-text-1 outline-none focus:border-accent"
+            className="h-7 w-52 bt-field bg-bg-term px-2 text-[12px] text-text-1 outline-none"
           />
         </div>
-        <div className="max-h-72 overflow-auto rounded border border-border">
+        <div className="max-h-72 overflow-auto bt-field">
           <table className="w-full text-[11px]">
             <thead className="sticky top-0 bg-bg-card text-text-3">
               <tr>
@@ -153,7 +153,7 @@ export function AIUsageSection({ conn, onMessage }: { conn: Connection; onMessag
           onChange={(e) => setLimit(e.target.value)}
           onBlur={() => void saveLimit()}
           placeholder="sem limite"
-          className="h-7 w-24 rounded border border-border bg-bg-term px-2 text-[12px] text-text-1 outline-none focus:border-accent"
+          className="h-7 w-24 bt-field bg-bg-term px-2 text-[12px] text-text-1 outline-none"
         />
         <span className="text-[11px] text-text-3">(aviso no “Falar”; não bloqueia)</span>
         <div className="flex-1" />

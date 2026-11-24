@@ -2,6 +2,8 @@
 // funcoes puras testadas em tests/agents.test.ts.
 
 import { wslFromUNC } from "./folderBrowser.ts";
+import { stripFileScheme } from "./localFile.ts";
+import type { AgentTool } from "./paneIdentity.ts";
 
 export interface AgentEvent {
   ev: "agent";
@@ -159,4 +161,34 @@ export function cwdFromPickedFolder(winPath: string, shellId: string): string {
   const rest = m[2].replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
   const asFile = rest ? `/${m[1]}:/${rest}` : `/${m[1]}:/`;
   return spawnCwd(`file://localhost${asFile}`, shellId);
+}
+
+export const AGENT_COMMAND: Record<AgentTool, string> = {
+  cursor: "cursor-agent",
+  claude: "claude",
+  codex: "codex",
+  grok: "grok",
+  gemini: "gemini",
+};
+
+/** CWD é argumento da ponte, nunca parte do comando enviado ao terminal. */
+export function agentFolder(destination: string, cwd: string, shellId: string): string {
+  const basePath = stripFileScheme(cwd).replace(/^\/([A-Za-z]:)/, "$1");
+  const target = stripFileScheme(destination).replace(/^\/([A-Za-z]:)/, "$1");
+  const windowsPath = /^(?:[A-Za-z]:[\\/]|\\\\)/;
+  const wsl = shellKind(shellId) === "wsl";
+  const base = wsl ? wslFromUNC(basePath)?.path ?? basePath : basePath;
+  if (wsl && windowsPath.test(target)) {
+    const unc = wslFromUNC(target);
+    if (unc && shellId !== "wsl.default" && unc.distro.toLowerCase() !== shellId.slice(4).toLowerCase()) return "";
+    if (!unc && !/^[A-Za-z]:/.test(target)) return "";
+    return cwdFromPickedFolder(target, shellId);
+  }
+  if (target.startsWith("/")) return target;
+  if (windowsPath.test(target)) return target.replace(/\//g, "\\");
+  if (target === "~" && wsl) return target;
+  if (target.startsWith("~")) return "";
+  if (base.startsWith("/")) return base.replace(/\/$/, "") + "/" + target;
+  if (windowsPath.test(base)) return (base.replace(/[\\/]$/, "") + "\\" + target).replace(/\//g, "\\");
+  return "";
 }

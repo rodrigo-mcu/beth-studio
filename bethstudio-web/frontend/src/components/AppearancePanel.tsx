@@ -47,7 +47,7 @@ export function AppearancePanel({ conn, paneId, catalog, settings, eff, onPrevie
   return (
     <div
       data-own-wheel
-      className="absolute bottom-2 right-2 top-2 z-40 flex w-[400px] max-w-[calc(100%-16px)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+      className="absolute bottom-2 right-2 top-2 z-40 flex w-[400px] max-w-[calc(100%-16px)] flex-col overflow-hidden bt-dialog"
       onMouseDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
@@ -292,7 +292,7 @@ function FontTab({ conn, paneId, catalog, settings, eff, onPreview, run }: TabPr
           <Chip active={size === 0} onClick={() => setSize(0)}>
             Automático
           </Chip>
-          <div className="flex items-center overflow-hidden rounded border border-border">
+          <div className="flex items-center overflow-hidden bt-field">
             <button className="p-1 text-text-2 hover:bg-bg-hover hover:text-text-1" title="Diminuir" onClick={() => setSize(Math.max(5, (size || 14) - 1))}>
               <Minus size={13} />
             </button>
@@ -389,7 +389,7 @@ function StarButton({ on, onClick, what }: { on: boolean; onClick: () => void; w
 
 function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
-    <div className="flex items-center gap-1.5 rounded border border-border bg-bg-term px-2">
+    <div className="flex items-center gap-1.5 bt-field bg-bg-term px-2">
       <Search size={13} className="text-text-3" />
       <input
         value={value}

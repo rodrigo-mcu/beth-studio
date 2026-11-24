@@ -294,7 +294,7 @@ export function PipelineTest({ conn, v, providerName }: { conn: Connection; v: V
         </div>
       )}
       {cmp && steps.length === 0 && (
-        <div className="rounded border border-border bg-bg-panel p-2 text-[12px]">
+        <div className="bt-field bg-bg-panel p-2 text-[12px]">
           <div className="mb-1 text-text-2">{cmpNote}</div>
           <table className="w-full">
             <thead className="text-[11px] text-text-3">
@@ -329,7 +329,7 @@ export function PipelineTest({ conn, v, providerName }: { conn: Connection; v: V
         </div>
       )}
       {steps.length > 0 && (
-        <ol className="space-y-1.5 rounded border border-border bg-bg-panel p-2 text-[12px]">
+        <ol className="space-y-1.5 bt-field bg-bg-panel p-2 text-[12px]">
           {steps.map((s, k) => (
             <li key={k}>
               <div className="flex items-center gap-1.5">

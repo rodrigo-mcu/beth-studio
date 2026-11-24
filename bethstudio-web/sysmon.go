@@ -946,6 +946,18 @@ func appendWSLHistory(hist []WSLPoint, p WSLPoint, max int) []WSLPoint {
 	return hist
 }
 
+func safeDistroName(n string) bool {
+	if n == "" || len(n) > 64 || strings.HasPrefix(n, "-") {
+		return false
+	}
+	for _, r := range n {
+		if !(r == '-' || r == '_' || r == '.' || r >= '0' && r <= '9' || r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z') {
+			return false
+		}
+	}
+	return true
+}
+
 func pu(s string) uint64 {
 	v, _ := strconv.ParseUint(s, 10, 64)
 	return v

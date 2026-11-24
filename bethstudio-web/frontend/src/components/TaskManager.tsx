@@ -82,7 +82,7 @@ export function TaskManager({ conn, onClose, onGoToPane }: { conn: Connection; o
         role="dialog"
         aria-modal="true"
         aria-label="Gerenciador de tarefas"
-        className="flex h-[90vh] w-[min(1180px,96vw)] flex-col overflow-hidden rounded-xl border border-border bg-bg-body text-[12px] text-text-1 shadow-2xl outline-none"
+        className="flex h-[90vh] w-[min(1180px,96vw)] flex-col overflow-hidden bt-dialog bg-bg-body text-[12px] text-text-1 shadow-2xl outline-none"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
       >

@@ -703,7 +703,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
         ref={boxRef}
         style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, visibility: pos ? "visible" : "hidden" }}
         className={cn(
-          "pointer-events-auto absolute flex max-h-[84vh] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl",
+          "pointer-events-auto absolute flex max-h-[84vh] flex-col overflow-hidden bt-dialog",
           // gravando: cartão compacto, para não cobrir o texto que se quer ler atrás
           phase === "recording" ? "w-[min(356px,94vw)]" : "w-[min(640px,94vw)]",
         )}
@@ -767,7 +767,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
             </div>
           )}
           {(phase === "privacy" || phase === "error") && snap && (
-            <div className="rounded border border-border bg-bg-panel p-2">
+            <div className="bt-field bg-bg-panel p-2">
               <div className="mb-1 text-[11px] text-text-3">Microfone</div>
               <MicPicker conn={conn} value={mic} onChange={changeMic} withTest />
             </div>
@@ -840,13 +840,13 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                   {showTuning ? "Esconder microfone e ajustes" : "Microfone e ajustes de áudio"}
                 </button>
                 {showTuning && snap && (
-                  <div className="rounded border border-border bg-bg-panel p-2">
+                  <div className="bt-field bg-bg-panel p-2">
                     <div className="mb-1 text-[11px] text-text-3">Microfone (trocar recomeça a gravação)</div>
                     <MicPicker conn={conn} value={mic} onChange={changeMic} withTest={false} />
                   </div>
                 )}
                 {showTuning && (
-                  <div className="space-y-1 rounded border border-border bg-bg-panel p-2 text-[12px] text-text-1">
+                  <div className="space-y-1 bt-field bg-bg-panel p-2 text-[12px] text-text-1">
                     {(
                       [
                         ["agc", "Controle automático de ganho", "O navegador sobe e desce o volume sozinho. Desligue se o volume pulando atrapalha."],
@@ -911,7 +911,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 text={`${phase === "transcribing" ? `Transcrevendo com ${sttName}` : `Corrigindo com ${llmName} (${snap?.settings.llm_model || "modelo padrão"})`}… ${formatSeconds(workMs)}`}
               />
               {phase === "correcting" && (
-                <div className="min-h-[3rem] rounded border border-border bg-bg-term p-2 text-[13px] text-text-1">
+                <div className="min-h-[3rem] bt-field bg-bg-term p-2 text-[13px] text-text-1">
                   {snap?.settings.show_correction_stream && streamText ? (
                     <>
                       {streamText}
@@ -987,7 +987,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
             <div className="space-y-2">
               {warn && <div className="rounded bg-status-warn/15 p-2 text-[12px] font-semibold text-status-warn">{warn}</div>}
               {corrected !== null && corrected !== original && (
-                <div className="rounded border border-border bg-bg-panel p-2 text-[12px] leading-relaxed">
+                <div className="bt-field bg-bg-panel p-2 text-[12px] leading-relaxed">
                   <div className="mb-1 flex items-center gap-2 text-[11px] text-text-3">
                     O que a correção mudou
                     <div className="flex-1" />
@@ -1017,14 +1017,14 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                 <textarea
                   value={prefix}
                   onChange={(e) => setPrefix(e.target.value)}
-                  className="h-14 w-full resize-y rounded border border-border bg-bg-term p-2 text-[12px] text-text-2 outline-none focus:border-accent"
+                  className="h-14 w-full resize-y bt-field bg-bg-term p-2 text-[12px] text-text-2 outline-none"
                 />
               )}
               <textarea
                 autoFocus
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                className="h-40 w-full resize-y rounded border border-border bg-bg-term p-2 text-[13px] text-text-1 outline-none focus:border-accent"
+                className="h-40 w-full resize-y bt-field bg-bg-term p-2 text-[13px] text-text-1 outline-none"
               />
               <div className="text-[11px] text-text-3">
                 {info2}
@@ -1034,7 +1034,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
             </div>
           )}
           {showHistory && (
-            <div className="rounded border border-border bg-bg-panel">
+            <div className="bt-field bg-bg-panel">
               <div className="flex items-center gap-2 border-b border-border px-2 py-1.5 text-[11px] text-text-3">
                 Últimas transcrições (guardadas só neste computador)
                 <div className="flex-1" />
@@ -1075,7 +1075,7 @@ export function SpeakDialog({ conn, pane, info, onClose, onOpenSettings, onSent 
                       </button>
                     </div>
                     {openId === h.id && (
-                      <textarea readOnly value={h.text} className="mt-2 h-40 w-full resize-y rounded border border-border bg-bg-term p-2 text-[12px] text-text-1 outline-none" />
+                      <textarea readOnly value={h.text} className="mt-2 h-40 w-full resize-y bt-field bg-bg-term p-2 text-[12px] text-text-1 outline-none" />
                     )}
                   </li>
                 ))}

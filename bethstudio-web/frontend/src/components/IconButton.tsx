@@ -23,7 +23,7 @@ export function IconButton({ label, onClick, disabled, active, children, classNa
         onClick(e);
       }}
       className={cn(
-        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-text-2 transition-colors",
+        "bt-glass inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-text-2 transition-colors",
         "hover:bg-bg-hover hover:text-text-1 disabled:cursor-default disabled:text-text-3 disabled:hover:bg-transparent",
         active && "bg-accent-soft text-accent-text",
         className,

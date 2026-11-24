@@ -19,7 +19,7 @@ export function TechVocabDialog({ conn, onClose }: { conn: Connection; onClose: 
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/50 pt-[5vh]" onMouseDown={onClose}>
       <div
-        className="flex h-[85vh] w-[min(820px,96vw)] flex-col overflow-hidden rounded-lg border border-border-strong bg-bg-card shadow-2xl"
+        className="flex h-[85vh] w-[min(820px,96vw)] flex-col overflow-hidden bt-dialog"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
       >
@@ -32,7 +32,7 @@ export function TechVocabDialog({ conn, onClose }: { conn: Connection; onClose: 
           </button>
         </div>
         <div className="border-b border-border px-4 py-2">
-          <div className="flex h-8 items-center gap-2 rounded border border-border bg-bg-term px-2">
+          <div className="flex h-8 items-center gap-2 bt-field bg-bg-term px-2">
             <Search size={14} className="text-text-3" />
             <input
               autoFocus

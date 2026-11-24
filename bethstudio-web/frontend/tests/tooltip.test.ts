@@ -17,6 +17,7 @@ test("posição: abaixo e centralizado; empurrado para dentro nas bordas; acima 
   assert.equal(p.left, 416);
   assert.equal(p.top, 36 + TIP_GAP);
   assert.equal(p.above, false);
+  assert.equal(p.side, "below");
   assert.equal(p.arrowX, 100);
   // botao no canto direito (ex. Fechar): cabe na janela e a seta segue o botao
   const r = placeTip({ left: 1054, top: 0, width: 46, height: 32 }, 120, 30, 1100, 680);
