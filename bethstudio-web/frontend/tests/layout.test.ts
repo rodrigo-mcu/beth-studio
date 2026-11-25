@@ -141,7 +141,7 @@ test("persistencia: JSON ida e volta + sanitize remove duplicados e lixo", () =>
   let l = base();
   l = dropOnPane(l, 3, 2, "bottom");
   const back = sanitize(JSON.parse(JSON.stringify(l)));
-  assert.deepEqual(back, { ...l, v: 2 });
+  assert.deepEqual(back, { ...l, v: 2, tabs: l.tabs.map((t) => ({ ...t, files_open: false })) }); // sanitize normaliza files_open
   const dirty = {
     active: "nao-existe",
     tabs: [

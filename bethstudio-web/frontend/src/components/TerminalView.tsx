@@ -50,7 +50,7 @@ import { attachRenderer, preloadRenderer, type RendererHandle } from "@/lib/term
 import { readIncrementalWrite } from "@/lib/termRenderer";
 import { openExternal } from "@/lib/links";
 import { MOUSE_OFF, MOUSE_ON, parseSgrMouse, wantMouse } from "@/lib/termMouse";
-import { resolveLinkPath, type PaneLinkCtx } from "@/lib/localFile";
+import { type PaneLinkCtx } from "@/lib/localFile";
 import { markScreen } from "@/lib/startup";
 import { fallbackLinksTouching, linkHoverHint, routeActions, routeSelection, routeTermLink, shouldActivateLink, suppressAppMouseDown, type CellLike, type LinkRoute, type LinkRow } from "@/lib/termLinks";
 import { reasonLabel, type AgentInfo } from "@/lib/agents";
@@ -1486,7 +1486,7 @@ Arraste para outra aba ou para a borda de outro terminal`
               shown={cwd}
               onGo={(dest) => {
                 if (onAgentFolder?.(dest)) return;
-                const q = dest.includes(" ") || dest.includes('"') ? `"${dest.replaceAll('"', "")}"` : dest;
+                const q = dest.includes(" ") || dest.includes('"') ? `"${dest.replace(/"/g, "")}"` : dest;
                 if (!conn.send(paneId, `cd ${q}\r`)) flash("Sem conexão com o terminal");
               }}
             />

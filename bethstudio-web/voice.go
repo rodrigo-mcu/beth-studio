@@ -1020,9 +1020,13 @@ func (s *server) serveTranscribe(w http.ResponseWriter, r *http.Request) {
 	s.transcribeAndLog(w, r, audio, ct)
 }
 
+// maskKey mostra só os 4 últimos caracteres (vazio continua vazio).
 func maskKey(k string) string {
-	if len(k) < 8 {
+	if k == "" {
+		return ""
+	}
+	if len(k) <= 4 {
 		return "••••"
 	}
-	return k[:4] + "…" + k[len(k)-2:]
+	return "••••" + k[len(k)-4:]
 }

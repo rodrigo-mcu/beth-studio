@@ -6,7 +6,7 @@ import { shellKind, type ShellKind } from "@/lib/agents";
 import { paneLabel } from "@/lib/panes";
 import { PANE_MIME, draggedPane, endDrag } from "@/lib/dnd";
 import { isAgentTool, ToolIcon, toolInText } from "./ToolIcon";
-import { KIND_LABEL, SHELL_ICON } from "./NewTerminalDialog";
+import { SHELL_ICON } from "./NewTerminalDialog";
 import { cn } from "@/lib/utils";
 import type { ToolKind } from "./SshScreen";
 

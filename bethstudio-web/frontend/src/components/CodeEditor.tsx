@@ -37,7 +37,7 @@ export function CodeEditor({
   wrap: boolean;
   fontPx: number;
   label: string;
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
 }) {
   const preRef = useRef<HTMLPreElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);

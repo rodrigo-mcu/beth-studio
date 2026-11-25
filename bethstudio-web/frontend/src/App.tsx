@@ -38,7 +38,6 @@ import { GitDiffPanel } from "@/components/GitDiffPanel";
 import { FolderBrowser, type FolderBrowserMode } from "@/components/FolderBrowser";
 import { UNTITLED_PATH } from "@/lib/folderBrowser";
 import { StartupOverlay } from "@/components/StartupOverlay";
-import { resolveLinkPath } from "@/lib/localFile";
 import { paneFolder } from "@/lib/worktree";
 import { glassPlateFields, nativeGlassPlates, toggleFolderPanel } from "@/lib/sidebarFrame";
 import { shellVibrancyOn } from "@/lib/appearanceTune";

@@ -559,7 +559,7 @@ export function FilePreviewPanel({ conn, path: requested, onClose, onOpen, editO
     e.preventDefault();
     const { clientX: sx, clientY: sy, pointerId } = e;
     const start = rectRef.current;
-    const el = e.currentTarget;
+    const el = e.currentTarget as HTMLElement;
     let next = start;
     let frame = 0;
     let deltaX = 0;

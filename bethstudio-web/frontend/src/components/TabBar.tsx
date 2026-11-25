@@ -20,7 +20,6 @@ import type { Layout, WebTab } from "@/lib/layout";
 import { countLeaves, leaves } from "@/lib/layout";
 import { PANE_MIME, TAB_MIME, dragEndedOutside, draggedPane, endDrag, startTabDrag, useDrag } from "@/lib/dnd";
 import { ToolIcon } from "./ToolIcon";
-import { paneIdentity } from "@/lib/paneIdentity";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -109,14 +108,14 @@ export function TabBar({
   alerts,
   tabTitle,
   tabIdentity,
-  paneScreen,
+  paneScreen: _paneScreen,
   onTool,
   status,
   onSpeak,
   hideActions,
   tabTerminal,
 }: Props) {
-  const drag = useDrag();
+  useDrag();
   const [editing, setEditing] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   useEffect(() => {
@@ -140,8 +139,8 @@ export function TabBar({
   }, []);
   // abas: rolagem horizontal com setas quando nao cabem
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [scrollL, setScrollL] = useState(false);
-  const [scrollR, setScrollR] = useState(false);
+  const [_scrollL, setScrollL] = useState(false);
+  const [_scrollR, setScrollR] = useState(false);
   const checkScroll = () => {
     const el = tabsRef.current;
     if (!el) return;
@@ -263,7 +262,7 @@ export function TabBar({
                 const name = id?.tool === "codex" ? "Codex" : id?.name || tabTitle(t, i);
                 return (
                   <>
-                    {id?.tool ? <ToolIcon tool={id.tool} size={14} /> : null}
+                    {id?.tool ? <ToolIcon tool={id.tool as React.ComponentProps<typeof ToolIcon>["tool"]} size={14} /> : null}
                     {editing === t.id ? (
                       <RenameBox
                         initial={t.name || name}

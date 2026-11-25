@@ -109,8 +109,7 @@ test("editor: painel tem modo editar, salvar no próprio arquivo e conflito", ()
   assert.match(src, /\/api\/local-file\/write/);
   assert.match(src, /X-File-Mtime/);
   assert.match(src, /<textarea/);
-  const app = fs.readFileSync("src/App.tsx", "utf8");
-  assert.match(app, /\/api\/local-file\/open-dialog/);
+  // "Abrir arquivo…" deixou de usar o diálogo nativo no App (Brian, 2026-11-25); o endpoint segue no Go.
 });
 
 test("editor automático normaliza o rascunho e preserva CRLF ao salvar", () => {

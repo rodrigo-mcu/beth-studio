@@ -89,7 +89,7 @@ export function cwdPath(cwd: string): { path: string; sep: "/" | "\\" } {
   return { path, sep };
 }
 
-import { paneIdentity } from "@/lib/paneIdentity";
+import { paneIdentity } from "./paneIdentity.ts";
 
 /**
  * Titulo que e' so' o caminho do executavel do shell

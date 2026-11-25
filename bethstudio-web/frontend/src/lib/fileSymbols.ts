@@ -33,7 +33,6 @@ import markdown from "@/assets/symbols/markdown.svg";
 import readme from "@/assets/symbols/readme.svg";
 import claude from "@/assets/symbols/claude.svg";
 import yaml from "@/assets/symbols/yaml.svg";
-import git from "@/assets/symbols/git.svg";
 import image from "@/assets/symbols/image.svg";
 import pdf from "@/assets/symbols/pdf.svg";
 import zip from "@/assets/symbols/zip.svg";

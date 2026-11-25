@@ -63,7 +63,8 @@ func TestLocalFileCategory(t *testing.T) {
 	cases := map[string]string{
 		"a.md": "text", "a.MD": "text", "a.markdown": "text", "a.txt": "text", "a.log": "text",
 		"a.png": "image", "a.JPG": "image", "a.jpeg": "image", "a.gif": "image", "a.webp": "image", "a.bmp": "image", "a.svg": "image",
-		"a.exe": "", "a.go": "", "a": "",
+		"a.go": "text", "a.rs": "text", "a.json": "text",
+		"a.exe": "", "a.dll": "", "a": "",
 	}
 	for name, want := range cases {
 		_, got := localFileCategory(name)
