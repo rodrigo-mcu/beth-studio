@@ -1,0 +1,12 @@
+---
+description: Mudança para um sistema (Windows ou Mac) não pode tirar nem quebrar o outro
+alwaysApply: true
+---
+
+# Windows e Mac
+
+Duas pessoas trabalham neste repositório, uma no Windows e outra no Mac. Uma mudança feita para um sistema não pode remover nem piorar o que funciona no outro. Regra completa em `AGENTS.md`, seção "Windows and Mac: never drop the other platform".
+
+1. Comportamento de um sistema só fica atrás de um teste (`isMacOS()` na página, build tag ou `runtime.GOOS` no Go, `cfg` no Rust). O caminho do outro sistema continua funcionando.
+2. Tirar ou trocar uma função que a pessoa usa é decisão de produto: combine antes com o outro desenvolvedor, registre no `FEATURES.md` e diga no commit.
+3. Antes de cada push no `main`: `pnpm build` e `pnpm test` em `bethstudio-web/frontend`, e `go test ./...` em `bethstudio-web`. Nunca envie com o build vermelho.

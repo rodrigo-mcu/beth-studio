@@ -52,6 +52,30 @@ date. The same rule is in `.cursor/rules/features-catalog.mdc`. Bugfixes
 and internal refactors do not belong there. Patch notes stay in
 `upstream-wezterm/PATCHES.md`.
 
+## Windows and Mac: never drop the other platform (2026-11-27)
+
+Two people work on this repository: one on Windows, one on macOS. A change
+made for one platform must not remove or degrade what works on the other.
+On 2026-11-25 Mac work removed the native Windows **Abrir arquivo…** dialog
+from the Studio (the Go endpoint `/api/local-file/open-dialog` stayed, but
+the page stopped calling it) and left `tsc` and several Windows tests
+failing on `main`.
+
+- Put platform behavior behind a check (`isMacOS()` in the page, build tags
+  or `runtime.GOOS` in Go, `cfg` in Rust) and keep the other platform's
+  path working. Do not delete it to make room.
+- Removing or replacing a user-facing feature on either platform is a
+  product decision: agree on it with the other developer before the
+  commit, record it in `FEATURES.md`, and say it in the commit message
+  (for example "Windows: remove X because Y").
+- Before every push to `main`, run on your own platform:
+  `pnpm build` (it runs `tsc`) and `pnpm test` in `bethstudio-web/frontend`,
+  and `go test ./...` in `bethstudio-web`. Tests that only make sense on
+  one platform need a build tag or a `runtime.GOOS` check, not a skip that
+  hides a failure.
+- Never push to `main` with a red build. If the other platform's CI or
+  tests break because of your change, fix it or revert it the same day.
+
 ## Live Terminals Rule (2026-09-23)
 
 The user's terminals, agents, and WSL sessions live in the running
