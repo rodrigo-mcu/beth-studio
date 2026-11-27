@@ -187,20 +187,21 @@ func TestFontBoldAndGUIDefaults(t *testing.T) {
 	}
 }
 
-// Identidade visual (AGENTS.md, "Product identity"): o Studio novo abre no
-// visual de sempre. Efeitos novos (vibrancy, Acrylic, vidro) e outros
-// visuais de barra lateral são opção, nunca o padrão de quem instala.
+// Protege o visual padrão de quem instala o Studio: tema escuro, sem
+// vibrancy/Acrylic e a barra lateral no visual padrão. Visual novo é
+// bem-vindo como opção (CONTRIBUTING.md, "Working together"); se
+// combinamos mudar o padrão, ajuste este teste no mesmo commit.
 func TestIdentityDefaultsStayClassic(t *testing.T) {
 	st := &settingsStore{}
 	st.load(t.TempDir())
 	snap := st.snapshot()
 	if snap.UITheme.Mode != "dark" {
-		t.Fatalf("tema padrão da interface mudou: %q (combine antes; veja AGENTS.md)", snap.UITheme.Mode)
+		t.Fatalf("o tema padrão da interface virou %q; visual novo entra como opção (CONTRIBUTING.md)", snap.UITheme.Mode)
 	}
 	if snap.UITheme.Vibrancy {
-		t.Fatal("vibrancy/Acrylic ligado por padrão: tem que ser opção (AGENTS.md)")
+		t.Fatal("vibrancy/Acrylic ficou ligado por padrão; ele entra como opção (CONTRIBUTING.md)")
 	}
 	if snap.Sidebar.Look != "" {
-		t.Fatalf("visual padrão da barra lateral mudou: %q (AGENTS.md)", snap.Sidebar.Look)
+		t.Fatalf("o visual padrão da barra lateral virou %q; ofereça como opção (CONTRIBUTING.md)", snap.Sidebar.Look)
 	}
 }

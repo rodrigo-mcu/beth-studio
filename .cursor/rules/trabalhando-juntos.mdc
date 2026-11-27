@@ -1,0 +1,14 @@
+---
+description: Como contribuímos no Beth Studio (Windows e Mac, CI e visual do produto)
+alwaysApply: true
+---
+
+# Trabalhando juntos
+
+O Beth Studio é feito por pessoas no Windows e no Mac, muitas vezes com ajuda de agentes, e é usado o dia todo nos dois. O guia completo está em `CONTRIBUTING.md`, seção "Working together". Em resumo:
+
+1. **Os dois sistemas continuam funcionando.** Comportamento de um sistema fica atrás de um teste (`isMacOS()` na página, build tag ou `runtime.GOOS` no Go, `cfg` no Rust), e o caminho do outro fica como estava.
+2. **Antes de dizer que terminou:** `pnpm build` e `pnpm test` em `bethstudio-web/frontend`, `go test ./...` em `bethstudio-web`, e confira o `CI` do commit no GitHub Actions.
+3. **Visual novo é bem-vindo como opção.** Tema, preset ou escolha em Configurações, desligado por padrão, num commit próprio que comece com `Visual:`. O visual atual continua o padrão; mudar o padrão é decisão do Rodrigo, então proponha e pergunte.
+4. Se `frontend/tests/identity.test.ts` ou `TestIdentityDefaultsStayClassic` falhar, a mudança mexeu no visual padrão: ofereça como opção.
+5. Mudança grande (layout, padrões, tirar algo que as pessoas usam): converse antes.

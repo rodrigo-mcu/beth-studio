@@ -52,95 +52,25 @@ date. The same rule is in `.cursor/rules/features-catalog.mdc`. Bugfixes
 and internal refactors do not belong there. Patch notes stay in
 `upstream-wezterm/PATCHES.md`.
 
-## Windows and Mac: never drop the other platform (2026-11-27)
+## Working together (Windows, Mac and the look of the product)
 
-Two people work on this repository: one on Windows, one on macOS. A change
-made for one platform must not remove or degrade what works on the other.
-On 2026-11-25 Mac work removed the native Windows **Abrir arquivo…** dialog
-from the Studio (the Go endpoint `/api/local-file/open-dialog` stayed, but
-the page stopped calling it) and left `tsc` and several Windows tests
-failing on `main`.
+Follow the "Working together" section of `CONTRIBUTING.md`. In short, for
+agents:
 
-- Put platform behavior behind a check (`isMacOS()` in the page, build tags
-  or `runtime.GOOS` in Go, `cfg` in Rust) and keep the other platform's
-  path working. Do not delete it to make room.
-- Removing or replacing a user-facing feature on either platform is a
-  product decision: agree on it with the other developer before the
-  commit, record it in `FEATURES.md`, and say it in the commit message
-  (for example "Windows: remove X because Y").
-- Before every push to `main`, run on your own platform:
-  `pnpm build` (it runs `tsc`) and `pnpm test` in `bethstudio-web/frontend`,
-  and `go test ./...` in `bethstudio-web`. Tests that only make sense on
-  one platform need a build tag or a `runtime.GOOS` check, not a skip that
-  hides a failure.
-- Never push to `main` with a red build. If the other platform's CI or
-  tests break because of your change, fix it or revert it the same day.
-- **After every push, open GitHub Actions and wait for the `CI` run of
-  your commit.** The CI already runs the Windows job (`pnpm test`,
-  `pnpm build`, `go test`) and the Linux Rust tests. From 2026-11-25 to
-  2026-11-26 six pushes in a row to `main` left `CI` red (9cd015a through
-  cf0da7f) and nobody looked. A red `CI` on `main` is the first thing to
-  fix: no new feature, release or install goes on top of it.
-- A test that fails because the code changed on purpose is updated in the
-  same commit, with the reason in the message. Do not delete it or skip
-  it to turn the build green.
-- An agent (Claude, Cursor, Codex) follows these rules too: before saying
-  "pushed" or "done", it runs the checks above and reports the `CI`
-  result, not only that `git push` worked.
-
-## Product identity: the default look is not changed by agents (2026-11-27)
-
-Beth Studio has one recognizable look: its themes and colors, the logo at
-the top, the flush sidebar, the tab bar, the fonts and the spacing. That
-look is the product's identity. If every person or agent changes it to
-their own taste, the product stops looking like one product.
-
-On 2026-11-25 a Mac port changed the look for everyone at once: glass and
-Acrylic styles, a floating card sidebar, new button styles and about 1,700
-lines of CSS. Nobody had agreed to it.
-
-Rules for people and for every agent (Claude, Cursor, Codex, any other):
-
-- **Never change the default look on your own.** Themes, colors, fonts,
-  icons, the logo, button and card styles, margins, transparency, glass,
-  Acrylic or vibrancy effects, animations and the default view all count.
-- **A new look is a new option.** Add it as a theme, a preset or a choice in
-  Configurações, off by default. The current look stays the default and
-  stays available.
-- **Agree with Rodrigo before** changing any default. Only he decides that
-  the default changes.
-- **Do not mix it into other work.** A Mac port, a performance fix or a
-  refactor must not carry a visual change. Send it as its own commit with
-  "Visual:" at the start of the message.
-- **Tests guard the defaults.** `frontend/tests/identity.test.ts` pins the
-  colors of the interface themes and `TestIdentityDefaultsStayClassic`
-  (`uitheme_test.go`) pins the default theme, vibrancy off and the default
-  sidebar look. If one fails, your change altered the default look: make it
-  an option instead. Update the pinned values only after Rodrigo agreed,
-  in the same commit, with the reason in the message.
-- An agent asked to "improve the design", "modernize" or "make it look like
-  the Mac" proposes the change as an option and asks before touching the
-  default.
-
-## Layout and visual changes: agree first, ship as an option (2026-11-27)
-
-The layout people use every day is a shared decision, not a personal taste.
-On 2026-11-25 the Mac work turned the left sidebar into a floating card that
-starts 40 px below the top, with margins and rounded corners, on every
-platform. On Windows it wasted space, moved the Beth Studio logo off the top
-and nobody had agreed to it.
-
-- **Any abrupt change to the layout or the look** (moving or removing a bar,
-  panel, logo or button, changing margins, sizes, cards, colors, fonts or the
-  default view) is agreed with Rodrigo **before** the commit.
-- **Ship it as an option, not as a replacement.** The current look stays the
-  default; the new one is a choice in Configurações (as with
-  Configurações > Barra lateral > Visual: Colada / Cartão). Each person picks
-  what suits them. A platform default may differ (Mac card, Windows flush),
-  but the other look must stay available.
-- Record the option in `FEATURES.md` and say it in the commit message.
-- Never change the default look as a side effect of another change (a
-  performance fix, a Mac port, a refactor).
+- Keep both platforms working: platform behavior goes behind a check, and
+  the other platform's path stays as it was.
+- Before saying a change is pushed or done, run `pnpm build` and `pnpm test`
+  in `bethstudio-web/frontend` and `go test ./...` in `bethstudio-web`, then
+  report the result of the `CI` run of the commit.
+- Do not change the default look (themes, colors, fonts, logo, sidebar, tab
+  bar, margins, glass/Acrylic/vibrancy effects, default view) as part of
+  other work. A new look goes in as an option in Configurações, off by
+  default, in its own commit starting with `Visual:`. Changing a default is
+  Rodrigo's decision: propose it and ask.
+- When asked to "improve the design" or "make it look like the Mac", offer
+  the result as an option and ask before touching the default.
+- If `frontend/tests/identity.test.ts` or `TestIdentityDefaultsStayClassic`
+  fails, the change touched the default look: make it an option instead.
 
 ## Live Terminals Rule (2026-09-23)
 
