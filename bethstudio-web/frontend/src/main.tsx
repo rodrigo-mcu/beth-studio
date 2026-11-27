@@ -37,6 +37,14 @@ if (mode === "sftp") {
       </React.StrictMode>,
     );
   });
+} else if (mode === "editor") {
+  void import("./components/EditorWindowApp").then(({ EditorWindowApp }) => {
+    root.render(
+      <React.StrictMode>
+        <EditorWindowApp />
+      </React.StrictMode>,
+    );
+  });
 } else if (mode === "db") {
   void import("./components/DbWindowApp").then(({ DbWindowApp }) => {
     root.render(

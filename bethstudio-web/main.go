@@ -41,26 +41,32 @@ func main() {
 	// Antes do bridge: os terminais que ele cria herdam este ambiente (agentenv.go).
 	droppedEnv := dropAgentEnv()
 	var (
-		exeFlag   = flag.String("bethstudio", "", "caminho do bethstudio.exe (padrao: env BETHSTUDIO_EXE, ao lado deste exe ou o build do repo)")
-		noWindow  = flag.Bool("no-window", false, "nao abre a janela WebView2; so imprime a URL")
-		readOnly  = flag.Bool("read-only", false, "recusa send/paste (so list/watch) — para testes")
-		port      = flag.Int("port", 0, "porta fixa em 127.0.0.1 (0 = aleatoria)")
-		devtools  = flag.Bool("devtools", false, "habilita DevTools no WebView2")
-		devOrig   = flag.String("dev-origin", "", "origem extra aceita (ex. http://127.0.0.1:5181 do vite dev)")
-		openIDs   = flag.String("open", "", "panes para abrir na UI, ex. 9 ou 9,10")
-		winSize   = flag.String("window-size", "1440x900", "tamanho inicial da janela, LxA")
-		diag      = flag.Bool("diag", false, "a UI manda diagnosticos (fonte efetiva etc.) para o log")
-		sftpHost  = flag.String("sftp", "", "abre so' a janela SFTP do host salvo (id hex de 16 digitos)")
-		dbWindow  = flag.Bool("db", false, "abre só a janela Banco de dados (barra de tarefas própria)")
+		exeFlag     = flag.String("bethstudio", "", "caminho do bethstudio.exe (padrao: env BETHSTUDIO_EXE, ao lado deste exe ou o build do repo)")
+		noWindow    = flag.Bool("no-window", false, "nao abre a janela WebView2; so imprime a URL")
+		readOnly    = flag.Bool("read-only", false, "recusa send/paste (so list/watch) — para testes")
+		port        = flag.Int("port", 0, "porta fixa em 127.0.0.1 (0 = aleatoria)")
+		devtools    = flag.Bool("devtools", false, "habilita DevTools no WebView2")
+		devOrig     = flag.String("dev-origin", "", "origem extra aceita (ex. http://127.0.0.1:5181 do vite dev)")
+		openIDs     = flag.String("open", "", "panes para abrir na UI, ex. 9 ou 9,10")
+		winSize     = flag.String("window-size", "1440x900", "tamanho inicial da janela, LxA")
+		diag        = flag.Bool("diag", false, "a UI manda diagnosticos (fonte efetiva etc.) para o log")
+		sftpHost    = flag.String("sftp", "", "abre so' a janela SFTP do host salvo (id hex de 16 digitos)")
+		dbWindow    = flag.Bool("db", false, "abre só a janela Banco de dados (barra de tarefas própria)")
 		tasksWindow = flag.Bool("tasks", false, "abre só o Gerenciador de tarefas (janela própria)")
-		supervise = flag.Bool("supervise", false, "liga a supervisão do host mesmo com --no-window (testes)")
-		termPane  = flag.Int("term", -1, "abre só a janela destacada do terminal <pane> (aberta pelo Studio)")
-		afterPID  = flag.Int("after-pid", 0, "espera este processo (o Studio anterior) terminar antes de abrir: Reiniciar Beth Studio")
+		supervise   = flag.Bool("supervise", false, "liga a supervisão do host mesmo com --no-window (testes)")
+		editorFile  = flag.String("editor", "", "abre só o editor deste arquivo numa janela própria (aberta pelo Studio)")
+		editorEdit  = flag.Bool("editor-edit", false, "com --editor: já abre editando")
+		termPane    = flag.Int("term", -1, "abre só a janela destacada do terminal <pane> (aberta pelo Studio)")
+		afterPID    = flag.Int("after-pid", 0, "espera este processo (o Studio anterior) terminar antes de abrir: Reiniciar Beth Studio")
 	)
 	flag.Parse()
 
 	if id := strings.TrimSpace(*sftpHost); id != "" {
 		runSFTPMode(id, *noWindow, *devtools, *port, *winSize, *devOrig)
+		return
+	}
+	if p := strings.TrimSpace(*editorFile); p != "" {
+		runEditorMode(p, *editorEdit, *devtools, *port, "", *devOrig)
 		return
 	}
 	if *termPane >= 0 {

@@ -46,7 +46,7 @@ import { SshScreen, type ToolKind } from "@/components/SshScreen";
 import { TopResizeEdges } from "@/components/WindowControls";
 import { AppTitle } from "@/components/AppTitle";
 import { TooltipLayer } from "@/components/TooltipLayer";
-import { dragMacWindow, isMacTitlebar, isWinAcrylicHost, useWindowState, winCommand, zoomMacWindow } from "@/lib/windowFrame";
+import { dragMacWindow, isMacOS, isMacTitlebar, isWinAcrylicHost, useWindowState, winCommand, zoomMacWindow } from "@/lib/windowFrame";
 import { isRemote, openRemoteTab } from "@/lib/remote";
 import { RemoteConnectedBadge } from "@/components/RemoteStudioSection";
 import { returnFocus, withTabFocus } from "@/lib/termFocus";
@@ -928,7 +928,7 @@ export function App() {
     split_by_kind?: boolean;
     files_width?: number;
     look?: "flush" | "card";
-    editor?: "window" | "docked";
+    editor?: "window" | "separate" | "docked";
   };
   const [sidebarLocal, setSidebarLocal] = useState<SidebarPrefs | null>(null);
   // Pasta da guia: gravada no layout (web-settings.json), não no localStorage.
@@ -957,6 +957,21 @@ export function App() {
   // no Windows (como na 0.4.1) e painel lateral no Mac.
   const editorPref = (sidebarLocal ?? snap.settings?.sidebar)?.editor;
   const editorDocked = editorPref ? editorPref === "docked" : isMacTitlebar();
+  // Janela separada (só no Windows, no PC): arquivo de verdade abre noutro
+  // processo; "Sem título" e notas continuam na janela solta do Studio.
+  const editorSeparate =
+    editorPref === "separate" && !isRemote() && !isMacOS() && !!filePreviewPath && filePreviewPath !== UNTITLED_PATH;
+  useEffect(() => {
+    if (!editorSeparate || !filePreviewPath) return;
+    const path = filePreviewPath;
+    conn
+      .api("/api/editor/window", { path, edit: editPath === path })
+      .then(() => setFilePreviewPath((cur) => (cur === path ? null : cur)))
+      .catch((e: Error) => {
+        setError(`Não foi possível abrir a janela do editor: ${e.message}`);
+        setFilePreviewPath((cur) => (cur === path ? null : cur));
+      });
+  }, [editorSeparate, filePreviewPath, editPath, conn]);
   // Diff/preview no slot da pasta: mesma altura do terminal, empurra o layout.
   const rightOverlay = !!(gitDiff || (editorDocked && filePreviewPath));
   useEffect(() => {
@@ -1853,7 +1868,7 @@ export function App() {
           onDone={setNotice}
         />
       )}
-      {!editorDocked && filePreviewPath && (
+      {!editorDocked && !editorSeparate && filePreviewPath && (
         <FilePreviewPanel
           key={panelKey}
           conn={conn}

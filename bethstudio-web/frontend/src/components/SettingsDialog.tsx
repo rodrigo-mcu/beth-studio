@@ -81,7 +81,7 @@ interface SidebarPrefs {
   kind_order?: string[];
   split_by_kind?: boolean;
   look?: "flush" | "card";
-  editor?: "window" | "docked";
+  editor?: "window" | "separate" | "docked";
 }
 
 interface Props {
@@ -620,8 +620,8 @@ function InterfaceStyle({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Pa
 
 /**
  * Onde o editor de arquivos abre (guardado em sidebar.editor): janela solta
- * dentro do Studio, que se arrasta e maximiza (como na 0.4.1), ou no painel
- * da direita. Sem escolha: janela solta no Windows, painel lateral no Mac.
+ * dentro do Studio, que se arrasta e maximiza (como na 0.4.1), janela
+ * separada do Windows (só no Windows) ou no painel da direita. Sem escolha: janela solta no Windows, painel lateral no Mac.
  */
 function EditorMode({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Partial<SidebarPrefs>) => void }) {
   const mode = sidebar.editor || (isMacOS() ? "docked" : "window");
@@ -635,6 +635,14 @@ function EditorMode({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Partia
           title="Janela solta"
           sub="abre por cima, arrasta e maximiza (padrão no Windows)"
         />
+        {!isMacOS() && (
+          <SettingsChoice
+            on={mode === "separate"}
+            onClick={() => save({ editor: "separate" })}
+            title="Janela separada"
+            sub="cada arquivo numa janela própria do Windows, que sai do Beth Studio (outro monitor)"
+          />
+        )}
         <SettingsChoice
           on={mode === "docked"}
           onClick={() => save({ editor: "docked" })}

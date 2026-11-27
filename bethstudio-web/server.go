@@ -176,6 +176,8 @@ func (s *server) route(w http.ResponseWriter, r *http.Request, remoteKey string)
 		serveOpenLocalFileDefault(w, r)
 	case "/api/local-file/save-as":
 		serveLocalFileSaveAs(w, r)
+	case "/api/editor/window":
+		serveEditorWindow(w, r)
 	case "/api/local-file/reveal":
 		serveLocalFileReveal(w, r)
 	case "/api/local-file/write":

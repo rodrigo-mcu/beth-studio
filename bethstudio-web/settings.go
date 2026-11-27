@@ -117,7 +117,8 @@ type SidebarPrefs struct {
 	Look string `json:"look,omitempty"`
 	// Onde o editor de arquivos abre: "" = padrão do sistema (janela solta
 	// no Windows, painel lateral no Mac), "window" = janela solta que se
-	// arrasta, "docked" = no painel da direita.
+	// arrasta dentro do Studio, "separate" = janela própria do Windows,
+	// "docked" = no painel da direita.
 	Editor string `json:"editor,omitempty"`
 }
 
@@ -910,7 +911,7 @@ func (st *settingsStore) setSidebar(p SidebarPrefs) (SettingsSnapshot, error) {
 		return SettingsSnapshot{}, errors.New("visual da barra lateral inválido")
 	}
 	switch p.Editor {
-	case "", "window", "docked":
+	case "", "window", "separate", "docked":
 	default:
 		return SettingsSnapshot{}, errors.New("modo do editor inválido")
 	}

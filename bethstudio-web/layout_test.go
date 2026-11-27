@@ -254,7 +254,7 @@ func TestSidebarLook(t *testing.T) {
 func TestSidebarEditorMode(t *testing.T) {
 	st := &settingsStore{}
 	st.load(t.TempDir())
-	for _, mode := range []string{"", "window", "docked"} {
+	for _, mode := range []string{"", "window", "separate", "docked"} {
 		snap, err := st.setSidebar(SidebarPrefs{Editor: mode})
 		if err != nil || snap.Sidebar.Editor != mode {
 			t.Fatalf("editor %q: %+v %v", mode, snap.Sidebar, err)

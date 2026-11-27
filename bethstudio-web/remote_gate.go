@@ -43,6 +43,7 @@ var remoteOnlyOnPC = map[string]bool{
 	"/api/pane/scrollback/save":         true,
 	"/api/pane/screenshot/save":         true,
 	"/api/db/window":                    true,
+	"/api/editor/window":                true,
 	"/api/ssh/sftp/window":              true,
 	"/api/ssh/sftp/reveal":              true,
 	// grava hooks no settings.json do Claude e o comando digitado ao retomar
