@@ -75,6 +75,18 @@ failing on `main`.
   hides a failure.
 - Never push to `main` with a red build. If the other platform's CI or
   tests break because of your change, fix it or revert it the same day.
+- **After every push, open GitHub Actions and wait for the `CI` run of
+  your commit.** The CI already runs the Windows job (`pnpm test`,
+  `pnpm build`, `go test`) and the Linux Rust tests. From 2026-11-25 to
+  2026-11-26 six pushes in a row to `main` left `CI` red (9cd015a through
+  cf0da7f) and nobody looked. A red `CI` on `main` is the first thing to
+  fix: no new feature, release or install goes on top of it.
+- A test that fails because the code changed on purpose is updated in the
+  same commit, with the reason in the message. Do not delete it or skip
+  it to turn the build green.
+- An agent (Claude, Cursor, Codex) follows these rules too: before saying
+  "pushed" or "done", it runs the checks above and reports the `CI`
+  result, not only that `git push` worked.
 
 ## Live Terminals Rule (2026-09-23)
 

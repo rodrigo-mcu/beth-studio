@@ -10,3 +10,6 @@ Duas pessoas trabalham neste repositório, uma no Windows e outra no Mac. Uma mu
 1. Comportamento de um sistema só fica atrás de um teste (`isMacOS()` na página, build tag ou `runtime.GOOS` no Go, `cfg` no Rust). O caminho do outro sistema continua funcionando.
 2. Tirar ou trocar uma função que a pessoa usa é decisão de produto: combine antes com o outro desenvolvedor, registre no `FEATURES.md` e diga no commit.
 3. Antes de cada push no `main`: `pnpm build` e `pnpm test` em `bethstudio-web/frontend`, e `go test ./...` em `bethstudio-web`. Nunca envie com o build vermelho.
+4. Depois de cada push, abra o GitHub Actions e espere o `CI` do seu commit ficar verde. Entre 25 e 26/11/2026 seis pushes seguidos deixaram o `CI` do `main` vermelho e ninguém viu. `CI` vermelho no `main` se corrige antes de qualquer outra coisa.
+5. Teste que quebrou porque o código mudou de propósito se atualiza no mesmo commit, com o motivo na mensagem. Não apague nem pule teste para o build ficar verde.
+6. O agente só diz "enviado" ou "pronto" depois de rodar essas verificações e informar o resultado do `CI`.
