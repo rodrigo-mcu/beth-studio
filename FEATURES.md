@@ -637,9 +637,12 @@ ends the shell together with everything it started (patch 0203).
 - 🟢 **Editor de arquivos** (2026-11-27). Configurações > Aparência >
   **Editor de arquivos**: **Janela solta** (the file opens in a window over
   the Studio that you drag by its title and maximize with a double click, as
-  in 0.4.1; default on Windows) or **Painel lateral** (it opens in the
-  right-hand panel next to the terminal; default on Mac). The git diff
-  always opens in the side panel.
+  in 0.4.1; default on Windows), **Janela separada** (Windows only: each
+  file in its own Windows window, with its own taskbar entry, that can leave
+  the Studio for another monitor; opening the same file again brings its
+  window forward; "Sem título" and notes stay in the floating window) or
+  **Painel lateral** (it opens in the right-hand panel next to the terminal;
+  default on Mac). The git diff always opens in the side panel.
 - 🟢 **Nome da aba** (2026-11-27). A name you give a tab always wins; without
   one the tab shows the running agent's chat title, then the terminal title.
 - 🟢 **Manter tamanho do terminal** (renamed from "Igual ao Beth Studio",
