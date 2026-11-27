@@ -203,16 +203,9 @@ test("caminho com espaços entre aspas: o intervalo não inclui as aspas", () =>
 });
 
 test("executável e similares não abrem: mostram o arquivo na pasta", () => {
-  for (const ext of [".exe", ".bat", ".cmd", ".lnk", ".vbs", ".msi", ".scr"]) {
+  for (const ext of [".exe", ".bat", ".cmd", ".ps1", ".lnk", ".js", ".vbs", ".msi", ".scr"]) {
     const path = `D:\\docs\\ferramenta${ext}`;
     assert.deepEqual(routeTermLink(path, WIN), { kind: "reveal", path }, ext);
-  }
-});
-
-test("script como .js e .ps1 abre como texto no painel (nunca executa)", () => {
-  for (const ext of [".js", ".ps1"]) {
-    const path = `D:\docs\ferramenta${ext}`;
-    assert.equal(routeTermLink(path, WIN).kind, "file", ext);
   }
 });
 

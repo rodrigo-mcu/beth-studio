@@ -41,7 +41,6 @@ import { applyTabComplete, expandHome, joinDirName, pathSep, splitDirPrefix } fr
 import { copyText, readClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 import { dragMacWindow, zoomMacWindow } from "@/lib/windowFrame";
-import { IconButton } from "./IconButton";
 import { PasteDialog } from "./PasteDialog";
 import { ImagePastePreview, type PendingPasteImage } from "./ImagePastePreview";
 import { ScrollBar } from "./ScrollBar";
@@ -88,7 +87,7 @@ interface Props {
   onClose: () => void;
   /** arrastar pelo cabecalho (organizacao do web) */
   onHeaderDragStart?: (e: RDragEvent) => void;
-  onHeaderDragEnd?: () => void;
+  onHeaderDragEnd?: (e: React.DragEvent<HTMLElement>) => void;
   /** menu "Organizar" (mover para aba, dividir...) */
   onOrganize?: (x: number, y: number) => void;
   /** abre a confirmacao "Encerrar este terminal?" */

@@ -115,7 +115,7 @@ export function TabBar({
   hideActions,
   tabTerminal,
 }: Props) {
-  useDrag();
+  const drag = useDrag();
   const [editing, setEditing] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   useEffect(() => {

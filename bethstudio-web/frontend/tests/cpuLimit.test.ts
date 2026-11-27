@@ -23,5 +23,5 @@ test("estado", () => {
   assert.match(s, /No máximo 50% da CPU, até você remover/);
   assert.match(s, /1 processo no Windows, 40 no WSL \(12 núcleos\)/);
   assert.doesNotMatch(statusText({ ...base, percent: 50, wsl: false }, "windows"), /WSL/);
-  assert.match(statusText({ ...base, percent: 50, applied_win: 3 }, "mac"), /3 processos no Mac/);
+  assert.match(statusText({ ...base, percent: 50, applied_win: 3 }, "mac"), /3 processos com prioridade reduzida no Mac/);
 });

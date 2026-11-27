@@ -6,12 +6,17 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 func TestFindAgentBinLookPathAndHome(t *testing.T) {
 	dir := t.TempDir()
-	bin := filepath.Join(dir, "codex-fake")
+	name := "codex-fake"
+	if runtime.GOOS == "windows" {
+		name += ".exe" // LookPath no Windows só acha com extensão de PATHEXT
+	}
+	bin := filepath.Join(dir, name)
 	if err := os.WriteFile(bin, []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
