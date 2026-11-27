@@ -49,21 +49,7 @@ for everyone to contribute without stepping on each other.
   (`pnpm test`, `pnpm build`, `go test`) and the Rust tests. If it turns red,
   fixing it comes first; it is fine to ask for help. When code changes on
   purpose, update its test in the same commit and say why in the message.
-- **New looks are welcome as options.** Beth Studio has a recognizable look:
-  its themes and colors, the logo at the top, the sidebar, the tab bar, the
-  fonts and the spacing. Ideas for a different look (glass, cards, new
-  colors, a different layout) are great: add them as a theme, a preset or a
-  choice in Configurações, so anyone can try them. The current look stays
-  the default; changing a default is a product decision, so talk to Rodrigo
-  first. Configurações > Aparência > Estilo da interface (Original or Mac)
-  is an example.
-- **The way things work is part of it too.** People rely on how a feature
-  behaves today: where it opens (a floating window or a side panel), what a
-  click or a shortcut does, what is on by default. A better way is welcome
-  as a choice in Configurações, with today's behavior kept as the default
-  on the platform that has it. Configurações > Aparência > Editor de
-  arquivos (Janela solta or Painel lateral) is an example. Removing or
-  replacing a feature people use is a conversation first.
+- **Follow the design rule below.** It is the one rule we hold firmly.
 - **Keep visual changes in their own commit**, starting with `Visual:`, so
   they are easy to review and to turn into an option.
 - **A few tests protect the defaults.** `bethstudio-web/frontend/tests/identity.test.ts`
@@ -75,6 +61,37 @@ for everyone to contribute without stepping on each other.
 - **Talk early about big changes.** A short message before a large change
   (layout, defaults, removing something people use) saves rework for
   everyone.
+
+## Design rule: what people already use stays where it is
+
+People use Beth Studio all day and work from habit: they reach for a button
+without looking, they expect a file to open where it opened yesterday. When
+an update moves buttons, changes colors or changes how something works,
+those people lose time and trust, even if the new way is nicer. Linux
+desktops lost many users exactly like this: an update arrives and every
+button is somewhere else. We do not want that here, so this rule is firm,
+for everyone, including Rodrigo and the AI agents.
+
+1. **The original design of Beth Studio is the default.** Its look (themes,
+   colors, fonts, logo, sidebar, tab bar, spacing) and its behavior (where
+   things open, floating window or side panel, what a click or a shortcut
+   does, what is on by default) do not change as part of other work.
+2. **Your own design is welcome, under its own name.** If you want a
+   different look or a different way of working, create it as a named
+   design (a theme, a style, a mode: "Mac", "Modo Brian", whatever you like)
+   that people choose in Configurações. It can change as much as you want
+   inside that design. The original stays as it is for everyone who does
+   not pick yours.
+3. **Changing the original is a product decision.** Propose it, show it as
+   your named design first, and talk to Rodrigo. Removing or replacing a
+   feature people use also starts with a conversation.
+4. **Examples in the product today:** Configurações > Aparência > Estilo da
+   interface (Original or Mac) and Editor de arquivos (Janela solta, Janela
+   separada or Painel lateral).
+
+This is not about whose taste is better. It protects the people who use the
+program every day, and it lets every contributor ship their ideas without
+waiting for everyone to agree.
 
 ## Coding rules
 

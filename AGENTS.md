@@ -62,20 +62,17 @@ agents:
 - Before saying a change is pushed or done, run `pnpm build` and `pnpm test`
   in `bethstudio-web/frontend` and `go test ./...` in `bethstudio-web`, then
   report the result of the `CI` run of the commit.
-- Do not change the default look (themes, colors, fonts, logo, sidebar, tab
-  bar, margins, glass/Acrylic/vibrancy effects, default view) as part of
-  other work. A new look goes in as an option in Configurações, off by
-  default, in its own commit starting with `Visual:`. Changing a default is
-  Rodrigo's decision: propose it and ask.
-- The same goes for behavior. Do not change how an existing feature works
-  for the people who already use it (where it opens, floating window or
-  side panel, what a click or shortcut does, what is on by default, a
-  feature taken away) as part of other work. A new way goes in as a choice
-  in Configurações, and the current way stays the default. Example:
-  Configurações > Aparência > Editor de arquivos (Janela solta, the
-  default on Windows, or Painel lateral, the default on the Mac).
-- When asked to "improve the design" or "make it look like the Mac", offer
-  the result as an option and ask before touching the default.
+- **Design rule (firm, see "Design rule" in `CONTRIBUTING.md`).** The
+  original design of Beth Studio is the default and does not change as
+  part of other work: neither its look (themes, colors, fonts, logo,
+  sidebar, tab bar, margins, glass/Acrylic/vibrancy, default view) nor its
+  behavior (where things open, floating window or side panel, what a click
+  or shortcut does, what is on by default, a feature taken away). A
+  different design goes in as a named design (theme, style or mode, for
+  example "Mac" or "Modo Brian") chosen in Configurações, off by default,
+  in its own commit (`Visual:` for looks). Changing the original is
+  Rodrigo's decision: propose it and ask. When asked to "improve the
+  design" or "make it look like the Mac", deliver it as a named design.
 - If `frontend/tests/identity.test.ts` or `TestIdentityDefaultsStayClassic`
   fails, the change touched the default look: make it an option instead.
 
