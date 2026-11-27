@@ -250,3 +250,17 @@ func TestSidebarLook(t *testing.T) {
 		t.Fatal("invalid look accepted")
 	}
 }
+
+func TestSidebarEditorMode(t *testing.T) {
+	st := &settingsStore{}
+	st.load(t.TempDir())
+	for _, mode := range []string{"", "window", "docked"} {
+		snap, err := st.setSidebar(SidebarPrefs{Editor: mode})
+		if err != nil || snap.Sidebar.Editor != mode {
+			t.Fatalf("editor %q: %+v %v", mode, snap.Sidebar, err)
+		}
+	}
+	if _, err := st.setSidebar(SidebarPrefs{Editor: "aba"}); err == nil {
+		t.Fatal("invalid editor mode accepted")
+	}
+}

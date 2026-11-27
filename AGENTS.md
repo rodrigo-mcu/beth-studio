@@ -67,6 +67,13 @@ agents:
   other work. A new look goes in as an option in Configurações, off by
   default, in its own commit starting with `Visual:`. Changing a default is
   Rodrigo's decision: propose it and ask.
+- The same goes for behavior. Do not change how an existing feature works
+  for the people who already use it (where it opens, floating window or
+  side panel, what a click or shortcut does, what is on by default, a
+  feature taken away) as part of other work. A new way goes in as a choice
+  in Configurações, and the current way stays the default. Example:
+  Configurações > Aparência > Editor de arquivos (Janela solta, the
+  default on Windows, or Painel lateral, the default on the Mac).
 - When asked to "improve the design" or "make it look like the Mac", offer
   the result as an option and ask before touching the default.
 - If `frontend/tests/identity.test.ts` or `TestIdentityDefaultsStayClassic`

@@ -928,6 +928,7 @@ export function App() {
     split_by_kind?: boolean;
     files_width?: number;
     look?: "flush" | "card";
+    editor?: "window" | "docked";
   };
   const [sidebarLocal, setSidebarLocal] = useState<SidebarPrefs | null>(null);
   // Pasta da guia: gravada no layout (web-settings.json), não no localStorage.
@@ -952,8 +953,12 @@ export function App() {
     const id = window.requestAnimationFrame(() => setSideAnim(true));
     return () => window.cancelAnimationFrame(id);
   }, []);
+  // Editor de arquivos (Configurações > Aparência): sem escolha, janela solta
+  // no Windows (como na 0.4.1) e painel lateral no Mac.
+  const editorPref = (sidebarLocal ?? snap.settings?.sidebar)?.editor;
+  const editorDocked = editorPref ? editorPref === "docked" : isMacTitlebar();
   // Diff/preview no slot da pasta: mesma altura do terminal, empurra o layout.
-  const rightOverlay = !!(gitDiff || filePreviewPath);
+  const rightOverlay = !!(gitDiff || (editorDocked && filePreviewPath));
   useEffect(() => {
     if (filesOpen || rightOverlay) {
       setFilesKeep(true);
@@ -1774,7 +1779,7 @@ export function App() {
                     folder={gitDiff.folder}
                     onClose={() => setGitDiff(null)}
                   />
-                ) : filePreviewPath ? (
+                ) : editorDocked && filePreviewPath ? (
                   <FilePreviewPanel
                     key={panelKey}
                     conn={conn}
@@ -1846,6 +1851,18 @@ export function App() {
           info={paneById.get(separateTarget)}
           onClose={() => setSeparateTarget(null)}
           onDone={setNotice}
+        />
+      )}
+      {!editorDocked && filePreviewPath && (
+        <FilePreviewPanel
+          key={panelKey}
+          conn={conn}
+          path={filePreviewPath}
+          editOnOpen={editPath}
+          onClose={() => setFilePreviewPath(null)}
+          onOpen={setFilePreviewPath}
+          onNewFile={newScratch}
+          onSaveUntitled={(content) => setBrowser({ mode: "new-file", initial: untitledDir, content })}
         />
       )}
       {browser && (

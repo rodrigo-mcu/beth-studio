@@ -634,6 +634,12 @@ ends the shell together with everything it started (patch 0203).
   the left, framed terminal, opaque menus; default on Windows) or **Mac**
   (sidebar and terminal as cards, pill tabs, glass buttons and menus;
   default on Mac).
+- 🟢 **Editor de arquivos** (2026-11-27). Configurações > Aparência >
+  **Editor de arquivos**: **Janela solta** (the file opens in a window over
+  the Studio that you drag by its title and maximize with a double click, as
+  in 0.4.1; default on Windows) or **Painel lateral** (it opens in the
+  right-hand panel next to the terminal; default on Mac). The git diff
+  always opens in the side panel.
 - 🟢 **Nome da aba** (2026-11-27). A name you give a tab always wins; without
   one the tab shows the running agent's chat title, then the terminal title.
 - 🟢 **Manter tamanho do terminal** (renamed from "Igual ao Beth Studio",

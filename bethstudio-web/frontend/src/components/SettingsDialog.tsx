@@ -81,6 +81,7 @@ interface SidebarPrefs {
   kind_order?: string[];
   split_by_kind?: boolean;
   look?: "flush" | "card";
+  editor?: "window" | "docked";
 }
 
 interface Props {
@@ -610,6 +611,35 @@ function InterfaceStyle({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Pa
           onClick={() => save({ look: "card" })}
           title="Mac"
           sub="barra lateral e terminal em cartões, com margem e cantos (padrão no Mac)"
+        />
+      </div>
+      <EditorMode sidebar={sidebar} save={save} />
+    </div>
+  );
+}
+
+/**
+ * Onde o editor de arquivos abre (guardado em sidebar.editor): janela solta
+ * dentro do Studio, que se arrasta e maximiza (como na 0.4.1), ou no painel
+ * da direita. Sem escolha: janela solta no Windows, painel lateral no Mac.
+ */
+function EditorMode({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Partial<SidebarPrefs>) => void }) {
+  const mode = sidebar.editor || (isMacOS() ? "docked" : "window");
+  return (
+    <div>
+      <SettingsSectionLabel>Editor de arquivos</SettingsSectionLabel>
+      <div className="bt-settings-choice-grid mb-4">
+        <SettingsChoice
+          on={mode === "window"}
+          onClick={() => save({ editor: "window" })}
+          title="Janela solta"
+          sub="abre por cima, arrasta e maximiza (padrão no Windows)"
+        />
+        <SettingsChoice
+          on={mode === "docked"}
+          onClick={() => save({ editor: "docked" })}
+          title="Painel lateral"
+          sub="abre no painel da direita, ao lado do terminal (padrão no Mac)"
         />
       </div>
     </div>

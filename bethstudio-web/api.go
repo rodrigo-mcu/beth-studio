@@ -62,6 +62,7 @@ func (s *server) serveAPI(w http.ResponseWriter, r *http.Request) {
 		KindOrder   []string   `json:"kind_order"`
 		SplitByKind *bool      `json:"split_by_kind"`
 		Look        string     `json:"look"`
+		Editor      string     `json:"editor"`
 		Name        string     `json:"name"`
 		Vibrancy    *bool      `json:"vibrancy"`
 		Glass       *int       `json:"glass"`
@@ -99,7 +100,7 @@ func (s *server) serveAPI(w http.ResponseWriter, r *http.Request) {
 		snap, err = settings.setPaneNames(req.PaneIDs, req.Name)
 	case "/api/settings/sidebar":
 		snap, err = settings.setSidebar(SidebarPrefs{Collapsed: req.Collapsed, Width: req.Width, View: req.View, Kinds: req.Kinds,
-			KindOrder: req.KindOrder, SplitByKind: req.SplitByKind, Look: req.Look})
+			KindOrder: req.KindOrder, SplitByKind: req.SplitByKind, Look: req.Look, Editor: req.Editor})
 	case "/api/settings/ui":
 		// Vibrancy e os sliders do liquid glass vão por campos próprios;
 		// mode/theme_id continuam trocando o tema da interface.

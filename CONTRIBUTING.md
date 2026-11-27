@@ -57,6 +57,13 @@ for everyone to contribute without stepping on each other.
   the default; changing a default is a product decision, so talk to Rodrigo
   first. Configurações > Aparência > Estilo da interface (Original or Mac)
   is an example.
+- **The way things work is part of it too.** People rely on how a feature
+  behaves today: where it opens (a floating window or a side panel), what a
+  click or a shortcut does, what is on by default. A better way is welcome
+  as a choice in Configurações, with today's behavior kept as the default
+  on the platform that has it. Configurações > Aparência > Editor de
+  arquivos (Janela solta or Painel lateral) is an example. Removing or
+  replacing a feature people use is a conversation first.
 - **Keep visual changes in their own commit**, starting with `Visual:`, so
   they are easy to review and to turn into an option.
 - **A few tests protect the defaults.** `bethstudio-web/frontend/tests/identity.test.ts`
