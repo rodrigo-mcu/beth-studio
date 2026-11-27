@@ -1,7 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent as RDragEvent, type ReactNode } from "react";
 import {
+  ChevronLeft,
+  ChevronRight,
   LayoutGrid,
   MoreHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
   PanelRight,
   RotateCcw,
   Pencil,
@@ -21,6 +25,7 @@ import { countLeaves, leaves } from "@/lib/layout";
 import { PANE_MIME, TAB_MIME, dragEndedOutside, draggedPane, endDrag, startTabDrag, useDrag } from "@/lib/dnd";
 import { ToolIcon } from "./ToolIcon";
 import { cn } from "@/lib/utils";
+import { useOriginalStyle } from "@/lib/uiStyle";
 
 interface Props {
   layout: Layout;
@@ -104,7 +109,7 @@ export function TabBar({
   waitingTabs,
   onNewTab,
   sidebarCollapsed,
-  onToggleSidebar: _onToggleSidebar,
+  onToggleSidebar,
   alerts,
   tabTitle,
   tabIdentity,
@@ -126,6 +131,8 @@ export function TabBar({
   const frameless = isFrameless();
   // macOS: os botões do sistema ocupam a esquerda da faixa de abas.
   const macBar = isMacTitlebar();
+  // Estilo Original (0.4.1): abas baixas e retas; Mac: abas em pílula.
+  const orig = useOriginalStyle();
   // largura da barra -> quais acoes mostram texto / vao para o "…"
   const barRef = useRef<HTMLDivElement>(null);
   const [barW, setBarW] = useState(1400);
@@ -139,8 +146,8 @@ export function TabBar({
   }, []);
   // abas: rolagem horizontal com setas quando nao cabem
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [_scrollL, setScrollL] = useState(false);
-  const [_scrollR, setScrollR] = useState(false);
+  const [scrollL, setScrollL] = useState(false);
+  const [scrollR, setScrollR] = useState(false);
   const checkScroll = () => {
     const el = tabsRef.current;
     if (!el) return;
@@ -176,9 +183,11 @@ export function TabBar({
       ref={barRef}
       data-term-drop="tabs"
       className={cn(
-        // overflow visible: a curva invertida da aba ativa sai ~20 px para
-        // cada lado; hidden cortava a da direita (junto do +).
-        "bt-tabstrip flex h-10 shrink-0 items-center overflow-visible px-1.5 select-none",
+        orig
+          ? "flex h-7 shrink-0 items-end gap-0.5 overflow-hidden border-b border-border px-2 pt-1 select-none"
+          : // overflow visible: a curva invertida da aba ativa sai ~20 px para
+            // cada lado; hidden cortava a da direita (junto do +).
+            "bt-tabstrip flex h-10 shrink-0 items-center overflow-visible px-1.5 select-none",
         macBar && sidebarCollapsed && "pl-8",
         macBar && "bt-tabstrip-mac",
         frameless && !win.active && "opacity-75",
@@ -204,11 +213,33 @@ export function TabBar({
         winCommand("toggle");
       }}
     >
-      <div className="relative flex min-w-0 shrink self-stretch overflow-visible">
+      {orig && (
+        <button
+          className="mb-0.5 mr-1 flex h-5 w-7 shrink-0 items-center justify-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1"
+          title={sidebarCollapsed ? "Mostrar a barra lateral" : "Recolher a barra lateral"}
+          onClick={onToggleSidebar}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+        </button>
+      )}
+      {orig && scrollL && (
+        <button
+          className="mb-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-text-2 hover:bg-bg-hover"
+          title="Abas à esquerda"
+          onClick={() => tabsRef.current?.scrollBy({ left: -240, behavior: "smooth" })}
+        >
+          <ChevronLeft size={14} />
+        </button>
+      )}
+      <div className={orig ? "contents" : "relative flex min-w-0 shrink self-stretch overflow-visible"}>
       <div
         ref={tabsRef}
         onScroll={checkScroll}
-        className="flex items-center overflow-x-auto pl-5 pr-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={
+          orig
+            ? "flex min-w-[120px] shrink items-end gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            : "flex items-center overflow-x-auto pl-5 pr-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        }
       >
         {layout.tabs.map((t, i) => {
           const active = t.id === layout.active;
@@ -248,11 +279,20 @@ export function TabBar({
                 setMenu({ id: t.id, x: e.clientX, y: e.clientY });
               }}
               data-tab-active={active ? "" : undefined}
-              className={cn(
-                "bt-tab group flex shrink-0 cursor-pointer items-center gap-1.5 text-[12.5px]",
-                active && "bt-tab-active",
-                over === t.id && "bt-tab-over",
-              )}
+              className={
+                orig
+                  ? cn(
+                      "group flex h-6 min-w-[96px] max-w-[220px] shrink-0 cursor-pointer items-center gap-1.5 rounded-t-md border border-b-0 px-3 text-[12.5px]",
+                      active ? "border-border bg-bg-panel text-text-1" : "border-transparent text-text-2 hover:bg-bg-hover hover:text-text-1",
+                      over === t.id && "border-accent bg-accent-soft text-text-1",
+                      drag?.kind === "pane" && !active && "border-dashed border-border-strong",
+                    )
+                  : cn(
+                      "bt-tab group flex shrink-0 cursor-pointer items-center gap-1.5 text-[12.5px]",
+                      active && "bt-tab-active",
+                      over === t.id && "bt-tab-over",
+                    )
+              }
               title={`${tabTitle(t, i)} — ${n} terminal(is)`}
             >
               {(() => {
@@ -286,29 +326,46 @@ export function TabBar({
                 </span>
               )}
               {/* Só com 2+ terminais: evita “Aba 2” + “0/1” parecer “Aba 20/21”. */}
-              {n > 1 && (
-                <span className="bt-tab-count" title={`${n} terminais nesta guia`}>
-                  {n}
-                </span>
+              {orig ? (
+                <span className="shrink-0 rounded bg-bg-hover px-1 text-[10px] text-text-3">{n}</span>
+              ) : (
+                n > 1 && (
+                  <span className="bt-tab-count" title={`${n} terminais nesta guia`}>
+                    {n}
+                  </span>
+                )
               )}
-              <span className="min-w-2 flex-1" />
+              {!orig && <span className="min-w-2 flex-1" />}
               <button
-                className="bt-tab-close"
+                className={
+                  orig
+                    ? cn("shrink-0 rounded p-0.5 hover:bg-bg-card", active ? "text-text-2" : "text-transparent group-hover:text-text-2")
+                    : "bt-tab-close"
+                }
                 title={n > 0 ? "Fechar aba — os terminais continuam rodando em Não organizados" : "Fechar aba"}
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose(t.id);
                 }}
               >
-                <X size={14} />
+                <X size={orig ? 12 : 14} />
               </button>
             </div>
           );
         })}
       </div>
       </div>
+      {orig && scrollR && (
+        <button
+          className="mb-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-text-2 hover:bg-bg-hover"
+          title="Abas à direita"
+          onClick={() => tabsRef.current?.scrollBy({ left: 240, behavior: "smooth" })}
+        >
+          <ChevronRight size={14} />
+        </button>
+      )}
       {/* Enquanto arrasta um terminal: slot pontilhado “nova guia” (kanban). */}
-      {drag?.kind === "pane" && (
+      {!orig && drag?.kind === "pane" && (
         <div
           className={cn("bt-tab-ghost", over === "+" && "bt-tab-ghost-hot")}
           aria-hidden
@@ -317,7 +374,14 @@ export function TabBar({
         </div>
       )}
       <button
-        className={cn("bt-tab-tool bt-tab-tool-plus", over === "+" && "bt-tab-tool-over")}
+        className={
+          orig
+            ? cn(
+                "ml-0.5 flex h-6 w-8 shrink-0 items-center justify-center self-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1",
+                over === "+" && "bg-accent-soft text-text-1 ring-1 ring-accent",
+              )
+            : cn("bt-tab-tool bt-tab-tool-plus", over === "+" && "bt-tab-tool-over")
+        }
         aria-label="Nova aba"
         title={
           onNewTab
@@ -339,12 +403,12 @@ export function TabBar({
           endDrag();
         }}
       >
-        <Plus size={16} strokeWidth={2.25} />
+        <Plus size={16} strokeWidth={orig ? 2 : 2.25} />
         {newTabLabel && "Nova aba"}
       </button>
       {onGrid && (
         <button
-          className="bt-tab-tool"
+          className={orig ? "flex h-6 w-8 shrink-0 items-center justify-center self-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1" : "bt-tab-tool"}
           aria-label="Ver todas as abas"
           title="Ver todas as abas: grade com print, nome e pasta de cada terminal, com busca (inclui os de abas fechadas)"
           onClick={onGrid}
@@ -354,7 +418,7 @@ export function TabBar({
       )}
       {onToggleFiles && (
         <button
-          className={cn("bt-tab-tool", filesOpen && "text-text-1")}
+          className={cn(orig ? "flex h-6 w-8 shrink-0 items-center justify-center self-center rounded text-text-2 hover:bg-bg-hover hover:text-text-1" : "bt-tab-tool", filesOpen && "text-text-1")}
           aria-label="Pasta desta guia"
           aria-pressed={filesOpen}
           title="Pasta desta guia: arquivos e mudanças de git do terminal em foco. Cada guia abre e fecha a sua."

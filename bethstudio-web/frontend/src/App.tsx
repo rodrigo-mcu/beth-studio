@@ -53,6 +53,7 @@ import { returnFocus, withTabFocus } from "@/lib/termFocus";
 import { sameShellId, splitAround, splitSpawn, type SplitZone } from "@/lib/splitSpawn";
 import { restartPane } from "@/lib/restartPane";
 import { watchSet } from "@/lib/watchSet";
+import { setOriginalStyle, useOriginalStyle } from "@/lib/uiStyle";
 import { Loader2 } from "lucide-react";
 import { KillDialog, type KillMode } from "@/components/KillDialog";
 import { SeparateDialog } from "@/components/SeparateDialog";
@@ -994,9 +995,8 @@ export function App() {
   // Estilo da interface (Configurações > Aparência): sem escolha, Original no Windows e Mac no Mac.
   const sideCard = sidebarPrefs.look ? sidebarPrefs.look === "card" : isMacTitlebar();
   // Estilo "Original" (sem cartões): o terminal também fica colado (index.css, bt-style-original).
-  useEffect(() => {
-    document.documentElement.classList.toggle("bt-style-original", !sideCard);
-  }, [sideCard]);
+  useEffect(() => setOriginalStyle(!sideCard), [sideCard]);
+  const origStyle = useOriginalStyle();
   const [dragWidth, setSidebarWidth] = useState<number | null>(null);
   const [dragFiles, setFilesWidth] = useState<number | null>(null);
   const sidebarWidth = dragWidth ?? sidebarPrefs.width ?? 288;
@@ -1569,7 +1569,7 @@ export function App() {
         </div>
         </div>
 
-        <main className={cn("bt-main flex min-w-0 flex-1 flex-col", isMacTitlebar() && "bt-main-mac")}>
+        <main className={cn(origStyle ? "flex min-w-0 flex-1 flex-col" : "bt-main flex min-w-0 flex-1 flex-col", isMacTitlebar() && "bt-main-mac")}>
           {layout && act && (
             <TabBar
               layout={layout}
@@ -1629,7 +1629,7 @@ export function App() {
           {!restoreDismissed && restoreInfo && <RestoreBanner conn={conn} info={restoreInfo} onDismiss={() => setRestoreDismissed(true)} />}
           {snap.resumeOffers.length > 0 && <ResumeBanner conn={conn} offers={snap.resumeOffers} nameOf={(id) => storedName(id) || undefined} />}
           <div className={cn("bt-stage flex min-h-0 flex-1", (filesOpen || filesKeep || rightOverlay) && "bt-stage-files")}>
-          <div className="bt-term-frame flex min-h-0 min-w-0 flex-1 flex-col bg-bg-term">
+          <div className={origStyle ? "flex min-h-0 min-w-0 flex-1 flex-col p-2" : "bt-term-frame flex min-h-0 min-w-0 flex-1 flex-col bg-bg-term"}>
             {hostBanner(snap.host, isMacTitlebar() ? "mac" : "windows") && (
               <HostBanner conn={conn} info={hostBanner(snap.host, "windows")!} />
             )}

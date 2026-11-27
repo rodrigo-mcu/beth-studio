@@ -1852,17 +1852,19 @@ html.bt-vibrancy .bt-preview-interacting {
   }
 }
 
-/* Estilo da interface "Original" (Configurações > Aparência): sem cartões.
-   O terminal fica colado na barra de abas e nas bordas da janela, como antes
-   do estilo Mac. O estilo Mac é o resto deste arquivo. */
-html.bt-style-original .bt-term-frame {
-  margin: 0;
-  border: 0;
-  border-top: 1px solid rgb(var(--bt-border) / 0.9);
+/* Estilo da interface "Original" (Configurações > Aparência): o visual da
+   0.4.1. As classes de cada componente vêm de lib/uiStyle (useOriginalStyle);
+   aqui só o que é CSS puro. O estilo Mac é o resto deste arquivo. */
+html.bt-style-original .bt-termbar {
+  height: auto;
+  gap: 4px;
+  padding: 0;
   border-radius: 0;
+  background: transparent;
+}
+html.bt-style-original .bt-termbar > button {
+  border-radius: 4px;
 }
 html.bt-style-original .bt-worktree {
-  border-radius: 0;
-  border-top: 0;
-  border-bottom: 0;
+  border-radius: 6px;
 }

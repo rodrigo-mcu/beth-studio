@@ -23,6 +23,7 @@ import { groupByFolder, splitCwd } from "@/lib/folders";
 import { findPane, leaves, looseByClosedGroup, type Layout, type Path, type WebTab } from "@/lib/layout";
 import { PANE_MIME, draggedPane, endDrag, startPaneDrag } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
+import { isOriginalStyle, useOriginalStyle } from "@/lib/uiStyle";
 import { IconButton } from "./IconButton";
 import { AppTitle } from "./AppTitle";
 import type { StudioAction } from "./StudioActions";
@@ -99,6 +100,7 @@ export function Sidebar(p0: Props) {
     return !!info && passesKindFilter(info, p0.kindFilter);
   };
   const shownResults = p.search.results.filter(acceptResult);
+  const orig = useOriginalStyle();
   return (
     <div className="flex h-full flex-col">
       {!isMacTitlebar() && <AppTitle right={p0.status} />}
@@ -122,6 +124,7 @@ export function Sidebar(p0: Props) {
             <PanelLeftClose size={15} />
           </IconButton>
         </div>
+        {orig && <KindChips panes={p0.panes ?? []} selected={p0.kindFilter} onChange={p0.onKindFilter} order={p0.kindOrder} />}
         <WaitingBar {...p0} />
         {p0.onNotify && p0.notify && (
           <label className="mt-1.5 flex cursor-pointer items-center gap-2 px-0.5 text-[11px] text-text-2 hover:text-text-1">
@@ -138,10 +141,12 @@ export function Sidebar(p0: Props) {
           </label>
         )}
       </div>
-      <div className="px-2 pt-2">
-        <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-3">Ver</div>
-      </div>
-      <div className={cn("grid grid-cols-2 gap-1 px-2", p.search.query.trim() && "hidden")}>
+      {!orig && (
+        <div className="px-2 pt-2">
+          <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-3">Ver</div>
+        </div>
+      )}
+      <div className={cn(orig ? "grid grid-cols-2 gap-1 p-2" : "grid grid-cols-2 gap-1 px-2", p.search.query.trim() && "hidden")}>
         <ModeButton active={p.mode === "web"} onClick={() => p.onMode("web")} icon={<LayoutGrid size={13} />}>
           Minha organização
         </ModeButton>
@@ -155,12 +160,14 @@ export function Sidebar(p0: Props) {
           Por pasta
         </ModeButton>
       </div>
-      <div className="px-2 pb-1 pt-2">
-        <KindChips panes={p0.panes ?? []} selected={p0.kindFilter} onChange={p0.onKindFilter} order={p0.kindOrder} />
-      </div>
+      {!orig && (
+        <div className="px-2 pb-1 pt-2">
+          <KindChips panes={p0.panes ?? []} selected={p0.kindFilter} onChange={p0.onKindFilter} order={p0.kindOrder} />
+        </div>
+      )}
       {(p.mode === "web" || p.mode === "host") && !p.search.query.trim() && (
         <label
-          className="flex cursor-pointer items-center gap-1.5 px-3 pb-1.5 text-[11px] text-text-2"
+          className={orig ? "-mt-1 flex cursor-pointer items-center gap-1.5 px-3 pb-1 text-[11px] text-text-2" : "flex cursor-pointer items-center gap-1.5 px-3 pb-1.5 text-[11px] text-text-2"}
           title={/Mac/.test(navigator.platform) ? "Subdivide a lista por tipo de terminal (Container, SSH…)" : "Subdivide a lista por tipo de terminal (WSL, PowerShell, SSH…)"}
         >
           <input type="checkbox" checked={p.splitByKind} onChange={(e) => p.onSplitByKind(e.target.checked)} />
@@ -193,6 +200,21 @@ export function Sidebar(p0: Props) {
 }
 
 function ModeButton({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: ReactNode; children: ReactNode }) {
+  if (isOriginalStyle()) {
+    // Estilo Original (0.4.1): botões baixos, ícone e texto na mesma linha.
+    return (
+      <button
+        className={cn(
+          "flex flex-1 items-center justify-center gap-1 rounded px-1.5 py-1 text-[11px] leading-tight",
+          active ? "bg-accent text-white" : "bg-bg-card text-text-2 hover:text-text-1",
+        )}
+        onClick={onClick}
+      >
+        {icon}
+        {children}
+      </button>
+    );
+  }
   return (
     <button
       className={cn(
@@ -453,8 +475,13 @@ function PaneItem(p: {
           p.onMenu(e.clientX, e.clientY);
         }}
         className={cn(
-          "bt-chat group flex min-h-10 cursor-pointer items-start gap-2.5 rounded-2xl px-2.5 py-2",
-          p.focused ? "bt-glass-on" : "hover:bg-bg-hover",
+          isOriginalStyle()
+            ? cn(
+                // Estilo Original (0.4.1): linha compacta com a borda da esquerda.
+                "group flex cursor-pointer items-start gap-2 rounded-md border-l-2 px-2 py-1.5",
+                p.focused ? "border-accent bg-accent-soft" : p.open ? "border-accent/60 bg-bg-card hover:bg-bg-hover" : "border-transparent hover:bg-bg-hover",
+              )
+            : cn("bt-chat group flex min-h-10 cursor-pointer items-start gap-2.5 rounded-2xl px-2.5 py-2", p.focused ? "bt-glass-on" : "hover:bg-bg-hover"),
           phase === "waiting" && !p.focused && "ring-1 ring-status-warn/35",
           phase === "running" && !p.focused && "ring-1 ring-status-busy/30",
         )}
@@ -584,14 +611,23 @@ function WaitingBar(p: Props) {
 function KindChips({ panes, selected, onChange, order }: { panes: PaneInfo[]; selected: string[]; onChange: (s: string[]) => void; order?: string[] }) {
   const c = countKinds(panes);
   const toggle = (k: string) => onChange(selected.includes(k) ? selected.filter((x) => x !== k) : [...selected, k]);
+  // Estilo Original (0.4.1): pílulas com fundo; Mac: texto com placa de vidro.
+  const orig = isOriginalStyle();
   const chip = (key: string, label: ReactNode, n: number, title: string) => (
     <button
       key={key}
-      className={cn(
-        // Selecionado: bt-glass-on → placa nativa; sem text-accent (segunda tinta).
-        "bt-chip flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px]",
-        selected.includes(key) ? "bt-glass-on font-semibold text-white" : "text-text-2 hover:text-text-1",
-      )}
+      className={
+        orig
+          ? cn(
+              "flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]",
+              selected.includes(key) ? "bg-accent text-white" : "bg-bg-card text-text-2 hover:text-text-1",
+            )
+          : cn(
+              // Selecionado: bt-glass-on → placa nativa; sem text-accent (segunda tinta).
+              "bt-chip flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px]",
+              selected.includes(key) ? "bt-glass-on font-semibold text-white" : "text-text-2 hover:text-text-1",
+            )
+      }
       onClick={() => toggle(key)}
       title={title}
     >
@@ -601,12 +637,16 @@ function KindChips({ panes, selected, onChange, order }: { panes: PaneInfo[]; se
   );
   const kinds = visibleKindOrder(order);
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className={orig ? "mt-2 flex flex-wrap gap-1" : "flex flex-wrap gap-1"}>
       <button
-        className={cn(
-          "bt-chip rounded-lg px-2 py-0.5 text-[11px]",
-          selected.length === 0 ? "bt-glass-on font-semibold text-white" : "text-text-2 hover:text-text-1",
-        )}
+        className={
+          orig
+            ? cn("rounded-full px-2 py-0.5 text-[11px]", selected.length === 0 ? "bg-accent text-white" : "bg-bg-card text-text-2 hover:text-text-1")
+            : cn(
+                "bt-chip rounded-lg px-2 py-0.5 text-[11px]",
+                selected.length === 0 ? "bt-glass-on font-semibold text-white" : "text-text-2 hover:text-text-1",
+              )
+        }
         onClick={() => onChange([])}
         title="Mostrar todos os tipos"
       >

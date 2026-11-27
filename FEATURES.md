@@ -629,9 +629,11 @@ ends the shell together with everything it started (patch 0203).
   always come first (the Studio watches at most 16 panes per page), so a tab
   never stays on "Carregando a tela do terminal…" (2026-11-27).
 - 🟢 **Estilo da interface** (2026-11-27). Configurações > Aparência >
-  **Estilo da interface**: **Original** (sidebar and terminal flush, no
-  margins; default on Windows) or **Mac** (sidebar and terminal as cards with
-  margin and rounded corners; default on Mac).
+  **Estilo da interface**: **Original** (the 0.4.1 look: low square tabs with
+  the terminal count, compact sidebar with pill filters and rows marked on
+  the left, framed terminal, opaque menus; default on Windows) or **Mac**
+  (sidebar and terminal as cards, pill tabs, glass buttons and menus;
+  default on Mac).
 - 🟢 **Nome da aba** (2026-11-27). A name you give a tab always wins; without
   one the tab shows the running agent's chat title, then the terminal title.
 - 🟢 **Manter tamanho do terminal** (renamed from "Igual ao Beth Studio",

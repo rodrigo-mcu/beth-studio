@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { isMacTitlebar } from "@/lib/windowFrame";
 import { MENU_ROW_SELECTOR, clickDrawnMenuRow, menuRowsFromNodes, menuSymbol, pageMenuHidden, pageMenuStyle, readMenuNode, type MenuNode } from "@/lib/glassMenu";
 import { cn } from "@/lib/utils";
+import { isOriginalStyle } from "@/lib/uiStyle";
 
 /** Menu flutuante do Studio. No macOS a placa é o liquid glass nativo e o
  *  texto fica na página, por cima. Clique fora e Esc fecham. O clique que
@@ -120,7 +121,13 @@ export function GlassMenu({
     <div
       ref={ref}
       data-glass-menu
-      className={cn("bt-menu fixed z-[80] overflow-hidden rounded-xl py-1 text-text-1", className)}
+      className={cn(
+        // Estilo Original (0.4.1): menu opaco com borda; Mac: vidro (bt-menu).
+        isOriginalStyle()
+          ? "fixed z-[80] overflow-hidden rounded-md border border-border-strong bg-bg-card py-1 text-text-1 shadow-xl"
+          : "bt-menu fixed z-[80] overflow-hidden rounded-xl py-1 text-text-1",
+        className,
+      )}
       style={{
         left: box?.x ?? x,
         top: box?.y ?? y,

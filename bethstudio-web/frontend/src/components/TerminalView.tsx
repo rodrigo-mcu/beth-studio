@@ -40,6 +40,7 @@ import { cwdPath, paneLabel, shortCwd } from "@/lib/panes";
 import { applyTabComplete, expandHome, joinDirName, pathSep, splitDirPrefix } from "@/lib/pathComplete";
 import { copyText, readClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
+import { useOriginalStyle } from "@/lib/uiStyle";
 import { dragMacWindow, zoomMacWindow } from "@/lib/windowFrame";
 import { PasteDialog } from "./PasteDialog";
 import { ImagePastePreview, type PendingPasteImage } from "./ImagePastePreview";
@@ -339,6 +340,7 @@ export function TerminalView({
     return () => window.clearTimeout(t);
   }, [flashKey]);
   const catalog = useCatalog();
+  const origStyle = useOriginalStyle();
   const [showLook, setShowLook] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const eff = effectiveFor(settings, paneId);
@@ -1430,8 +1432,9 @@ export function TerminalView({
   return (
     <section
       className={cn(
-        "flex min-w-0 flex-1 flex-col overflow-hidden bg-bg-term",
-        focused && "rounded-b-md",
+        origStyle
+          ? cn("flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border bg-bg-panel", focused ? "border-accent" : "border-border")
+          : cn("flex min-w-0 flex-1 flex-col overflow-hidden bg-bg-term", focused && "rounded-b-md"),
         flashing && "animate-bt-flash",
       )}
       onMouseDownCapture={(e) => {
