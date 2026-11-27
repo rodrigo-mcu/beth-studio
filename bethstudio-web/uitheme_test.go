@@ -186,3 +186,21 @@ func TestFontBoldAndGUIDefaults(t *testing.T) {
 		t.Fatalf("pane bold = %+v", p)
 	}
 }
+
+// Identidade visual (AGENTS.md, "Product identity"): o Studio novo abre no
+// visual de sempre. Efeitos novos (vibrancy, Acrylic, vidro) e outros
+// visuais de barra lateral são opção, nunca o padrão de quem instala.
+func TestIdentityDefaultsStayClassic(t *testing.T) {
+	st := &settingsStore{}
+	st.load(t.TempDir())
+	snap := st.snapshot()
+	if snap.UITheme.Mode != "dark" {
+		t.Fatalf("tema padrão da interface mudou: %q (combine antes; veja AGENTS.md)", snap.UITheme.Mode)
+	}
+	if snap.UITheme.Vibrancy {
+		t.Fatal("vibrancy/Acrylic ligado por padrão: tem que ser opção (AGENTS.md)")
+	}
+	if snap.Sidebar.Look != "" {
+		t.Fatalf("visual padrão da barra lateral mudou: %q (AGENTS.md)", snap.Sidebar.Look)
+	}
+}

@@ -88,6 +88,40 @@ failing on `main`.
   "pushed" or "done", it runs the checks above and reports the `CI`
   result, not only that `git push` worked.
 
+## Product identity: the default look is not changed by agents (2026-11-27)
+
+Beth Studio has one recognizable look: its themes and colors, the logo at
+the top, the flush sidebar, the tab bar, the fonts and the spacing. That
+look is the product's identity. If every person or agent changes it to
+their own taste, the product stops looking like one product.
+
+On 2026-11-25 a Mac port changed the look for everyone at once: glass and
+Acrylic styles, a floating card sidebar, new button styles and about 1,700
+lines of CSS. Nobody had agreed to it.
+
+Rules for people and for every agent (Claude, Cursor, Codex, any other):
+
+- **Never change the default look on your own.** Themes, colors, fonts,
+  icons, the logo, button and card styles, margins, transparency, glass,
+  Acrylic or vibrancy effects, animations and the default view all count.
+- **A new look is a new option.** Add it as a theme, a preset or a choice in
+  Configurações, off by default. The current look stays the default and
+  stays available.
+- **Agree with Rodrigo before** changing any default. Only he decides that
+  the default changes.
+- **Do not mix it into other work.** A Mac port, a performance fix or a
+  refactor must not carry a visual change. Send it as its own commit with
+  "Visual:" at the start of the message.
+- **Tests guard the defaults.** `frontend/tests/identity.test.ts` pins the
+  colors of the interface themes and `TestIdentityDefaultsStayClassic`
+  (`uitheme_test.go`) pins the default theme, vibrancy off and the default
+  sidebar look. If one fails, your change altered the default look: make it
+  an option instead. Update the pinned values only after Rodrigo agreed,
+  in the same commit, with the reason in the message.
+- An agent asked to "improve the design", "modernize" or "make it look like
+  the Mac" proposes the change as an option and asks before touching the
+  default.
+
 ## Layout and visual changes: agree first, ship as an option (2026-11-27)
 
 The layout people use every day is a shared decision, not a personal taste.
