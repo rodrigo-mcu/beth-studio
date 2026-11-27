@@ -991,8 +991,12 @@ export function App() {
     return () => stops.forEach((s) => s());
   }, [layout, conn, paneTools]);
   const sidebarCollapsed = sidebarPrefs.collapsed;
-  // Visual da barra lateral: escolha da pessoa; sem escolha, colada no Windows e cartão no Mac.
+  // Estilo da interface (Configurações > Aparência): sem escolha, Original no Windows e Mac no Mac.
   const sideCard = sidebarPrefs.look ? sidebarPrefs.look === "card" : isMacTitlebar();
+  // Estilo "Original" (sem cartões): o terminal também fica colado (index.css, bt-style-original).
+  useEffect(() => {
+    document.documentElement.classList.toggle("bt-style-original", !sideCard);
+  }, [sideCard]);
   const [dragWidth, setSidebarWidth] = useState<number | null>(null);
   const [dragFiles, setFilesWidth] = useState<number | null>(null);
   const sidebarWidth = dragWidth ?? sidebarPrefs.width ?? 288;

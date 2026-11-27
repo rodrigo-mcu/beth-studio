@@ -1851,3 +1851,18 @@ html.bt-vibrancy .bt-preview-interacting {
     grid-template-columns: 1fr;
   }
 }
+
+/* Estilo da interface "Original" (Configurações > Aparência): sem cartões.
+   O terminal fica colado na barra de abas e nas bordas da janela, como antes
+   do estilo Mac. O estilo Mac é o resto deste arquivo. */
+html.bt-style-original .bt-term-frame {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid rgb(var(--bt-border) / 0.9);
+  border-radius: 0;
+}
+html.bt-style-original .bt-worktree {
+  border-radius: 0;
+  border-top: 0;
+  border-bottom: 0;
+}

@@ -217,7 +217,15 @@ export function SettingsDialog(p: Props) {
             ))}
           </nav>
           <div className="bt-settings__content">
-            {sec === "aparencia" && <GeneralAppearance {...common} sections={["ui", "terminals"]} pageTitle={page.title} pageSubtitle={page.subtitle} />}
+            {sec === "aparencia" && (
+              <GeneralAppearance
+                {...common}
+                sections={["ui", "terminals"]}
+                pageTitle={page.title}
+                pageSubtitle={page.subtitle}
+                before={<InterfaceStyle sidebar={p.sidebar} save={p.saveSidebar} />}
+              />
+            )}
             {sec === "atalhos" && (
               <SettingsPage title={page.title} subtitle={page.subtitle}>
                 <ShortcutsSection conn={p.conn} saved={p.settings?.shortcuts} onMessage={p.onMessage} />
@@ -393,16 +401,8 @@ function SidebarSection({
   subtitle?: string;
 }) {
   const view = sidebar.view || "web";
-  const look = sidebar.look || (isMacOS() ? "card" : "flush");
   return (
     <SettingsPage title={title} subtitle={subtitle}>
-      <div>
-        <SettingsSectionLabel>Visual</SettingsSectionLabel>
-        <div className="bt-settings-choice-grid mb-4">
-          <SettingsChoice on={look === "flush"} onClick={() => save({ look: "flush" })} title="Colada" sub="do topo ao rodapé, sem margens (padrão no Windows)" />
-          <SettingsChoice on={look === "card"} onClick={() => save({ look: "card" })} title="Cartão" sub="solta, com margem e cantos arredondados (padrão no Mac)" />
-        </div>
-      </div>
       <div>
         <SettingsSectionLabel>Visão</SettingsSectionLabel>
         <div className="bt-settings-choice-grid">
@@ -585,5 +585,33 @@ function AboutSection({
           : "Chaves de API ficam cifradas pelo Windows (DPAPI) e nunca aparecem aqui."}
       </p>
     </SettingsPage>
+  );
+}
+
+/**
+ * Estilo da interface (guardado em sidebar.look): "Original" = barra lateral
+ * e terminal colados, sem margens; "Mac" = barra e terminal em cartões, com
+ * margem e cantos. Sem escolha: Original no Windows, Mac no Mac.
+ */
+function InterfaceStyle({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Partial<SidebarPrefs>) => void }) {
+  const look = sidebar.look || (isMacOS() ? "card" : "flush");
+  return (
+    <div>
+      <SettingsSectionLabel>Estilo da interface</SettingsSectionLabel>
+      <div className="bt-settings-choice-grid mb-4">
+        <SettingsChoice
+          on={look === "flush"}
+          onClick={() => save({ look: "flush" })}
+          title="Original"
+          sub="barra lateral e terminal colados, sem margens (padrão no Windows)"
+        />
+        <SettingsChoice
+          on={look === "card"}
+          onClick={() => save({ look: "card" })}
+          title="Mac"
+          sub="barra lateral e terminal em cartões, com margem e cantos (padrão no Mac)"
+        />
+      </div>
+    </div>
   );
 }

@@ -38,6 +38,8 @@ interface Props {
   sections?: ("ui" | "voice" | "notify" | "terminals")[];
   pageTitle?: string;
   pageSubtitle?: string;
+  /** Bloco mostrado antes do tema (ex.: Estilo da interface). */
+  before?: ReactNode;
 }
 
 /** "Aparencia geral": tema da interface + padroes de todos os terminais. */
@@ -57,6 +59,7 @@ export function GeneralAppearance({
   sections,
   pageTitle,
   pageSubtitle,
+  before,
 }: Props) {
   const show = (k: "ui" | "voice" | "notify" | "terminals") => !sections || sections.includes(k);
   const ui = { mode: normalizeUIMode(settings?.ui_theme?.mode), theme_id: settings?.ui_theme?.theme_id };
@@ -114,6 +117,7 @@ export function GeneralAppearance({
 
   const body = (
     <div className={cn(!pageTitle && "space-y-5", !pageTitle && (embedded ? "p-0" : ""), !embedded && "min-h-0 flex-1 space-y-5 overflow-y-auto p-4")} onMouseLeave={() => preview(null)}>
+      {before}
       {show("ui") && (
         <div className="space-y-5">
           <div>

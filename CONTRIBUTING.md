@@ -55,8 +55,8 @@ for everyone to contribute without stepping on each other.
   colors, a different layout) are great: add them as a theme, a preset or a
   choice in Configurações, so anyone can try them. The current look stays
   the default; changing a default is a product decision, so talk to Rodrigo
-  first. Configurações > Barra lateral > Visual (Colada or Cartão) is an
-  example.
+  first. Configurações > Aparência > Estilo da interface (Original or Mac)
+  is an example.
 - **Keep visual changes in their own commit**, starting with `Visual:`, so
   they are easy to review and to turn into an option.
 - **A few tests protect the defaults.** `bethstudio-web/frontend/tests/identity.test.ts`
