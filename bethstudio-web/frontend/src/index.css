@@ -113,18 +113,18 @@ html.bt-acrylic .bt-sidebar .overflow-y-auto {
 }
 html.dark.bt-acrylic .bt-sidebar .bt-search,
 html.dark.bt-acrylic .bt-sidebar .bt-mode,
-html.dark.bt-acrylic .bt-sidebar button.h-7 {
+html.dark.bt-acrylic:not(.bt-style-original) .bt-sidebar button.h-7 {
   background: rgb(255 255 255 / 0.08) !important;
   background-color: rgb(255 255 255 / 0.08) !important;
 }
 html:not(.dark).bt-acrylic .bt-sidebar .bt-search,
 html:not(.dark).bt-acrylic .bt-sidebar .bt-mode,
-html:not(.dark).bt-acrylic .bt-sidebar button.h-7 {
+html:not(.dark).bt-acrylic:not(.bt-style-original) .bt-sidebar button.h-7 {
   background: rgb(0 0 0 / 0.05) !important;
   background-color: rgb(0 0 0 / 0.05) !important;
 }
 html:not(.dark).bt-acrylic .bt-sidebar .bt-mode:hover:not(.bt-glass-on),
-html:not(.dark).bt-acrylic .bt-sidebar button.h-7:hover {
+html:not(.dark).bt-acrylic:not(.bt-style-original) .bt-sidebar button.h-7:hover {
   background: rgb(0 0 0 / 0.11) !important;
   background-color: rgb(0 0 0 / 0.11) !important;
 }
@@ -979,10 +979,12 @@ html:not(.bt-vibrancy) .bt-sidebar .bt-chip.bt-glass-on {
   color: rgb(var(--bt-accent-text));
   font-weight: 600;
 }
-html:not(.bt-vibrancy) .bt-sidebar button.h-7 {
+/* Placa atrás dos botões de ícone: só no estilo Mac. No Original (0.4.1) o
+   ícone fica sem placa e o fundo aparece só no hover. */
+html:not(.bt-vibrancy):not(.bt-style-original) .bt-sidebar button.h-7 {
   background: rgb(var(--bt-bg-hover));
 }
-html:not(.bt-vibrancy) .bt-sidebar button.h-7:hover {
+html:not(.bt-vibrancy):not(.bt-style-original) .bt-sidebar button.h-7:hover {
   background: rgb(var(--bt-bg-card));
   color: rgb(var(--bt-text-1));
 }
