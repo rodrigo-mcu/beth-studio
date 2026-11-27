@@ -80,6 +80,7 @@ interface SidebarPrefs {
   kinds?: string[];
   kind_order?: string[];
   split_by_kind?: boolean;
+  look?: "flush" | "card";
 }
 
 interface Props {
@@ -346,7 +347,7 @@ function TerminalsSection({ conn, settings, onMessage }: { conn: Connection; set
       <div>
         <SettingsSectionLabel>Tamanho dos terminais</SettingsSectionLabel>
         <SettingsHint className="mb-2">
-          Padrão para terminais sozinhos na aba. Cada um pode mudar no cabeçalho. Em split usam “Igual ao Beth Studio”.
+          Padrão para terminais sozinhos na aba. Cada um pode mudar no cabeçalho. Em split usam “Manter tamanho do terminal”.
         </SettingsHint>
         <div className="bt-settings-choice-grid">
           <SettingsChoice
@@ -358,8 +359,8 @@ function TerminalsSection({ conn, settings, onMessage }: { conn: Connection; set
           <SettingsChoice
             on={mode === "host"}
             onClick={() => set("host")}
-            title="Igual ao Beth Studio"
-            sub="mantém o tamanho da GUI; a fonte se ajusta"
+            title="Manter tamanho do terminal"
+            sub="mantém as colunas × linhas; a fonte se ajusta"
           />
         </div>
       </div>
@@ -368,7 +369,7 @@ function TerminalsSection({ conn, settings, onMessage }: { conn: Connection; set
         <SettingsGroup>
           <SettingsRow
             label="Fonte"
-            hint="Em “Igual ao Beth Studio” a fonte é automática, a não ser que você fixe o tamanho com A−/A+. Família e tamanho padrão ficam em Aparência."
+            hint="Em “Manter tamanho do terminal” a fonte é automática, a não ser que você fixe o tamanho com A−/A+. Família e tamanho padrão ficam em Aparência."
           />
           <SettingsRow
             label="Clique num terminal"
@@ -392,8 +393,16 @@ function SidebarSection({
   subtitle?: string;
 }) {
   const view = sidebar.view || "web";
+  const look = sidebar.look || (isMacOS() ? "card" : "flush");
   return (
     <SettingsPage title={title} subtitle={subtitle}>
+      <div>
+        <SettingsSectionLabel>Visual</SettingsSectionLabel>
+        <div className="bt-settings-choice-grid mb-4">
+          <SettingsChoice on={look === "flush"} onClick={() => save({ look: "flush" })} title="Colada" sub="do topo ao rodapé, sem margens (padrão no Windows)" />
+          <SettingsChoice on={look === "card"} onClick={() => save({ look: "card" })} title="Cartão" sub="solta, com margem e cantos arredondados (padrão no Mac)" />
+        </div>
+      </div>
       <div>
         <SettingsSectionLabel>Visão</SettingsSectionLabel>
         <div className="bt-settings-choice-grid">

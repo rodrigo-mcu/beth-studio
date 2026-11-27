@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { dragMacWindow, isFrameless, isMacTitlebar, startDrag, useWindowState, winCommand, zoomMacWindow } from "@/lib/windowFrame";
-import { ICON_W, labelWidth, planBarActions } from "@/lib/tabBarLayout";
+import { ICON_W, labelWidth, planBarActions, tabLabel } from "@/lib/tabBarLayout";
 import { WindowControls } from "./WindowControls";
 import { GlassMenu, MenuItem, MenuRule } from "./GlassMenu";
 import { buildStudioActions, type StudioAction } from "./StudioActions";
@@ -259,7 +259,7 @@ export function TabBar({
                 const id = tabIdentity?.(t);
                 const stored = leaves(t.root).map((l) => l.leaf.tool).find((s) => s);
                 if (id?.tool && id.tool !== stored) onTool?.(t.id, id.tool);
-                const name = id?.tool === "codex" ? "Codex" : id?.name || tabTitle(t, i);
+                const name = tabLabel(t.name, id, tabTitle(t, i));
                 return (
                   <>
                     {id?.tool ? <ToolIcon tool={id.tool as React.ComponentProps<typeof ToolIcon>["tool"]} size={14} /> : null}

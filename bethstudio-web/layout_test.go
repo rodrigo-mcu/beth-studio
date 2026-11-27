@@ -236,3 +236,17 @@ func TestSidebarKindOrderAndSplit(t *testing.T) {
 		t.Fatal("ordem inválida aceita")
 	}
 }
+
+func TestSidebarLook(t *testing.T) {
+	st := &settingsStore{}
+	st.load(t.TempDir())
+	for _, look := range []string{"", "flush", "card"} {
+		snap, err := st.setSidebar(SidebarPrefs{Look: look})
+		if err != nil || snap.Sidebar.Look != look {
+			t.Fatalf("look %q: %+v %v", look, snap.Sidebar, err)
+		}
+	}
+	if _, err := st.setSidebar(SidebarPrefs{Look: "vidro"}); err == nil {
+		t.Fatal("invalid look accepted")
+	}
+}

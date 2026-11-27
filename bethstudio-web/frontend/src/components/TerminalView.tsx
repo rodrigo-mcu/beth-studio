@@ -356,7 +356,7 @@ export function TerminalView({
   const [fighting, setFighting] = useState(false);
   const scrollBoxRef = useRef<HTMLDivElement>(null);
   const preferredFontRef = useRef(14);
-  // A ponte recusou o resize (o pane divide a aba do host): cai para "Igual ao Beth Studio".
+  // A ponte recusou o resize (o pane divide a aba do host): cai para "Manter tamanho do terminal".
   const [refused, setRefused] = useState(false);
   useEffect(() => setRefused(false), [aloneInHost]);
   // tamanho fixo que vale neste pane agora (0 = automatico); ver fixedFontFor
@@ -1567,7 +1567,7 @@ Arraste para outra aba ou para a borda de outro terminal`
           </button>
           <button
             className={cn(sizeMode === "host" && "bt-on")}
-            title="Igual ao Beth Studio: mostra o tamanho que o terminal tem lá (a fonte se ajusta)"
+            title="Manter tamanho do terminal: mantém as colunas × linhas atuais; a fonte se ajusta ao painel"
             onClick={() => aloneInHost && setPane(conn, paneId, { size_mode: "host" }).catch((e: Error) => flash(`Erro: ${e.message}`))}
           >
             <Monitor size={13} />

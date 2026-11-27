@@ -112,6 +112,9 @@ type SidebarPrefs struct {
 	SplitByKind *bool    `json:"split_by_kind,omitempty"`
 	// Largura da pasta da guia (sidebar da direita). 0 = padrão.
 	FilesWidth int `json:"files_width,omitempty"`
+	// Visual da barra da esquerda: "" = padrão do sistema (colada no
+	// Windows, cartão no Mac), "flush" = colada, "card" = cartão.
+	Look string `json:"look,omitempty"`
 }
 
 // SpawnedPane: pane criado pelo web (a GUI nao grava o comando desses).
@@ -896,6 +899,11 @@ func (st *settingsStore) setSidebar(p SidebarPrefs) (SettingsSnapshot, error) {
 	case "", "web", "host", "kind", "folder":
 	default:
 		return SettingsSnapshot{}, errors.New("visão inválida")
+	}
+	switch p.Look {
+	case "", "flush", "card":
+	default:
+		return SettingsSnapshot{}, errors.New("visual da barra lateral inválido")
 	}
 	if len(p.Kinds) > 20 || len(p.KindOrder) > 20 {
 		return SettingsSnapshot{}, errors.New("filtros demais")

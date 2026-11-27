@@ -49,3 +49,14 @@ export function planBarActions(available: number, actions: BarAction[]): BarPlan
     overflow: actions.filter((a) => !inBar.has(a.id)).map((a) => a.id),
   };
 }
+
+/**
+ * Texto da aba: o nome que a pessoa deu sempre ganha. Sem nome, o agente em
+ * execução (título do chat; Codex pelo nome do programa) e, por último, o
+ * nome automático (título do terminal).
+ */
+export function tabLabel(userName: string, identity: { name?: string; tool?: string } | undefined, fallback: string): string {
+  if (userName.trim()) return userName.trim();
+  if (identity?.tool === "codex") return "Codex";
+  return identity?.name || fallback;
+}

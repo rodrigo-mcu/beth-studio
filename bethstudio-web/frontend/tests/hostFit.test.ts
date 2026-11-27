@@ -54,7 +54,7 @@ test("pedido pendente expira: area mudou de novo depois de 1,5 s manda outra vez
 });
 
 test("regra 'sozinho na aba do host' usa o tab_id do host; fit salvo e' ignorado em split", () => {
-  // pane 10 e 11 na mesma aba do host (tab 10): so' "Igual ao Beth Studio"
+  // pane 10 e 11 na mesma aba do host (tab 10): so' "Manter tamanho do terminal"
   const panes = [pane(10, 10), pane(11, 10), pane(29, 23)];
   assert.equal(effectiveSizeMode("fit", aloneInHostTab(panes, 10)), "host");
   // o 11 fechou: o 10 fica sozinho e o "fit" salvo volta a valer

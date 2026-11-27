@@ -20,7 +20,7 @@ export function fontSizeLabel(fixed: number): string {
 /**
  * Fonte fixa efetiva (0 = automatica):
  *  - "Ajustar a' janela": a do pane, senao a padrao geral, senao 14;
- *  - "Igual ao Beth Studio" (ou Ajustar indisponivel): AUTOMATICA, a nao ser
+ *  - "Manter tamanho do terminal" (ou Ajustar indisponivel): AUTOMATICA, a nao ser
  *    que o usuario tenha fixado NESTE pane (A-/A+ nele). O padrao geral
  *    fixo nao vale aqui.
  */

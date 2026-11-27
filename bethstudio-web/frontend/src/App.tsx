@@ -52,6 +52,7 @@ import { RemoteConnectedBadge } from "@/components/RemoteStudioSection";
 import { returnFocus, withTabFocus } from "@/lib/termFocus";
 import { sameShellId, splitAround, splitSpawn, type SplitZone } from "@/lib/splitSpawn";
 import { restartPane } from "@/lib/restartPane";
+import { watchSet } from "@/lib/watchSet";
 import { Loader2 } from "lucide-react";
 import { KillDialog, type KillMode } from "@/components/KillDialog";
 import { SeparateDialog } from "@/components/SeparateDialog";
@@ -432,7 +433,8 @@ export function App() {
   const agentTailRef = useRef<Record<number, string>>({});
   useEffect(() => {
     const visible = activeLeaves.filter((l) => !l.leaf.gone && paneById.has(l.leaf.pane)).map((l) => l.leaf.pane);
-    conn.setWatched([...new Set([...visible, ...agentPaneIds])]);
+    // visíveis primeiro: o Go corta acima de MAX_WATCH (ver lib/watchSet)
+    conn.setWatched(watchSet(visible, agentPaneIds));
   }, [activeLeaves, paneById, agentPaneIds]);
   useEffect(() => {
     let t = 0;
@@ -924,6 +926,7 @@ export function App() {
     kind_order?: string[];
     split_by_kind?: boolean;
     files_width?: number;
+    look?: "flush" | "card";
   };
   const [sidebarLocal, setSidebarLocal] = useState<SidebarPrefs | null>(null);
   // Pasta da guia: gravada no layout (web-settings.json), não no localStorage.
@@ -988,6 +991,8 @@ export function App() {
     return () => stops.forEach((s) => s());
   }, [layout, conn, paneTools]);
   const sidebarCollapsed = sidebarPrefs.collapsed;
+  // Visual da barra lateral: escolha da pessoa; sem escolha, colada no Windows e cartão no Mac.
+  const sideCard = sidebarPrefs.look ? sidebarPrefs.look === "card" : isMacTitlebar();
   const [dragWidth, setSidebarWidth] = useState<number | null>(null);
   const [dragFiles, setFilesWidth] = useState<number | null>(null);
   const sidebarWidth = dragWidth ?? sidebarPrefs.width ?? 288;
@@ -1426,7 +1431,8 @@ export function App() {
           )}
           style={{ width: sidebarCollapsed ? 48 : sidebarWidth, background: sideMaterial ? "transparent" : "var(--bt-topbar)" }}
         >
-        <div
+        {/* Faixa dos botões de janela do Mac; no Windows a barra lateral vai até o topo. */}
+        {isMacTitlebar() && <div
           className="bt-mac-gutter absolute inset-x-0 top-0 z-30 h-10"
           style={{ background: "var(--bt-topbar)" }}
           title="Arraste para mover a janela"
@@ -1436,13 +1442,23 @@ export function App() {
             dragMacWindow();
           }}
           onDoubleClick={() => isMacTitlebar() && zoomMacWindow()}
-        />
-        <div className="bt-side-slot bt-side-slot-left absolute inset-x-0" style={{ top: 40, bottom: 8, padding: "0 8px", background: sideMaterial ? "transparent" : undefined }}>
+        />}
+        <div
+          className="bt-side-slot bt-side-slot-left absolute inset-x-0"
+          style={{
+            // Mac: a faixa de 40 px é dos botões da janela; no Windows a barra vai até o topo.
+            top: isMacTitlebar() ? 40 : sideCard ? 8 : 0,
+            bottom: sideCard ? 8 : 0,
+            height: "auto",
+            padding: sideCard ? "0 8px" : 0,
+            background: sideMaterial ? "transparent" : undefined,
+          }}
+        >
         <aside
           className={cn(
             "bt-sidebar relative h-full overflow-hidden",
             sideMaterial ? "bg-transparent" : "bg-bg-panel",
-            "bt-side-card",
+            sideCard ? "bt-side-card" : "border-r border-border",
             sidebarCollapsed && "flex flex-col items-center gap-1 overflow-y-auto overflow-x-hidden pb-2 [scrollbar-width:none]",
           )}
           style={{ width: "100%" }}

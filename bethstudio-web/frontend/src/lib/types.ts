@@ -129,7 +129,7 @@ export interface SettingsEvent {
   ui_theme?: { mode: "dark" | "light" | "navy" | "follow" | "theme"; theme_id?: string; vibrancy?: boolean; glass?: number; glass_alpha?: number };
   search_shortcut?: string;
   shortcuts?: Record<string, string>;
-  sidebar?: { collapsed: boolean; width: number; view?: "web" | "host" | "kind" | "folder"; kinds?: string[]; kind_order?: string[]; split_by_kind?: boolean; files_width?: number };
+  sidebar?: { collapsed: boolean; width: number; view?: "web" | "host" | "kind" | "folder"; kinds?: string[]; kind_order?: string[]; split_by_kind?: boolean; files_width?: number; look?: "flush" | "card" };
   /** Pré-visualizar imagem antes de colar no terminal (padrão: ligado). */
   paste_image_preview?: boolean;
 }

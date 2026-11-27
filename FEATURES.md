@@ -13,7 +13,7 @@
 > When a user-facing feature is added, changed, or removed, update this
 > file in the same change (`.cursor/rules/features-catalog.mdc`).
 
-Atualizado: 2026-11-25.
+Atualizado: 2026-11-27.
 
 ---
 
@@ -625,6 +625,17 @@ ends the shell together with everything it started (patch 0203).
   notification when the agent waits or when the chat becomes ready; sound is
   optional. Defaults stay off. For Cursor titles like Codex, turn on
   `/status-indicators` (or `display.showStatusIndicators` in the CLI config).
+  Agents in other tabs only fill the free watch slots: the visible terminals
+  always come first (the Studio watches at most 16 panes per page), so a tab
+  never stays on "Carregando a tela do terminal…" (2026-11-27).
+- 🟢 **Visual da barra lateral** (2026-11-27). Configurações > Barra lateral >
+  **Visual**: **Colada** (top to bottom, no margins; default on Windows) or
+  **Cartão** (floating card with margin and rounded corners; default on Mac).
+- 🟢 **Nome da aba** (2026-11-27). A name you give a tab always wins; without
+  one the tab shows the running agent's chat title, then the terminal title.
+- 🟢 **Manter tamanho do terminal** (renamed from "Igual ao Beth Studio",
+  2026-11-27): keeps the pane's columns × rows and fits the font to the panel;
+  the other mode, **Ajustar à janela**, resizes the terminal to the panel.
 - 🟢 Voice: record, transcribe, and optionally correct with an LLM before
   paste (no Enter). Per-call cost in `ai-usage.jsonl`; audio and text are
   not stored. API keys stay in DPAPI `secrets.dat`.

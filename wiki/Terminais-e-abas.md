@@ -88,7 +88,7 @@ O Studio aberto pelo navegador usa um navegador de pastas dentro da página em *
 
 - **Fechar não encerra.** Fechar uma aba manda seus terminais para **Não organizados**. Só **Encerrar terminal…** (com confirmação) encerra o processo.
 - **Splits do Studio e do host.** Um split que só existe no Beth Studio mantém o tamanho da coluna. Para ajustar o terminal à janela, use **Separar no Beth Studio para ajustar à janela…**, que tira o painel do split do host sem encerrar nada.
-- **Tamanho.** Os botões de tamanho no cabeçalho alternam entre **Ajustar à janela** e **Igual ao Beth Studio**. Em Configurações, **Terminais**, você define o padrão.
+- **Tamanho.** Os botões de tamanho no cabeçalho alternam entre **Ajustar à janela** e **Manter tamanho do terminal**. Em Configurações, **Terminais**, você define o padrão.
 - **Studio no navegador.** Pasta, arquivos e janelas nativas do PC não abrem remotamente: o navegador de pastas da página substitui o seletor do Windows. Veja [Celular e acesso remoto](Celular-e-acesso-remoto).
 - **WSL.** O terminal WSL espera a distro responder antes de abrir. Veja [WSL](WSL).
 

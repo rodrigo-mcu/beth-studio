@@ -278,7 +278,7 @@ export class Connection {
           if (/no such pane/i.test(ev.message)) break; // ponte antiga: terminal fechado
           this.errorListeners.forEach((fn) => fn(ev.message));
           // recusa de resize (pane em split no host): o terminal cai sozinho
-          // para "Igual ao Beth Studio", sem faixa de erro
+          // para "Manter tamanho do terminal", sem faixa de erro
           if (/^resize: pane \d+ shares its Beth Studio tab/.test(ev.message)) break;
           this.patch({ lastError: ev.message });
           break;

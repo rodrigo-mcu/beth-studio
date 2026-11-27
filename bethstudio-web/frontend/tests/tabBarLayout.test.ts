@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { ICON_W, MORE_W, planBarActions, type BarAction } from "../src/lib/tabBarLayout.ts";
+import { ICON_W, MORE_W, planBarActions, tabLabel, type BarAction } from "../src/lib/tabBarLayout.ts";
 
 const A: BarAction[] = [
   { id: "speak", label: "Falar", priority: 3 },
@@ -52,4 +52,12 @@ test("barra de título: arraste, botões da janela e ações com tooltip/aria-la
   assert.match(tb, /aria-label=\{a\.label\}/);
   const side = fs.readFileSync("src/components/Sidebar.tsx", "utf8");
   assert.match(side, /<AppTitle( right=\{[^}]*\})? \/>/);
+});
+
+test("aba: o nome dado pela pessoa ganha do título do chat do agente", () => {
+  const claude = { name: "Publicação da versão atual", tool: "claude" };
+  assert.equal(tabLabel("BETH-STUDIO", claude, "bash"), "BETH-STUDIO");
+  assert.equal(tabLabel("  ", claude, "bash"), "Publicação da versão atual");
+  assert.equal(tabLabel("", { name: "x", tool: "codex" }, "bash"), "Codex");
+  assert.equal(tabLabel("", undefined, "bash"), "bash");
 });

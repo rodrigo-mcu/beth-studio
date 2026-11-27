@@ -88,6 +88,26 @@ failing on `main`.
   "pushed" or "done", it runs the checks above and reports the `CI`
   result, not only that `git push` worked.
 
+## Layout and visual changes: agree first, ship as an option (2026-11-27)
+
+The layout people use every day is a shared decision, not a personal taste.
+On 2026-11-25 the Mac work turned the left sidebar into a floating card that
+starts 40 px below the top, with margins and rounded corners, on every
+platform. On Windows it wasted space, moved the Beth Studio logo off the top
+and nobody had agreed to it.
+
+- **Any abrupt change to the layout or the look** (moving or removing a bar,
+  panel, logo or button, changing margins, sizes, cards, colors, fonts or the
+  default view) is agreed with Rodrigo **before** the commit.
+- **Ship it as an option, not as a replacement.** The current look stays the
+  default; the new one is a choice in Configurações (as with
+  Configurações > Barra lateral > Visual: Colada / Cartão). Each person picks
+  what suits them. A platform default may differ (Mac card, Windows flush),
+  but the other look must stay available.
+- Record the option in `FEATURES.md` and say it in the commit message.
+- Never change the default look as a side effect of another change (a
+  performance fix, a Mac port, a refactor).
+
 ## Live Terminals Rule (2026-09-23)
 
 The user's terminals, agents, and WSL sessions live in the running

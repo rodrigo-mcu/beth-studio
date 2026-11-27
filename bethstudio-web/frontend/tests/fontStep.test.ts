@@ -22,7 +22,7 @@ test("rotulo", () => {
   assert.equal(fontSizeLabel(14), "14px");
 });
 
-test("Igual ao Beth Studio: fonte automatica salvo se fixada NESTE pane", () => {
+test("Manter tamanho do terminal: fonte automatica salvo se fixada NESTE pane", () => {
   assert.equal(fixedFontFor("host", 0, 20), 0); // padrao geral 20 nao vale
   assert.equal(fixedFontFor("host", 16, 20), 16); // fixada no pane
   assert.equal(fixedFontFor("fit", 0, 20), 20);

@@ -50,7 +50,7 @@ Em **Configurações**, **Aparência**, **Tema da interface** vale para barra la
 
 Em **Configurações**, **Terminais**, você define:
 
-- **Tamanho dos terminais**: **Ajustar à janela** ou **Igual ao Beth Studio**, como padrão para terminais sozinhos na aba.
+- **Tamanho dos terminais**: **Ajustar à janela** ou **Manter tamanho do terminal**, como padrão para terminais sozinhos na aba.
 - **Avisos de agente aguardando**: **Notificação do Windows** e **Som**.
 
 ## De onde vêm os temas
