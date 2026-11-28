@@ -592,10 +592,10 @@ function AboutSection({
 /**
  * Estilo da interface (guardado em sidebar.look): "Original" = barra lateral
  * e terminal colados, sem margens; "Mac" = barra e terminal em cartões, com
- * margem e cantos. Sem escolha: Original no Windows, Mac no Mac.
+ * margem e cantos. Sem escolha: Original, no Windows e no Mac.
  */
 function InterfaceStyle({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Partial<SidebarPrefs>) => void }) {
-  const look = sidebar.look || (isMacOS() ? "card" : "flush");
+  const look = sidebar.look || "flush";
   return (
     <div>
       <SettingsSectionLabel>Estilo da interface</SettingsSectionLabel>
@@ -604,13 +604,13 @@ function InterfaceStyle({ sidebar, save }: { sidebar: SidebarPrefs; save: (p: Pa
           on={look === "flush"}
           onClick={() => save({ look: "flush" })}
           title="Original"
-          sub="barra lateral e terminal colados, sem margens (padrão no Windows)"
+          sub="barra lateral e terminal colados, sem margens (padrão)"
         />
         <SettingsChoice
           on={look === "card"}
           onClick={() => save({ look: "card" })}
           title="Mac"
-          sub="barra lateral e terminal em cartões, com margem e cantos (padrão no Mac)"
+          sub="barra lateral e terminal em cartões, com margem e cantos"
         />
       </div>
       <EditorMode sidebar={sidebar} save={save} />

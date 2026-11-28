@@ -628,12 +628,12 @@ ends the shell together with everything it started (patch 0203).
   Agents in other tabs only fill the free watch slots: the visible terminals
   always come first (the Studio watches at most 16 panes per page), so a tab
   never stays on "Carregando a tela do terminal…" (2026-11-27).
-- 🟢 **Estilo da interface** (2026-11-27). Configurações > Aparência >
+- 🟢 **Estilo da interface** (2026-11-28). Configurações > Aparência >
   **Estilo da interface**: **Original** (the 0.4.1 look: low square tabs with
   the terminal count, compact sidebar with pill filters and rows marked on
-  the left, framed terminal, opaque menus; default on Windows) or **Mac**
-  (sidebar and terminal as cards, pill tabs, glass buttons and menus;
-  default on Mac).
+  the left, framed terminal, opaque menus; the default on Windows and on
+  Mac) or **Mac** (sidebar and terminal as cards, pill tabs, glass buttons
+  and menus; chosen in Configurações).
 - 🟢 **Editor de arquivos** (2026-11-27). Configurações > Aparência >
   **Editor de arquivos**: **Janela solta** (the file opens in a window over
   the Studio that you drag by its title and maximize with a double click, as

@@ -1013,7 +1013,7 @@ export function App() {
   }, [layout, conn, paneTools]);
   const sidebarCollapsed = sidebarPrefs.collapsed;
   // Estilo da interface (Configurações > Aparência): sem escolha, Original no Windows e Mac no Mac.
-  const sideCard = sidebarPrefs.look ? sidebarPrefs.look === "card" : isMacTitlebar();
+  const sideCard = sidebarPrefs.look === "card";
   // Estilo "Original" (sem cartões): o terminal também fica colado (index.css, bt-style-original).
   useEffect(() => setOriginalStyle(!sideCard), [sideCard]);
   const origStyle = useOriginalStyle();
